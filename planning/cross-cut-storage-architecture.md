@@ -4,7 +4,7 @@
 
 Where the user's substrate files live determines what works and what breaks. Cloud-drive-mounted-locally has been the canonical answer (Box) but has real failure modes — most painfully, offline-cached files that don't auto-trigger downloads when Claude reads them, leading to silent empty-file failures. Shared cloud drives for teams have additional failure modes: contention, eventual-consistency surprises, multiple clients writing concurrently.
 
-The storage architecture is upstream of nearly everything else. Both plugins depend on it. We need a clear architectural decision, with the trade-offs visible, before T2 work proceeds on either plugin.
+The storage architecture is upstream of nearly everything else. All three plugins depend on it. We need a clear architectural decision, with the trade-offs visible, before T2 work proceeds on any plugin.
 
 ## How
 
@@ -20,9 +20,11 @@ Box remains the canonical recommendation for solo users at v1, despite the offli
 
 The right answer probably depends on the user's profile. A solo user with one machine and no need for mobile access can use direct local. A solo user spanning multiple devices needs *something* that reaches them all.
 
-### Team plugin: git, not shared cloud drive
+### Team and team-admin plugins: git, not shared cloud drive
 
 Teams use git as the substrate-sync mechanism. Each user has a local clone of the team's substrate repo. Pulling and pushing keeps everyone aligned. The substrate filesystem is local to each machine; git is the propagation layer.
+
+The `git-substrate-sync` skill is shared between the team and team-admin plugins. One source file lives at `plugin/src/team/skills/git-substrate-sync/` and is bundled into both plugins at build time.
 
 Why this works better than shared cloud drives for teams:
 - No contention or eventual-consistency surprises. Conflicts surface as merge conflicts, which are explicit and resolvable.
@@ -45,7 +47,7 @@ Worth considering: a generic `filesystem-management` skill that accommodates all
 ## What (initial)
 
 - Solo v1 stays on Box, with the caveat documented and a research task open to explore alternatives.
-- Team v1 uses git. Needs a `git-substrate-sync` skill (or similar). T2 work for the team plugin assumes git from the start.
+- Team and team-admin v1 both use git. They share a single `git-substrate-sync` skill. T2 work for both team variants assumes git from the start.
 - The current `box-filesystem-management` skill probably becomes the basis for a generalised filesystem skill, or stays Box-specific while a new git-flavoured skill stands alongside it.
 
 ## Open questions

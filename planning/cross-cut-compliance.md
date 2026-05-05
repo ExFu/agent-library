@@ -46,9 +46,9 @@ Other frameworks may apply (SOC 2, HIPAA, GDPR, sector regulators). v1 doesn't n
 
 ## What (initial)
 
-- Compliance briefing doc shipped in team plugin's `guides` content. Covers data flow, controls, recommended team practices.
-- Substrate-hygiene rules (no credentials, no IDs, no raw medical) carried into both plugins via existing substrate guide.
-- Disk-encryption recommendation in team-plugin install conversation.
+- Compliance briefing doc shipped in the team-admin plugin's `guides` content only. The team plugin does not include it. The substrate champion (team-admin user) is responsible for sharing compliance guidance with team members during onboarding. Covers data flow, controls, recommended team practices.
+- Substrate-hygiene rules (no credentials, no IDs, no raw medical) carried into all three plugins via existing substrate guide.
+- Disk-encryption recommendation in team-admin and team install conversations.
 - Research task to confirm specifics of ISO 27001 requirements that affect us.
 
 ## Open questions

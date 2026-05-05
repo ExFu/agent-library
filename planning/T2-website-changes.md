@@ -22,13 +22,23 @@ Per `T2-build-and-distribution.md`, the page lives at `/install` (or similar). S
 
 Content shape:
 
-- Lead with what's available: two plugins, solo and team, with one-liners for each ("personal Claude install for individuals" / "personal Claude install for team members"). Brief, not hyped.
-- Download buttons for each plugin's latest version.
+- Lead with what's available: three plugins, with one-liners for each. Solo: "personal Claude install for individuals". Team: "personal Claude install for team members". Team-admin is not listed with the same prominence — see the "which plugin" section below.
+- Download buttons for solo and team, latest versions.
 - Version indicator next to each.
 - Quick-start: "Download. Install in Claude (link to Anthropic docs on plugin install). Run `/exfu` to start."
 - Link to the substrate primer for users who want to read about it before installing.
+- "Which plugin is for me?" section — a short decision helper (see below).
 - Archive section (collapsed by default) for previous versions.
-- Honest note about which plugin to pick if uncertain — probably solo unless they've explicitly come in for a team setup.
+
+### Which plugin is for me?
+
+A short decision-helper section on the download page. Something like:
+
+- **Solo** — you're setting up your own personal Claude. You work alone, or you're trying this before rolling it out to a team.
+- **Team** — you're a team member joining an existing ExFu team setup. Your substrate champion has invited you to install.
+- **Team-admin** — you're the substrate champion responsible for provisioning the team repo, onboarding members, and maintaining shared skills and conventions.
+
+Team-admin should not be linked with the same prominence as solo and team. The team-admin plugin is intended for substrate champions, not for general download. Orgs may prefer to control its distribution internally rather than having it discoverable by all team members. The download page can mention it exists and link to a separate "substrate champion setup" page rather than offering a direct download button at the same level as solo and team.
 
 ### Retiring `/clients/*` URLs
 
@@ -94,7 +104,7 @@ Add `/install` to the site's nav. Update sitemap accordingly.
 
 ## T3 candidates
 
-- `T3-install-page.md` — design and build the download page.
+- `T3-install-page.md` — design and build the download page, including the "which plugin is for me?" decision helper and the lower-prominence handling of team-admin.
 - `T3-clients-url-retirement.md` — set up redirects, plan the eventual hard-delete.
 - `T3-marketing-audit.md` — pass through existing pages, list edits needed.
 - `T3-ecosystem-references-page.md` — optional, low priority.

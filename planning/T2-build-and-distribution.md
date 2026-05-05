@@ -35,14 +35,19 @@ plugin/src/
     skills/
     resources/
     manifest.json
+  team-admin/
+    skills/
+    resources/
+    manifest.json
 ```
 
-Build script reads `plugin/src/shared/` and `plugin/src/<variant>/`, merges them per the variant's overlay rules, packages into the Anthropic plugin format. Output:
+Build script reads `plugin/src/shared/` and `plugin/src/<variant>/`, merges them per the variant's overlay rules, packages into the Anthropic plugin format. For `team-admin`, the build additionally pulls `git-substrate-sync` from `plugin/src/team/skills/`. Output:
 
 ```
 plugin/build/
   exfu-solo-vN.M.P.plugin
   exfu-team-vN.M.P.plugin
+  exfu-team-admin-vN.M.P.plugin
 ```
 
 The build is reproducible — same source produces the same output. Worth keeping deterministic so users can verify their installation if needed.
@@ -52,7 +57,7 @@ The build is reproducible — same source produces the same output. Worth keepin
 V1 is a documented manual build: a script (Bash or Python — pick whichever is simpler given Anthropic's plugin tooling) that:
 
 1. Validates source — checks every skill has a `SKILL.md`, every scheduled task has a `TASK.md`, the manifest is valid, no missing references.
-2. Assembles the plugin file from `shared/` + `<variant>/`.
+2. Assembles the plugin file from `shared/` + `<variant>/`. For `team-admin`, also pulls `git-substrate-sync` from `team/`.
 3. Versions the output filename per the manifest.
 4. Writes a brief build log.
 
@@ -74,13 +79,13 @@ Semantic versioning per plugin, independently:
 - **Minor.** Feature additions. New skills, new scheduled tasks, new resources, expanded capabilities. Backward-compatible.
 - **Patch.** Bug fixes. Tightening a skill body, fixing a typo, updating an external link.
 
-Solo and team plugins version independently. Solo can be on v1.3.0 while team is on v0.4.2 if their release cadences differ.
+All three plugins version independently. Solo can be on v1.3.0, team on v0.4.2, and team-admin on v0.4.3 if their release cadences differ. Team-admin will typically track team releases closely (since it is a strict superset), but there is no coupling requirement.
 
 ### Manifest content
 
 Pending plugin-format research, but expected to declare:
 
-- Plugin name (`exfu-solo`, `exfu-team`).
+- Plugin name (`exfu-solo`, `exfu-team`, `exfu-team-admin`).
 - Version (semver).
 - Description (one-liner).
 - Author (Alastair Whaley / WhaleyBear Ltd / ExFu).
@@ -128,7 +133,7 @@ Once this process feels routine, automate via a make target or release script.
 
 ### Migration mechanics
 
-Major-version bumps require migration logic. Per `T2-solo-plugin.md` and `T2-team-plugin.md`, an `exfu:migrate-from-fetch-model` skill handles the v1 case (legacy fetch-model installs). Future major bumps need their own migration skills, named per the from-version (e.g. `exfu:migrate-v1-to-v2`).
+Major-version bumps require migration logic. Per `T2-solo-plugin.md`, `T2-team-plugin.md`, and `T2-team-admin-plugin.md`, an `exfu:migrate-from-fetch-model` skill handles the v1 case (legacy fetch-model installs). Future major bumps need their own migration skills, named per the from-version (e.g. `exfu:migrate-v1-to-v2`). A team-to-team-admin upgrade path is handled by the separate `exfu:upgrade-from-team-to-admin` skill rather than a standard migration path.
 
 ---
 
@@ -136,7 +141,7 @@ Major-version bumps require migration logic. Per `T2-solo-plugin.md` and `T2-tea
 
 ### Build script
 
-Location: `plugin/build/build.sh` (or `.py`). Inputs: source folder, target variant (solo or team). Output: built plugin file.
+Location: `plugin/build/build.sh` (or `.py`). Inputs: source folder, target variant (`solo`, `team`, or `team-admin`). Output: built plugin file.
 
 Validates, assembles, writes to `plugin/build/output/`. Idempotent.
 
@@ -145,7 +150,7 @@ Validates, assembles, writes to `plugin/build/output/`. Idempotent.
 Location: `public/install/index.astro` (or wherever the existing site convention puts it). Content:
 
 - Brief explanation: what the plugins are, who each is for.
-- Download buttons: solo and team, latest versions.
+- Download buttons: solo and team, latest versions. Team-admin is not prominently listed here — orgs may prefer to control its distribution internally (see distribution notes in `cross-cut-plugin-distribution.md`).
 - Version indicators visible.
 - Archive links to previous versions.
 - Quick-start instructions: download, install in Claude, run `/exfu`.

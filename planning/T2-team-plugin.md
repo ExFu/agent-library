@@ -1,16 +1,24 @@
 # T2 — Team plugin
 
-The plugin for users operating inside a team or organisation. Different storage architecture (git rather than cloud-drive sharing), additional teaching artefacts (admin/user, seniority/trust, personal/team split), and additional resources (compliance briefing, role capture).
+The plugin for ordinary team members: people joining a team that already has its shared substrate set up, installing their own personal layer on top, and reading/writing the shared layer through it. Strict subset of the team-admin plugin's capability surface — no admin tooling, no repo provisioning, no IT briefing.
 
-Anchors back to: `T1-overview.md`, `T2-shared-skills-and-resources.md`, `cross-cut-storage-architecture.md`, `cross-cut-compliance.md`, `cross-cut-teaching-artefacts.md`.
+Anchors back to: `T1-overview.md`, `T2-team-admin-plugin.md`, `T2-shared-skills-and-resources.md`, `cross-cut-storage-architecture.md`, `cross-cut-teaching-artefacts.md`.
 
 ---
 
 ## Why
 
-Team installs are different in kind from solo, not just degree. The user is one of several humans. Their substrate has a personal layer *and* a team-shared layer. Storage has to propagate reliably across machines (git, not Box). IT and security teams will likely review what's being installed. Role-in-org becomes part of identity-level context rather than incidental colour.
+Most team members are joiners, not champions. They're given a git remote URL, a download link, and a quick "this is what we use, get yourself set up" message from whoever is maintaining the team's substrate. They don't need to know how the repo got provisioned, what the IT briefing said, or how to author shared skills. They need their personal substrate set up, their connection to the team's shared substrate working, and a clear sense of what's theirs vs what's the team's.
 
-Forcing all this into the solo plugin would distort the solo experience and dilute the team experience. Two plugins keeps each clean.
+The team plugin gives them exactly that. Nothing more.
+
+The split from team-admin matters because:
+
+- **Capability boundary.** A joiner cannot accidentally write to the team's shared `skills/` folder if the authoring skill isn't installed. The plugin enforces the boundary by what's *not* present.
+- **Conversation cleanliness.** The install-team conversation doesn't have to navigate champion-vs-joiner branching. It's just the joiner flow.
+- **Lean install.** No compliance briefing the joiner doesn't need. No provisioning step they can't use. No diagrams about admin domains that don't apply to them.
+
+If a joiner later becomes the team's champion, they upgrade to team-admin (handled by `exfu:upgrade-from-team-to-admin` in T2-team-admin-plugin).
 
 ---
 
@@ -18,27 +26,17 @@ Forcing all this into the solo plugin would distort the solo experience and dilu
 
 ### What this plugin contains beyond shared
 
-- **`exfu:install-teams`** — the install conversation skill. Builds on the same shape as `install-solo` but with team-specific concerns surfaced earlier and the storage architecture defaulting to git rather than Box.
-- **`git-substrate-sync`** — net-new skill. Wraps git operations safely so the user (and their Claude) don't have to think about git commands during routine substrate work.
-- **`role-capture`** support — handled inside `install-teams` as part of the about-me phase. Not a separate skill; a structured beat in the install conversation that produces `context/me/role.md`.
-- **Compliance briefing** — `resources/compliance-briefing.md`. Material the team's substrate champion can hand to IT/security to answer ISO 27001 / SOC 2 / similar reviews.
-- **Team-specific teaching artefacts** — diagrams covering personal-vs-team skills and instructions, admin plane vs user domain, seniority and trust roles. Live in `resources/diagrams/` per the teaching-artefacts cross-cut convention.
+- **`exfu:install-team`** — the install conversation skill. Builds on the lean `start.md` shape, adapted for: joining an existing team substrate, layering personal-only content on top, defaulting to git as the storage mechanism.
+- **`git-substrate-sync`** — net-new skill for both team variants. Wraps git operations safely. Same source file shared with team-admin; bundled into both at build time.
+- **`role-capture`** support — handled inside `install-team` as part of the about-me phase. The joiner captures their own role; this is identity-level context.
+- **Team-related teaching artefact** — the personal-vs-team-skills diagram. Shared with team-admin.
 - **Team plugin manifest** — declares contents, version, compatibility.
 
-### Storage decision: git, not shared cloud drives
+### Storage architecture
 
-Per `cross-cut-storage-architecture.md`, the team plugin uses git as the substrate-sync mechanism. Each user has a local clone of the team's substrate repo. Pulling and pushing keeps the team aligned. The substrate filesystem is local; git is the propagation layer.
+Git, identical to team-admin. The joiner clones the team's substrate repo (URL provided by their champion, possibly via the onboarding pack the champion's `team-onboard-member` skill produced). After cloning, `git-substrate-sync` handles all subsequent operations.
 
-The `git-substrate-sync` skill is the new design work. It teaches Claude (and by extension the user) the right operations:
-
-- Pull at session start (read-fresh).
-- Stage and commit logical units of change with sensible messages.
-- Push after substantive changes.
-- Detect and surface merge conflicts cleanly — the user resolves; Claude can help walk them through but doesn't force resolution.
-- Handle branch hygiene (working on main vs feature branches — most teams will work on main; some may want a per-member branch model).
-- Honour the substrate hygiene rules (don't commit credentials, IDs, raw medical data, etc., even by accident).
-
-The skill body should be substantive but not turn the user into a git expert. It does the operations; the user thinks at the substrate level. This is a teach-as-you-go design — the user learns enough git to recover when things go sideways, but doesn't have to learn git to use the substrate.
+The joiner does not provision a repo. The repo already exists; their job is to connect to it.
 
 ### Personal vs team layers
 
@@ -49,123 +47,100 @@ Each team member has both:
 
 Their personal `wow` skill points at both layers via its navigation map. Claude reads from whichever is relevant for the current conversation.
 
-Worth a teaching artefact: a clean diagram showing this split. Probably the highest-leverage team-specific diagram.
+The personal-vs-team-skills diagram is the calibration moment for this concept; the install conversation reaches for it during the diagram step.
 
-### Role capture — first-class beat in the install
+### Reading the onboarding pack
 
-Role-in-org isn't optional context for team users; it's identity-level. The install-teams skill should make role-capture a deliberate beat during about-me, not an afterthought.
+If the joiner's champion used `team-onboard-member`, the joiner will have an onboarding pack — typically a markdown doc with the team plugin download URL, the git remote URL, an intro to the team's conventions, and a preview of the install flow.
 
-The capture writes to `context/me/role.md` (or augments `context/me/about.md` with a Role section — probably its own file given how often Claude will want to reach for it independently).
+The install-team skill should ask early: "Do you have an onboarding pack from your team's substrate champion? If yes, paste it in or point me at it; I'll use it to personalise this install."
 
-If the user wants their role visible to colleagues' Claude instances, the install can offer to also write a pointer-or-snippet into the team-shared `context/team-x/` layer. That decision should be deliberate, not a default.
+If the joiner has the pack, the install reads it and adjusts:
+- Pre-populates the git remote URL.
+- Surfaces the team's conventions during the relevant calibration moments.
+- Shapes the buffet step around what the team uses.
+- Mentions the champion by name when relevant.
 
-### Compliance briefing
-
-Ships as a resource (`resources/compliance-briefing.md`) the substrate champion can adapt and hand to their IT/security team. Covers:
-
-- Data flow: where data goes, where it doesn't.
-- Controls: encryption-at-rest recommendations, access controls via git, hygiene rules.
-- ISO 27001 control mappings — at the level of "this control: this answer".
-- Recommended team practices.
-- What this plugin is not (specifically: it's not an Anthropic product, it doesn't grant the team any Anthropic capabilities they don't already have).
-
-The install-teams skill should mention this resource exists and where it lives, so the team champion can find and use it without asking.
-
-### Admin-vs-staff variant — defer the decision
-
-Per T1, the admin-vs-staff split is carried as an option through this T2 and decided once we see the shape of each conversation. Two questions to settle before deciding:
-
-1. **What does an admin install look like differently from a staff install?** Plausible differences: admin captures team conventions and writes them once for everyone; admin sets up the shared git repo; admin writes the team's customised skills; admin briefs IT. Staff just connects to the team's repo and does a personal install on top.
-2. **Is the difference enough to warrant separate plugins, or could it be a branch in the install conversation?** A single `install-teams` skill that asks "are you the substrate champion for your team, or coming in as a member?" might handle the variance cleanly without a second plugin.
-
-Recommendation tilts toward "single plugin with conversation branching" unless we discover something during T3 that forces a split. Carry the option open through T3-team-install design.
+If the joiner does not have a pack, the install proceeds with default flow but flags that the joiner should confirm details with their champion when uncertainty arises (e.g. naming conventions, where personal vs shared content lives).
 
 ### Install conversation shape
 
-Same skeleton as install-solo (open with diagram, calibrate, plant priors, about-me, buffet, demonstrate, close), with these team-specific changes:
+Skeleton mirrors install-solo with team-specific adjustments:
 
-- **Diagram step.** Show the substrate diagram *and* a team-specific diagram (personal/team split). Two artefacts, one moment.
-- **Pre-about-me beat.** "Are you the substrate champion for your team setting things up for the first time, or coming in as a team member to install your personal layer?" — branches the rest of the conversation.
-- **About-me beat.** Includes role-capture as a deliberate sub-beat.
-- **Storage step.** Set up git remote, clone the team repo (or initialise it if champion). Walk through the `git-substrate-sync` skill.
-- **Buffet step.** Same shared-skills options as solo, plus team-specific moves (set up shared scope skills, register pointer to team conventions in `wow`).
-- **Compliance step (champion only).** Show the compliance briefing resource. Offer to walk through it with them.
-- **Close.** Migration / update notes; champion gets a "here's how to onboard the next team member" pointer.
+- **Diagram step.** Show the substrate diagram and the personal-vs-team split. Two artefacts.
+- **Onboarding-pack step.** "Do you have a pack from your champion?"
+- **About-me beat.** Includes role-capture (joiner's own role). If the team's `context/team-x/role-conventions.md` exists in the cloned substrate, surface its conventions to the joiner.
+- **Storage step.** Clone the team repo using the URL from the onboarding pack (or ask if no pack). Walk through `git-substrate-sync` so the joiner understands pull-before-write and commit hygiene.
+- **Personal-layer step.** Set up the joiner's personal substrate (local folder structure for `context/me/`, personal scopes, etc.) parallel to the team's shared one.
+- **Buffet step.** Same shared-skills options as solo. Plus connection points to team-shared scopes (read-only or contribute-via-PR depending on the team's git access model).
+- **Wow generation.** `exfu:create-wow` with navigation map pointing at both personal and team layers.
+- **Close.** Update notes; pointer to the team-admin contact for help; pointer to the team's conventions doc for ongoing reference.
+
+### What the team plugin does NOT do
+
+Worth being explicit:
+
+- It does not provision the team's git repo. The champion did that.
+- It does not let the joiner write to the team's shared `skills/` folder. (They can write to it via raw git commands, but the team plugin gives them no skill for doing so. The team's git access model — branch protection, PR review — is the real enforcement layer.)
+- It does not ship the compliance briefing. The champion has that.
+- It does not include admin-only diagrams.
+
+If the joiner finds themselves wanting any of the above, they're probably on their way to becoming the team's champion. That's the path that triggers the upgrade to team-admin.
+
+### Migration path
+
+Joiners coming from the fetch model (rare for team installs but possible) use `exfu:migrate-from-fetch-model` (designed in T2-solo). Same skill works for any plugin variant.
 
 ---
 
 ## What — components inventory
 
-### `exfu:install-teams` (new design, content adapted from start.md + team-considerations.md)
+### `exfu:install-team` (new design, content adapted from start.md + team-considerations.md)
 
-Skill body builds on lean `start.md` plus the existing `team-considerations.md`. Champion-vs-member branching at the top. Storage default git. Role-capture as a deliberate beat.
+Skill body builds on lean `start.md`. Joiner-flavoured opening: "this is the team plugin, you're joining a team that already has its substrate set up." Onboarding-pack reading early. Storage default git, clone existing repo (no provisioning). Role-capture as a deliberate beat.
 
-### `git-substrate-sync` (new design, substantial)
+### `git-substrate-sync` (new design, substantial — shared with team-admin)
 
-Wraps git operations for substrate use:
+Wraps git operations for substrate use. See T2-team-admin-plugin for full description. Same source file; bundled into both team plugin variants at build time.
 
-- Pull-before-write at session start.
-- Commit with structured messages (e.g. "scope:acme-deal — meeting notes 2026-05-12" or similar conventions).
-- Push after logical units of work.
-- Detect uncommitted changes, surface to user.
-- Merge-conflict handling — present clearly, let user resolve, help paraphrase.
-- Branch awareness — prefer main; respect alternate models if team uses them.
-- Hygiene checks — refuse to commit files matching credential patterns, etc.
+For the team plugin, the relevant subset of behaviour:
 
-Body has to be substantive but not pedagogical-overload. The user is expected to understand git is involved; they don't need to become a git practitioner.
-
-### Compliance briefing (new content)
-
-`resources/compliance-briefing.md`. Sections:
-
-- Data flow overview.
-- Recommended controls.
-- ISO 27001 control mappings (best-effort; teams can adapt).
-- Disk encryption recommendation.
-- Hygiene rules (no credentials, no PII, no regulated content).
-- Audit trail (git history).
-- Backup story.
-- What this is, what this isn't.
-
-### Team teaching artefacts
-
-Each ships as a static diagram, produced via the ChatGPT instruction-pattern from `cross-cut-teaching-artefacts.md`:
-
-- **Personal vs team skills and instructions** — shows how the user's `wow` points at both their private substrate and the team's shared substrate.
-- **Admin plane vs user domain** — what the team admin/champion controls vs what individual members own.
-- **Seniority and trust roles** — recommended permissions/setups across organisational seniority levels.
-
-Each gets a planning file with the rich descriptive instructions for ChatGPT.
+- Pull at session start.
+- Stage and commit personal changes (the joiner's own personal substrate is local and not in the team repo, so most personal work doesn't trigger git).
+- Stage and commit changes to shared substrate when the joiner makes them (e.g. updating a shared scope's database).
+- Push after substantive shared changes.
+- Detect and surface merge conflicts for shared substrate edits.
 
 ### Team plugin manifest
 
-TBD pending plugin-format research.
+Declares contents, version, compatibility. Per `T2-build-and-distribution.md`.
+
+### Personal-vs-team-skills teaching artefact
+
+Shared with team-admin. Ships in both.
 
 ### Migration support
 
-If a team is currently using the fetch model (unlikely but possible), `exfu:migrate-from-fetch-model` (designed in T2-solo) covers them too. Worth confirming during T3.
+`exfu:migrate-from-fetch-model` from T2-solo applies.
 
 ---
 
 ## T3 candidates
 
-- `T3-install-teams-skill.md` — design and write the install-teams skill, including the champion-vs-member branch and role-capture beat.
-- `T3-git-substrate-sync-skill.md` — design and write the new git skill. The largest piece of net-new design in the team plugin.
-- `T3-compliance-briefing.md` — write the compliance briefing resource.
-- `T3-team-teaching-artefacts.md` — write the ChatGPT instructions for the three team-specific diagrams.
-- `T3-team-manifest.md` — manifest assembly, post plugin-format research.
-- `T3-admin-vs-staff-decision.md` — settle the admin-vs-staff variant question once T3-install-teams design is firm.
+- `T3-install-team-skill.md` — design and write the install-team skill, including the onboarding-pack reading and the joiner-flavoured beats.
+- `T3-git-substrate-sync-skill.md` — shared with T3 of team-admin; design once, bundle into both.
+- `T3-team-plugin-manifest.md` — manifest assembly per plugin format.
 
-Run order: `T3-git-substrate-sync` and `T3-install-teams` are tightly coupled (the install conversation drives users into the git flow); design them in conversation rather than fully parallel. Compliance briefing and teaching artefacts are independent and can run alongside.
+Run order: `git-substrate-sync` is the shared dependency. Once it's designed, the install-team skill can wrap around it. Manifest follows the plugin-format research.
 
 ---
 
 ## Open questions
 
-- **Git provider neutrality.** The skill should work with GitHub, GitLab, Bitbucket, on-prem servers. Anything provider-specific (e.g. issue creation, PR workflows) should be optional. Will the skill detect provider and adapt, or stay provider-agnostic?
-- **Branch model.** Default to main-only. But some teams may want per-member branches with periodic merge to main. Should the install offer that as a choice, or pick main-only and let the team override later?
-- **Repo provisioning.** When the substrate champion runs the install, do they create the repo manually first (and the install just clones it) or does the install help them create the repo on their git provider? Probably the former for v1; latter is provider-specific work.
-- **Two team plugins (admin vs staff).** Carrying as deferred. Settle in `T3-admin-vs-staff-decision.md`.
-- **Coexistence with solo plugin.** What if a user already has the solo plugin installed and joins a team that wants them on the team plugin? Need a coexistence story or a clean migration path. Coordination point with T2-solo.
-- **Mobile and scheduled tasks under git.** Mobile Claude can't run git directly. Scheduled tasks can. Mobile sessions probably read-only against the local clone via Box-style MCP if the local machine syncs the clone to a cloud drive — but that re-introduces cloud-drive issues. Or mobile sessions just don't get the team substrate's freshest state and live with what was last pulled. Trade-off worth surfacing to the user.
-- **Backup story.** Git remote is the canonical backup. What if the remote is lost (provider failure, account deletion)? Recommend per-team backup of the remote? Out of scope for v1, flag for cross-cut-compliance.
+- **Git access model.** Most teams will give all members read-write access to the substrate repo. Some will use branch protection requiring PR review for shared changes. Should the install-team skill detect or ask, and adapt the git-sync flow accordingly? Probably yes — surface as a "is your team's repo direct-push or PR-required?" question early.
+- **Onboarding pack format.** Markdown is the assumption. Worth confirming once team-admin's `team-onboard-member` skill is firm.
+- **No-pack flow.** When the joiner has no onboarding pack, what's the minimum information needed to proceed? Git remote URL is essential. Team conventions doc is highly desirable but can be read from the cloned repo. Champion's contact is helpful but not blocking. Worth a clear "minimum to start" definition.
+- **Read-only mode.** Some joiners (e.g. interns, contractors) may have read-only access to the team substrate. Should the team plugin support this gracefully? Probably yes — the git skill should detect read-only and adjust (no commit attempts, all changes are local-only). Flag for T3.
+- **Multi-team membership.** A user on two teams (e.g. a manager spanning departments) needs two team substrates. Out of scope for v1; the team plugin assumes one team. Flag for future.
+- **Mobile and scheduled tasks under git.** Same trade-off as team-admin. Mobile sessions probably read the local clone via Box-style MCP if the joiner syncs the clone; surface the trade-off, don't pretend it's solved.
+- **Coexistence with solo plugin.** What if the joiner already has the solo plugin installed (their personal Claude setup) and is now joining a team? Probably the team plugin coexists fine — the personal substrate is already there, the team layer is added on top. The `wow` navigation map points at both. Worth verifying no skill name collisions in T3.

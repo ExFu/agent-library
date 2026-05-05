@@ -25,7 +25,7 @@ A single canonical index of teaching artefacts lives in the plugin. Each entry h
 - When the install agent should consider showing it
 - Source/credits if borrowed or built on prior work
 
-The install-solo and install-teams skills reference the index when looking for a teaching artefact for the moment. The catalogue can grow without changing the skills' code.
+The install-solo, install-team, and install-team-admin skills reference the index when looking for a teaching artefact for the moment. The catalogue can grow without changing the skills' code.
 
 ### Source attribution
 
@@ -41,19 +41,21 @@ The principle: be hyper-clear on the conceptual content, hands-off on the visual
 
 ### Where artefacts live in the plugin source
 
-Static diagrams: `plugin/src/shared/resources/diagrams/<artefact-name>.png` (or .svg).
-Live HTML: `plugin/src/shared/resources/widgets/<artefact-name>.html`.
-Catalogue index: `plugin/src/shared/resources/teaching-artefacts.md` — single source of truth for what's available, what each teaches, when to surface it.
+Static diagrams (all 3 plugins): `plugin/src/shared/resources/diagrams/<artefact-name>.png` (or .svg).
+Static diagrams (team + team-admin): `plugin/src/team/resources/diagrams/<artefact-name>.png`.
+Static diagrams (team-admin only): `plugin/src/team-admin/resources/diagrams/<artefact-name>.png`.
+Live HTML (all 3 plugins): `plugin/src/shared/resources/widgets/<artefact-name>.html`.
+Catalogue index: `plugin/src/shared/resources/teaching-artefacts.md` — single source of truth for what's available, what each teaches, when to surface it, and which plugin variants include it.
 
 ## What (initial)
 
 Known teaching artefacts (some exist, some are TBD):
 
-- **Substrate overview diagram** — the four ingredients and the discoverability asymmetry. Already drafted. Lives at `public/clients/substrate-diagram.png` (will move into the plugin source).
-- **Agent typology diagram** — chat / cowork / coding / custom-hosted agents. Helps users place ExFu's scope. Not yet built.
-- **Personal vs team skills and instructions** — where things live for solo vs team installs. Not yet built. Critical for the team plugin.
-- **Admin plane vs user domain** — what the team admin controls vs what individual team members own. Not yet built.
-- **Seniority / trust roles** — recommended permissions and setups across organisational seniority. Not yet built.
+- **Substrate overview diagram** — the four ingredients and the discoverability asymmetry. Already drafted. Lives at `public/clients/substrate-diagram.png` (will move into the plugin source). **Ships in: solo, team, team-admin.**
+- **Agent typology diagram** — chat / cowork / coding / custom-hosted agents. Helps users place ExFu's scope. Not yet built. **Ships in: solo, team, team-admin.**
+- **Personal vs team skills and instructions** — where things live for solo vs team installs. Not yet built. Critical for both team variants. **Ships in: team, team-admin** (not solo).
+- **Admin plane vs user domain** — what the substrate champion controls vs what individual team members own. Not yet built. **Ships in: team-admin only.**
+- **Seniority / trust roles** — recommended permissions and setups across organisational seniority. Not yet built. **Ships in: team-admin only.**
 - **Install flow diagram** — visual of how an install conversation unfolds (the about-me → buffet → small-wins shape). Possibly redundant with the substrate diagram; revisit.
 
 ## Open questions

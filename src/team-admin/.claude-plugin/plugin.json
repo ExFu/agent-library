@@ -1,0 +1,13 @@
+{
+  "name": "exfu-team-admin",
+  "version": "0.1.0",
+  "description": "ExFu — substrate-champion edition. Provision team substrate, author shared skills, brief IT, onboard members.",
+  "author": {
+    "name": "Alastair Whaley",
+    "email": "al@exfu.ai",
+    "url": "https://exfu.ai"
+  },
+  "homepage": "https://exfu.ai/install",
+  "license": "Proprietary",
+  "keywords": ["exfu", "substrate", "knowledge-base", "cowork", "team-claude", "admin"]
+}

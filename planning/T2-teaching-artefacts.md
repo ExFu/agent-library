@@ -8,7 +8,7 @@ Anchors back to: `T1-overview.md`, `cross-cut-teaching-artefacts.md`.
 
 ## Why
 
-Teaching artefacts are first-class deliverables, not decoration. The install conversation reaches for them to calibrate users on the lay of the land. The team plugin in particular relies on diagrams to show structural distinctions (personal/team, admin/user, seniority/trust) that are hard to land in prose alone.
+Teaching artefacts are first-class deliverables, not decoration. The install conversation reaches for them to calibrate users on the lay of the land. The team and team-admin plugins in particular rely on diagrams to show structural distinctions (personal/team, admin/user, seniority/trust) that are hard to land in prose alone.
 
 This T2 lays out which artefacts are needed, how they get made (per `cross-cut-teaching-artefacts.md`'s ChatGPT-instruction pattern), and where they live in the plugin source so the install agents can find them.
 
@@ -42,17 +42,18 @@ A single index file at `plugin/src/shared/resources/teaching-artefacts.md` lists
 - When the install agent should consider showing it
 - Source attribution (if any)
 
-The install-solo and install-teams skills reference the catalogue when looking for an artefact for the moment. New artefacts can be added without changing the install skills.
+The install-solo, install-team, and install-team-admin skills reference the catalogue when looking for an artefact for the moment. New artefacts can be added without changing the install skills.
 
 ### Where artefacts live
 
 Per `cross-cut-teaching-artefacts.md`:
 
-- Static diagrams (shared): `plugin/src/shared/resources/diagrams/<name>.png` (or `.svg`)
-- Static diagrams (team-specific): `plugin/src/team/resources/diagrams/<name>.png`
+- Static diagrams (shared, all 3 plugins): `plugin/src/shared/resources/diagrams/<name>.png` (or `.svg`)
+- Static diagrams (team + team-admin): `plugin/src/team/resources/diagrams/<name>.png`
+- Static diagrams (team-admin only): `plugin/src/team-admin/resources/diagrams/<name>.png`
 - Live HTML widgets (shared): `plugin/src/shared/resources/widgets/<name>.html`
 
-Team-specific diagrams ship only in the team plugin. Shared diagrams ship in both via the `shared/` folder.
+Shared diagrams ship in all three plugins. Diagrams in `team/resources/diagrams/` ship in both team and team-admin. Diagrams in `team-admin/resources/diagrams/` ship only in team-admin.
 
 ---
 
@@ -60,17 +61,20 @@ Team-specific diagrams ship only in the team plugin. Shared diagrams ship in bot
 
 ### Already exists
 
-- **Substrate overview diagram** (`substrate-diagram.png`). Currently at `public/clients/substrate-diagram.png`. Move into `plugin/src/shared/resources/diagrams/`. Captures the four ingredients and the discoverability asymmetry.
+- **Substrate overview diagram** (`substrate-diagram.png`). Currently at `public/clients/substrate-diagram.png`. Move into `plugin/src/shared/resources/diagrams/`. Captures the four ingredients and the discoverability asymmetry. **Ships in: solo, team, team-admin.**
 
-### To produce — shared (both plugins)
+### To produce — shared (all 3 plugins)
 
-- **Agent typology diagram.** Chat / cowork / coding / custom-hosted agents, with ExFu's scope highlighted as Cowork. Helps users place ExFu in the broader landscape and understand what's *not* in scope.
+- **Agent typology diagram.** Chat / cowork / coding / custom-hosted agents, with ExFu's scope highlighted as Cowork. Helps users place ExFu in the broader landscape and understand what's *not* in scope. **Ships in: solo, team, team-admin.**
 
-### To produce — team plugin only
+### To produce — team + team-admin
 
-- **Personal vs team skills and instructions.** Two-pane structure showing the user's personal substrate on one side, the team's shared substrate on the other, with the user's `wow` skill bridging both.
-- **Admin plane vs user domain.** Shows what the team's substrate champion controls (shared skills, conventions, repo policies) versus what individual members own (personal substrate, their own scopes, their own wow customisations).
-- **Seniority and trust roles.** Recommended permissions and setups across organisational seniority — what an exec setup looks like vs an IC, what shared vs private looks like by trust level.
+- **Personal vs team skills and instructions.** Two-pane structure showing the user's personal substrate on one side, the team's shared substrate on the other, with the user's `wow` skill bridging both. **Ships in: team, team-admin.** Source: `plugin/src/team/resources/diagrams/personal-vs-team-skills.png`.
+
+### To produce — team-admin only
+
+- **Admin plane vs user domain.** Shows what the team's substrate champion controls (shared skills, conventions, repo policies) versus what individual members own (personal substrate, their own scopes, their own wow customisations). **Ships in: team-admin only.** Source: `plugin/src/team-admin/resources/diagrams/admin-plane-vs-user-domain.png`.
+- **Seniority and trust roles.** Recommended permissions and setups across organisational seniority — what an exec setup looks like vs an IC, what shared vs private looks like by trust level. **Ships in: team-admin only.** Source: `plugin/src/team-admin/resources/diagrams/seniority-and-trust-roles.png`.
 
 ### Possible future
 

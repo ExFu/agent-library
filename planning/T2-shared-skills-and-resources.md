@@ -1,6 +1,6 @@
 # T2 — Shared skills and resources
 
-The foundation both plugins build on. Most of what ships in either plugin is the same content; the divergent parts (storage skill, install entrypoint, team-specific resources) are handled in their own T2s.
+The foundation all three plugins build on. Most of what ships in any plugin is the same content; the divergent parts (storage skill, install entrypoint, team-admin-specific resources) are handled in their own T2s.
 
 Anchors back to: `T1-overview.md`, `cross-cut-storage-architecture.md`, `cross-cut-brand-voice.md`, `cross-cut-teaching-artefacts.md`, `cross-cut-ecosystem-references.md`.
 
@@ -8,7 +8,7 @@ Anchors back to: `T1-overview.md`, `cross-cut-storage-architecture.md`, `cross-c
 
 ## Why
 
-Both plugins do most of the same things. They both need an orchestrator skill that triages user need. They both ship the bedrock skills that let Claude work with the user's setup. They both ship the optional skills (`reminders`, `inbox`, `writing-styles`) that users adopt à la carte. They both ship the substrate guide, the substrate primer, the teaching-artefacts catalogue, the ecosystem reference catalogue. They both produce a personal `wow` for the user.
+All three plugins do most of the same things. They all need an orchestrator skill that triages user need. They all ship the bedrock skills that let Claude work with the user's setup. They all ship the optional skills (`reminders`, `inbox`, `writing-styles`) that users adopt à la carte. They all ship the substrate guide, the substrate primer, the teaching-artefacts catalogue, the ecosystem reference catalogue. They all produce a personal `wow` for the user.
 
 If we duplicate this content into each plugin's source folder we double the maintenance burden and guarantee drift. If we share it cleanly we maintain one source of truth and let each plugin's build pull from it. This T2 designs that shared layer.
 
@@ -28,7 +28,7 @@ If we duplicate this content into each plugin's source folder we double the main
 - `inbox` (optional)
 - `writing-styles` (optional)
 - `scope-skills` template (used by either plugin's install conversation when scopes are created)
-- `daily-briefing` scheduled task (with hooks both plugins can extend)
+- `daily-briefing` scheduled task (with hooks all three plugins can extend)
 - `wow` template
 - Substrate guide (`substrate-guide.md`)
 - Substrate primer (`the-substrate-primer.md`)
@@ -37,11 +37,13 @@ If we duplicate this content into each plugin's source folder we double the main
 - Ecosystem reference catalogue
 - Brand-voice guidance (the `writing-styles` anti-slop layer carries the rules)
 
-**Not shared (handled in solo / team T2s):**
-- The storage skill (`box-filesystem-management` for solo, `git-substrate-sync` for team)
+**Not shared (handled in solo / team / team-admin T2s):**
+- The storage skill (`box-filesystem-management` for solo, `git-substrate-sync` for team and team-admin)
 - The storage-related scheduled tasks (`box-cleanup` for solo)
-- The install entrypoint skill (`exfu:install-solo` vs `exfu:install-teams`)
-- Team-specific resources (compliance briefing, admin-vs-user diagrams, seniority diagrams, role-capture templates)
+- The install entrypoint skill (`exfu:install-solo`, `exfu:install-team`, `exfu:install-team-admin`)
+- Team-admin-only resources (compliance briefing, admin-vs-user diagrams, seniority diagrams, role-capture templates)
+
+Note: `git-substrate-sync` is shared between the team and team-admin plugins. One source file (`plugin/src/team/skills/git-substrate-sync/`) is bundled into both at build time.
 
 ### Source-of-truth structure
 
@@ -87,16 +89,27 @@ plugin/src/
     manifest.json
   team/
     skills/
-      exfu_install-teams/SKILL.md
+      exfu_install-team/SKILL.md
       git-substrate-sync/SKILL.md
+    resources/
+      diagrams/
+        personal-vs-team-skills.png
+    manifest.json
+  team-admin/
+    skills/
+      exfu_install-team-admin/SKILL.md
+      team-repo-provisioning/SKILL.md
+      team-shared-skills-authoring/SKILL.md
+      team-onboard-member/SKILL.md
     resources/
       compliance-briefing.md
       diagrams/
-        (team-specific diagrams)
+        admin-plane-vs-user-domain.png
+        seniority-and-trust-roles.png
     manifest.json
 ```
 
-The build pipeline (T2-build-and-distribution) is what knows how to combine `shared/` with `solo/` or `team/` to produce a plugin file.
+The build pipeline (T2-build-and-distribution) is what knows how to combine `shared/` with `solo/`, `team/`, or `team-admin/` to produce a plugin file. For team-admin, the build also pulls `git-substrate-sync` from the `team/` source folder.
 
 ### Approach to porting from current `public/clients/`
 
@@ -113,7 +126,7 @@ The substrate guide, the primer, and the ExFu primer largely move as-is, possibl
 
 - **`exfu` (orchestrator).** Front-door skill. Triggers on phrases like "exfu", "install", "set up my Claude", "start my ExFu setup". Body of the skill: ask the user briefly what they're here for (install, getting reference material, picking up where they left off), route to the right sub-skill, or just answer their question if it's small enough.
 - **`exfu:guides`.** Loads on "how does X work", "explain X", "what is the substrate", and similar — *if* the user has gone deep enough that the install conversation should hand off to reference. Surfaces relevant content from the substrate guide, primer, ecosystem catalogue, or teaching artefacts catalogue.
-- **`exfu:create-wow`.** Pulls the wow template, customises it lightly with what's known about the user (their about-me content from `context/me/`, any preferences they've stated, the navigation map for their substrate as it stands), packages it, presents to the user for install. Invoked by install-solo and install-teams during the install flow; can also be invoked later if the user wants a substantial wow regeneration.
+- **`exfu:create-wow`.** Pulls the wow template, customises it lightly with what's known about the user (their about-me content from `context/me/`, any preferences they've stated, the navigation map for their substrate as it stands), packages it, presents to the user for install. Invoked by install-solo, install-team, and install-team-admin during the install flow; can also be invoked later if the user wants a substantial wow regeneration.
 
 These three are net-new design work. The rest is porting and refining.
 
@@ -138,7 +151,7 @@ This needs validation against Anthropic's plugin format conventions (research fi
 **New design.** Description triggers on install/setup/exfu phrases. Body:
 - Asks the user briefly: "What brings you in? Doing your initial setup, picking up where you left off, just want to read about how things work?"
 - Routes:
-  - "Initial setup" → loads `exfu:install-solo` or `exfu:install-teams` (the orchestrator can detect plugin variant from its own skill set, or just pick the install-skill that's installed).
+  - "Initial setup" → loads `exfu:install-solo`, `exfu:install-team`, or `exfu:install-team-admin` (the orchestrator detects the plugin variant from whichever install skill is present).
   - "Pick up where I left off" → loads `substrate` (which orients to whatever's in the user's setup currently).
   - "Reference / how does X work" → loads `exfu:guides`.
 
@@ -222,4 +235,4 @@ These can largely run in parallel once the plugin-format research is closed, wit
 - **Daily briefing extension hooks.** What's the cleanest way for the team plugin to add team-specific briefing items without forking the task? Probably the task body invites the install agent to add team-specific sections at install time, written into the user's task prompt rather than the shared template.
 - **`exfu:create-wow` and substrate state.** When `create-wow` runs, what existing state does it read? About-me, role (if a team install captured it), tools.md, any earlier wow if present. Worth designing the read-set explicitly.
 - **Plugin-format conventions.** Local paths, the `{{plugin_root}}` placeholder, manifest format — pending research, will inform the exact shape of `T3-skill-content-conventions.md`.
-- **What happens if both plugins are installed?** Edge case but worth thinking about: a user who tries to install both. The orchestrator should detect and surface the conflict, recommend uninstalling one. Or possibly there's a way for them to coexist. Flag for solo and team T2s to handle.
+- **What happens if multiple plugins are installed?** Edge case but worth thinking about: a user who tries to install more than one. The orchestrator should detect and surface the conflict, recommend uninstalling the others. Team and team-admin cannot coexist. Flag for solo, team, and team-admin T2s to handle. Note: a user upgrading from team to team-admin should use the `exfu:upgrade-from-team-to-admin` skill, which handles the transition cleanly.
