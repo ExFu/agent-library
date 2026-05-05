@@ -11,7 +11,7 @@
 #   ./plugin/build/build.sh all
 #
 # Flags:
-#   --dist    Also produce a versioned .tar.gz in plugin/build/dist/
+#   --dist    Also produce a versioned .zip in public/downloads/ (publishable)
 # =============================================================================
 set -euo pipefail
 
@@ -36,7 +36,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SRC_ROOT="${REPO_ROOT}/plugin/src"
 OUTPUT_ROOT="${SCRIPT_DIR}/output"
-DIST_DIR="${SCRIPT_DIR}/dist"
+DIST_DIR="${REPO_ROOT}/public/downloads"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -336,14 +336,15 @@ build_variant() {
   fi
 
   # ------------------------------------------------------------------
-  # 5. Optional: produce versioned tar.gz archive
+  # 5. Optional: produce versioned .zip archive in public/downloads/
   # ------------------------------------------------------------------
   if [[ "$WANT_DIST" == true ]]; then
     mkdir -p "$DIST_DIR"
-    local archive_name="${plugin_name}-v${plugin_version}.tar.gz"
+    local archive_name="${plugin_name}-v${plugin_version}.zip"
     local archive_path="${DIST_DIR}/${archive_name}"
-    # Create deterministic archive: sort entries, strip leading path components
-    (cd "${OUTPUT_ROOT}" && tar -czf "$archive_path" "$variant")
+    # Remove any prior archive at the same path so the zip is rebuilt clean
+    rm -f "$archive_path"
+    (cd "${OUTPUT_ROOT}" && zip -rq "$archive_path" "$variant")
     ok "Archive written: $archive_path  ($(du -sh "$archive_path" | cut -f1))"
   fi
 
