@@ -120,6 +120,18 @@ Role capture is a deliberate beat. The champion's role shapes how their own Clau
 
 Note: the champion will also be captured in the team's shared context in a later step (as the team's substrate champion), but that's a different file at the team level. The personal about-me is theirs alone.
 
+### Step 5b — Org and team scope
+
+Before touching any folder structure, clarify the scope:
+
+*"Are you setting this up for one team, or are there multiple teams or orgs whose substrate you'll be provisioning? One is the common case — but if you're a champion across more than one, let's plan the structure now."*
+
+**One team:** create `teams/<team-name>/` in the shared repo (seeded in Step 7) and in the champion's personal layer (Step 8). A single `README.md` with YAML front-matter, `parent_org: <org-name>` if the team belongs to an org.
+
+**Multiple teams or orgs:** create one entry per team and per org in both locations. Cross-link via front-matter. The repo provisioning step (Step 6) may need to accommodate multiple repos or a single monorepo with sub-folders — surface this decision to the champion explicitly. There's no single right answer; get their input.
+
+This shapes the repo structure the champion is about to provision. Don't skip it.
+
 ### Step 6 — Storage: repo provisioning or connection
 
 The storage mechanism is git. The shared substrate lives in a git repo that every team member clones. The champion is the one who sets it up.
@@ -164,6 +176,8 @@ Placeholder for shared databases if the team wants them.
 **`_meta/README.md`**
 Describe the repo's structure clearly, so any team member's Claude can orient from it.
 
+Write a `CLAUDE.md` guard file at the root of the team repo before making the first commit — unless one is already there. Tell the champion briefly: *"I'm adding a CLAUDE.md at the repo root. It tells future Claude sessions that this is a substrate, so it won't be treated as a generic folder if someone accidentally points Claude at it."* Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md`. Do not overwrite an existing `CLAUDE.md` without explicit confirmation.
+
 Make a first commit to the team repo with this initial structure.
 
 ### Step 8 — Personal layer setup
@@ -171,6 +185,8 @@ Make a first commit to the team repo with this initial structure.
 Set up the champion's personal layer, parallel to the cloned team repo and separate from it. Same structure as the solo install: `context/me/`, `scopes/`, `databases/`, `_meta/`. Use `request_cowork_directory` for the folder picker.
 
 The champion's personal layer is not in the team repo. Their about-me, personal scopes, personal reminders — these are theirs alone.
+
+Write a `CLAUDE.md` guard file at the personal layer root — unless one already exists. Same canonical content as the team repo guard (from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md`). Do not overwrite without explicit confirmation.
 
 ### Step 9 — The buffet
 

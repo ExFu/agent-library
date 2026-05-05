@@ -112,6 +112,18 @@ If the team's cloned repo contains `context/team-[name]/role-conventions.md`, re
 
 Write the about-me and role-context files collaboratively. Read them back. The joiner should recognise themselves in what you've written.
 
+### Step 4b — Org and team scope
+
+You're at least on one team — that's why you're here. But some people span more than one:
+
+*"Which team or teams are we setting up for? One team is the common case, but if you're across multiple teams or orgs, tell me now — we'll create a folder entry for each."*
+
+**One team:** create `teams/<team-name>/` at the top level of the personal layer with `context/` inside (the hard convention) and a `README.md` with YAML front-matter (`parent_org: <org-name>` if applicable).
+
+**Multiple teams or orgs:** create one entry per team (`teams/<team-name>/`) and per org (`orgs/<org-name>/`), each with `context/` inside and a `README.md`. Cross-link via front-matter.
+
+The team folders in the personal layer hold the joiner's personal context *about* each team — not the team's shared content, which lives in the cloned repo. Make this distinction clear when you create the folders.
+
 ### Step 5 — Storage: connect to the team repo
 
 The storage mechanism for the team plugin is git. The joiner clones the team's shared substrate repo; `git-substrate-sync` handles all subsequent operations.
@@ -142,6 +154,8 @@ The personal layer holds:
 Use `request_cowork_directory` to establish where this lives. It should not be inside the team's repo. Keep them cleanly separate.
 
 Create the folder structure and README files.
+
+When you create the personal layer root, write a `CLAUDE.md` file at that root — unless one already exists there. Tell the joiner briefly: *"I'm adding a small CLAUDE.md file at the root of your personal layer. It tells future Claude sessions that this folder is a substrate, not a generic working folder."* Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` (the guard content is embedded there). Do not overwrite an existing `CLAUDE.md` without explicit confirmation.
 
 ### Step 7 — The buffet
 

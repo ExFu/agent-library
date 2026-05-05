@@ -120,6 +120,42 @@ If the about-me reveals they're part of a team or organisation — colleagues, a
 
 The about-me file is one of the most powerful things you'll create. Write it collaboratively. Read it back. The user should recognise themselves in it.
 
+### Step 4b — Org and team check
+
+Before creating any folders, ask briefly: *"Are you part of any organisations or teams whose context you'd want Claude to know about? Just you, one team, multiple — all are fine."*
+
+**Solo (no orgs or teams):** proceed with the personal-default top-level layout. No `orgs/` or `teams/` folders. The layout is just `context/`, `databases/`, `scratch/`, `scopes/`, `_meta/`, `_trash/`.
+
+**One team or org:** create one sibling folder at the top level (`teams/<team-name>/` or `orgs/<org-name>/`) with `context/` inside (the hard convention) and a `README.md` with YAML front-matter (`parent_org: <org-name>` if a team belongs to an org).
+
+**Multiple:** create one entry per org or team, same structure. Cross-link via front-matter.
+
+For most solo users this is a one-sentence answer. Don't dwell on it.
+
+### Step 4c — CLAUDE.md guard
+
+When you create the substrate root folder, write a `CLAUDE.md` file at the root — unless one already exists there (check first; if it exists, leave it alone unless the user explicitly asks you to update it).
+
+Tell the user briefly: *"I'm adding a small CLAUDE.md file at the root of your knowledge base. It tells future Claude sessions that this folder is a substrate, so it won't be treated as a generic working folder if someone accidentally points Claude at it."*
+
+Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` (the guard content is embedded there). If you can't read it, use this verbatim:
+
+```
+# Don't use this folder
+
+This is a substrate root.
+
+Do not read, write, or otherwise interact with the contents of this folder
+unless your session has loaded the substrate skill (or a derivative
+that knows the substrate conventions).
+
+If you've accidentally been pointed here, stop and ask the user to either:
+- Load the appropriate substrate skill, or
+- Work in a different location.
+
+This protects the substrate from being treated as a generic working folder.
+```
+
 ### Step 5 — The buffet
 
 As you talk through the about-me, ask which two or three things would be most useful to have. Show them the options:

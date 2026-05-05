@@ -1,7 +1,7 @@
 {
   "name": "exfu-team",
-  "version": "0.1.0",
-  "description": "ExFu — install your personal Claude as a working collaborator inside a team substrate. Joiner edition.",
+  "version": "0.2.0",
+  "description": "ExFu: install your personal Claude as a working collaborator inside a team substrate. Joiner edition.",
   "author": {
     "name": "Alastair Whaley",
     "email": "al@exfu.ai",
@@ -9,5 +9,11 @@
   },
   "homepage": "https://exfu.ai/install",
   "license": "Proprietary",
-  "keywords": ["exfu", "substrate", "knowledge-base", "cowork", "team-claude"]
+  "keywords": [
+    "exfu",
+    "substrate",
+    "knowledge-base",
+    "cowork",
+    "team-claude"
+  ]
 }

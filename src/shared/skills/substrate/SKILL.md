@@ -1,35 +1,116 @@
 ---
 name: substrate
-description: Core substrate skill. Bootstraps any Claude session with awareness of the user's substrate — the persistent system of files, skills, connectors, and scheduled tasks that lets Claude have memory and context across sessions. Loads the ways-of-working guide, orients to the directory structure, pulls in relevant scope context, and surfaces anything due from reminders or inbox. Should load at the start of every substrate-aware conversation. Triggers on "substrate", "load my substrate", "check my setup", on fresh sessions, or when the personal `wow` skill delegates to it.
+description: Core substrate skill. Bootstraps any Claude session with awareness of the user's substrate — the persistent system of files, skills, connectors, and scheduled tasks that lets Claude have memory and context across sessions. Loads the ways-of-working guide, orients to the directory structure, detects orgs and teams, surfaces permission-appropriate verbs for git-backed substrates, and pulls in relevant scope context. Should load at the start of every substrate-aware conversation. Triggers on "substrate", "load my substrate", "check my setup", "check for updates", "save", "share for review", on fresh sessions, or when the personal `wow` skill delegates to it.
 ---
 
-# Substrate skill
+# Substrate skill — v0.2.0
 
-This skill connects you to the user's substrate — the persistent files, skills, connectors, and scheduled tasks that carry continuity across their Claude conversations. Without it, a fresh Claude session has no memory of who the user is, what they're working on, or how they work. With it, Claude can pick up where things left off.
+## Hard constraints
 
-This skill is generic — the same across all ExFu clients. The user's *personal* way of working lives in a separate skill called `wow`, which loads this skill first and then layers their specifics on top.
+Read these before doing anything else. They apply for the entire session.
+
+1. **Never write PII into the substrate proper.** Before writing any file to the substrate, check whether it contains identifiable personal information about someone other than the user (names, emails, contact details, health data, financial identifiers). If it does, route it to the PII layer connector instead (see the two-layer model section). If no PII layer is configured, refuse with a plain explanation and suggest the user set one up.
+
+2. **Never fabricate org or team membership.** Only surface orgs and teams that are actually present in `orgs/` and `teams/` folders in the substrate. If neither folder exists, the user is in no orgs or teams. Do not invent structure.
+
+3. **Never overwrite the CLAUDE.md guard without confirmation.** If a `CLAUDE.md` already exists at the substrate root, do not modify or replace it without the user explicitly asking. It is a safety guard, not content.
+
+4. **Never surface admin verbs without confirmed admin permissions.** Do not show `approve change`, `review`, or `reject` vocabulary unless the permission lookup (see below) returns `admin` or `maintainer`. When in doubt, default to member rights.
+
+5. **Respect the two-layer boundary at all times.** The substrate proper is for shareable, non-PII knowledge. The PII layer is for anything identifiable. This boundary is non-negotiable regardless of what the user asks.
 
 ---
 
 ## What to do when this skill loads
 
-### 1. Find the substrate
+### Step 1 — Find the substrate root
 
-The substrate core lives in a Box knowledge base. Check whether the Box folder is mounted in this session (filesystem access available) or whether you need to use the Box MCP connector.
+The substrate core lives in a knowledge base (Box for solo installs, a git repository for team installs). Check whether the folder is mounted in this session (filesystem access available) or whether you need to use the connector.
 
 If you're not sure where the knowledge base is, check the Global Instructions — the path should be noted there. If it's not, ask the user.
 
-### 2. Read the ways-of-working guide
+### Step 2 — Check for the CLAUDE.md guard
 
-Read `context/ways-of-working/substrate-guide.md` from the knowledge base. This is the durable reference — directory layout, conventions, access modes, naming rules, how to find things, and (critically) the difference between scopes and context.
+At the substrate root, check whether `CLAUDE.md` exists.
 
-If the file doesn't exist yet, the substrate may not be fully set up. Tell the user. A copy of the substrate guide is also available in the plugin resources at `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` — you can read it from there to orient the user on what to set up.
+- If it exists, continue. It confirms you're in a substrate root.
+- If it doesn't exist, you may be in an unguarded substrate (or this may be a first-time setup). See the CLAUDE.md guard section below for what to do.
 
-### 3. Read the current folder's README
+### Step 3 — Read the substrate guide
 
-If the conversation is happening inside a specific scope or context folder, read its README.md. Pay attention to the **Dependencies** section — it tells you what other parts of the substrate are relevant. Follow the chain: if a scope README points to team context, read that too.
+Read `context/ways-of-working/substrate-guide.md` from the knowledge base. This is the durable reference for directory layout, conventions, access modes, naming rules, the scope/context distinction, and the two-layer model.
 
-### 4. Check reminders and inbox
+If the file doesn't exist yet, the substrate may not be fully set up. Tell the user. A copy of the guide is available in the plugin resources at `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` — read it from there to orient yourself on what to set up.
+
+### Step 4 — Orient to the directory structure
+
+Read the top-level folder listing of the substrate root. You're looking for:
+
+- `context/` — personal/default context
+- `databases/` — personal/default structured data
+- `scopes/` — all scopes (top-level only)
+- `scratch/` — ephemeral working space (top-level only)
+- `_meta/` — system infrastructure
+- `_trash/` — soft-delete
+- `orgs/` — present only if the user is in one or more orgs
+- `teams/` — present only if the user is on one or more teams
+
+Report honestly what's present. If `orgs/` and `teams/` are absent, the user is solo or hasn't set up team context yet.
+
+### Step 5 — Orient to orgs and teams (if present)
+
+**If `orgs/` exists:** list the org entries. For each, read `orgs/<org-name>/context/` to understand what org-wide context is available. Read `orgs/<org-name>/README.md` for the summary.
+
+**If `teams/` exists:** list the team entries. For each, read `teams/<team-name>/context/` to understand team-specific context. Read `teams/<team-name>/README.md` for the summary, including any `parent_org:` front-matter that links the team to an org.
+
+Tell the user plainly what you found. Example: "You're in 2 orgs and 3 teams. Here's what each holds: [summary per entry]." If both folders are absent, say so and move on.
+
+### Step 6 — Check for a wrapping plugin
+
+Check whether a wrapping plugin is active. Look for a `_meta/wrapper.json` or `_meta/wrapper.md` file at the substrate root, or a designated marker in `${CLAUDE_PLUGIN_ROOT}` that identifies the wrapper. If a wrapper is present:
+
+- Defer to the wrapper for permission lookups.
+- Defer to the wrapper for PII connector configuration.
+- Defer to the wrapper for any org-specific verb vocabulary overrides.
+
+If no wrapper is present, fall back to install-time-resolved values stored in `_meta/` (e.g. `_meta/permissions.md` or `_meta/pii-connector.md`). If neither exists, use safe defaults (member permissions, no PII layer).
+
+### Step 7 — Permission lookup (git-backed substrates only)
+
+For git-backed substrates, determine what operations to surface. The permission lookup is provider-specific and resolved by the wrapping plugin or at install time. The contract is:
+
+```
+lookup(remoteUrl: string) -> "admin" | "maintainer" | "member" | "read-only"
+```
+
+The lookup is configured by the wrapping plugin or written into `_meta/` at install time. When no lookup is configured, default to `"member"` and surface a note to the user that permission detection wasn't available.
+
+Based on the result, surface verbs as follows:
+
+| Permission level | Verbs to surface |
+|---|---|
+| `admin` or `maintainer` | save, share for review, check for updates, fix clashes, approve change, review, reject |
+| `member` | save, share for review, check for updates, fix clashes |
+| `read-only` | check for updates only (explain that writes require someone with write rights to act on their behalf) |
+
+Do not mention git commands at any point. Users interact through the verbs above.
+
+**When checking for updates:** prefer a non-LLM approach first. Compare the local HEAD commit hash against the remote HEAD hash. Only invoke a full sync process when there is a confirmed delta. Tokens are consumed only when needed.
+
+### Step 8 — Read the current folder's README
+
+If the conversation is happening inside a specific scope or context folder, read its `README.md`. Pay attention to the **Dependencies** section — it tells you what other parts of the substrate are relevant. Follow the chain: if a scope README points to team context, read that too.
+
+### Step 9 — Check PII layer status
+
+Check whether a PII layer connector is configured (wrapper or `_meta/pii-connector.md`). Note the status for the session:
+
+- Connector configured: route PII writes to it automatically.
+- No connector: if PII write is requested, refuse with explanation and offer to help the user set up a connector if they want one.
+
+For solo installs without team context, there is typically no PII layer. That's expected. No action needed.
+
+### Step 10 — Check reminders and inbox
 
 If the `reminders` skill is installed, delegate to it: read the reminders file, surface anything due or overdue. If nothing is due, say nothing.
 
@@ -37,62 +118,148 @@ If the `inbox` skill is installed, delegate to it: check the count. If there are
 
 These checks are fast and quiet. Session start is not a ceremony.
 
-### 5. Orient and proceed
+### Step 11 — Orient and proceed
 
-You should now understand how the substrate is structured, what the user's conventions are, what context is relevant to the current conversation, and what (if anything) needs their attention.
+You should now understand: how the substrate is structured, which orgs and teams the user is in, what the current context and scope are, what permission level to operate at, and what (if anything) needs the user's attention.
 
 If the user hasn't asked for anything specific yet, briefly confirm what you've loaded and ask what they'd like to work on.
 
 ---
 
-## Core concepts (durable — every Claude should know these)
+## CLAUDE.md guard creation
 
-The substrate guide has the full reference. These are the concepts that come up most often and need to be internalised here so they're available even when the guide hasn't been loaded yet in a given conversation.
+The substrate root must contain a `CLAUDE.md` file. Its purpose is to prevent Claude from treating the substrate as a generic working folder when loaded in a session without the substrate skill.
 
-### Substrate
+**When this skill is called by an install skill at substrate creation time:**
 
-The combination of files, skills, connectors, and scheduled tasks that together give Claude persistent memory and context across sessions and devices. No single component is the substrate — it's the interplay. Files store information. Skills encode behaviour and conventions. Connectors make files and tools accessible from any Claude surface. Scheduled tasks run in the background for maintenance and proactive work.
+1. Check whether `CLAUDE.md` exists at the root.
+2. If it does not exist, write it immediately with the canonical content below.
+3. If it does exist, do not overwrite it. Only modify it if the user explicitly asks.
 
-### Skill
+Canonical content (copy this exactly):
 
-A named bundle of instructions and conventions that Claude loads on demand. Skills are how the user encodes their way of working so it survives across conversations. Every skill has a name, a description (which controls when it triggers), and a body of guidance. The description is what Claude matches against to decide whether to load the skill — so descriptions matter.
+```
+# Don't use this folder
 
-### Scope
+This is a substrate root.
 
-A user-defined area of active work or attention. A scope is *where things happen* — plans, decisions-in-progress, drafts, working notes. It's project-like but not constrained to the Claude Desktop "Projects" feature. Each scope has a dedicated folder under `scopes/` and usually a paired skill named `scope-<scope-name>` that serves as its discoverability anchor.
+Do not read, write, or otherwise interact with the contents of this folder
+unless your session has loaded the substrate skill (or a derivative
+that knows the substrate conventions).
 
-A scope is flexible. It can be a client engagement, a product initiative, a team, a role, a domain of interest, a recurring event. The user decides. The one-to-one pairing of scope folder + scope skill is the convention; the internal structure of a scope is up to the user and what the work requires.
+If you've accidentally been pointed here, stop and ask the user to either:
+- Load the appropriate substrate skill, or
+- Work in a different location.
 
-### Context
+This protects the substrate from being treated as a generic working folder.
+```
 
-Persistent background information that describes the user, their people, their world, and their standing facts. It's read-often-write-rarely. Identity-level material. `context/` holds this.
+The canonical content is also available as a reference in the substrate guide at `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md`.
 
-### Scope vs context — the distinction
+---
 
-Context is *about* things. Scopes are *where things happen*.
+## Verb vocabulary (git-backed team substrates)
 
-Context answers "who/what is this?" Scopes answer "what am I doing here?"
+Users speak natural verbs to Claude in place of git terminology. Map each as follows:
 
-Example: a company called Acme might appear in both. `context/work/acme.md` holds who Acme is, the relationship, standing facts. `scopes/acme-deal/` holds the active sales cycle — call notes, proposal drafts, decisions, follow-ups. Same entity, two different reasons to write about it. If either is missing, the substrate still functions — but they're not the same thing.
+| User says | What you do |
+|---|---|
+| save | Commit the change on the user's personal branch |
+| share for review | Push the branch and open a pull request via the git provider API |
+| check for updates | Check the remote HEAD hash; if there's a delta, pull from main |
+| fix clashes | Walk the user through merge conflict resolution (guided, not technical) |
+| approve change | Merge the pull request — only if permission level is `admin` or `maintainer` |
+| review | Surface the open pull request for the user to read and respond to |
+| reject | Close the pull request without merging — only if `admin` or `maintainer` |
 
-Fuzzy-zone test: if you'd read it to *orient*, it's context. If you'd read it to *pick up work*, it's a scope.
+Never expose git commands, branch names, or diff output directly to the user unless they ask. The above vocabulary is the interface.
 
-### Data tiers
+**Lightweight sync before "check for updates":** before firing any sync process, compare local HEAD commit hash to remote HEAD commit hash using a non-LLM call. If they match, tell the user they're up to date — no further work needed. If there's a delta, proceed with the pull.
 
-- **Tier 1 — project files**: source code, documents, designs. Live wherever makes sense (GitHub, Google Drive, local folders). Referenced from the substrate but not stored in it.
-- **Tier 2 — third-party tools**: SaaS platforms (task managers, CRMs, email, wikis). Accessed via MCP connectors.
-- **Tier 3 — substrate core**: this Box knowledge base. Holds context, scopes, databases, instructions, ways of working.
+---
 
-### Access modes
+## Two-layer model
 
-When filesystem access is available (Cowork on Desktop with the knowledge base mounted), prefer it — faster, supports delete/move/rename. When it's not (mobile, unmounted sessions), use the Box MCP connector. The `box-filesystem-management` skill handles the details.
+The substrate has two conceptual layers. The boundary is about what gets *stored*, not what Claude *sees*.
+
+**Layer 1 — Substrate proper (this knowledge base).** Holds: skills, templates, context docs, structured non-PII data, configuration, sanitised test fixtures. Versioned, auditable, shareable, evolves slowly. Everything in the substrate's directory structure lives here.
+
+**Layer 2 — PII layer (access-controlled store).** Holds: anything containing identifiable PII about other people — customer profiles, per-customer working memory, drafting feedback. Accessed at runtime via a guarded connector. The connector enforces access control; every query parameterised by user and subject. No general SELECT, no admin verbs from the rep-side connector.
+
+**For solo installs:** there is typically no PII layer. That's expected and correct. If the user starts tracking third-party contact data and grows into a team context, this boundary becomes relevant.
+
+**For team installs:** the PII layer connector is configured by the wrapping plugin or during the install conversation. The substrate skill expects either a configured connector or a "no PII layer" status noted in `_meta/`.
+
+When asked to write data that may contain third-party PII:
+1. Check whether the content contains identifiable information about others.
+2. If yes, route to the PII layer connector (if configured) or refuse and explain why.
+3. If no, write to the substrate normally.
+
+When unsure whether something counts as PII, err on the side of caution. Ask the user, or put it in `scratch/` flagged for review.
+
+---
+
+## Multi-org / multi-team awareness
+
+The substrate accommodates zero, one, or multiple orgs and teams. The folder structure is additive:
+
+- A user in no orgs/teams has only the personal-default layout (`context/`, `databases/`, `scopes/`, `scratch/`, `_meta/`, `_trash/`).
+- A user in one or more orgs has an `orgs/` folder with one entry per org.
+- A user on one or more teams has a `teams/` folder with one entry per team.
+
+Multiple entries under `orgs/` and `teams/` are fully supported. A manager spanning two departments would have two entries under `teams/`. A consultant working across two organisations would have two entries under `orgs/`.
+
+When orienting, list each entry and give a one-line summary based on its README. Don't assume the user remembers the exact names of their orgs and teams — surface them.
+
+**To find scopes belonging to a specific team or org:** search `scopes/` and filter by YAML front-matter. A scope's `README.md` carries `team: <team-name>` and/or `org: <org-name>`. Do not traverse into `teams/<team-name>/` looking for nested scopes — there are none. All scopes are top-level.
+
+---
+
+## Wrapping plugin awareness
+
+The substrate skill operates in two modes depending on whether a wrapping plugin is active.
+
+**With a wrapping plugin:** the wrapper provides the permission lookup function, the PII connector configuration, and any org-specific verb overrides. The substrate skill defers to the wrapper for these. The wrapper is detected via `_meta/wrapper.json` or a marker in `${CLAUDE_PLUGIN_ROOT}`.
+
+**Without a wrapping plugin:** fall back to install-time-resolved values in `_meta/`. These were written during the install conversation when the user's setup was captured. If `_meta/` has no relevant files, use the safe defaults:
+
+- Permission level: `member`
+- PII layer: not configured
+- Surface a note that permission detection wasn't available, and suggest the user run the install skill if they haven't yet
+
+The substrate skill does not require a wrapping plugin to function. Wrappers are additive. Solo installs have no wrapper and that's correct.
+
+---
+
+## Core concepts
+
+These are internalised here so they're available even when the guide hasn't been loaded yet in a given conversation.
+
+**Substrate.** The combination of files, skills, connectors, and scheduled tasks that together give Claude persistent memory and context across sessions and devices. No single component is the substrate — it's the interplay.
+
+**Skill.** A named bundle of instructions and conventions that Claude loads on demand. Every skill has a name, a description (which controls when it triggers), and a body of guidance. The description is what Claude matches against to decide whether to load the skill.
+
+**Scope.** A user-defined area of active work or attention. Scopes are *where things happen* — plans, decisions-in-progress, drafts, working notes. Each scope has a dedicated folder under `scopes/` and usually a paired skill named `scope-<scope-name>`. All scopes are top-level in `scopes/` regardless of ownership.
+
+**Context.** Persistent background information that describes the user, their people, their world, and their standing facts. Read-often, write-rarely. Identity-level material. `context/` holds this.
+
+**Scope vs context.** Context is *about* things. Scopes are *where things happen*. Fuzzy-zone test: if you'd read it to orient, it's context. If you'd read it to pick up work, it's a scope.
+
+**Data tiers.**
+- Tier 1: project files — source code, documents, designs. Live in their natural home. Referenced from the substrate, not stored in it.
+- Tier 2: third-party tools — SaaS platforms. Accessed via connectors.
+- Tier 3: substrate core — this knowledge base. Holds context, scopes, databases, ways of working.
+
+**Access modes.** When the filesystem is mounted in this session, use it directly. When it's not (mobile, unmounted sessions), use the connector. Filesystem is faster and supports delete, move, and rename.
 
 ---
 
 ## Ongoing behaviour while loaded
 
-- **Follow the substrate conventions** described in the ways-of-working guide (folder structure, naming, README maintenance, nothing casual in root).
-- **Use the right access mode** — filesystem when mounted, Box connector when not.
-- **Maintain discoverability** — if you create new folders or content, create/update READMEs with dependency links. If you create a new scope, set up or point to its scope skill.
-- **Respect the scope/context distinction** when deciding where to save new material. When in doubt, ask, or put it in `scratch/` and flag it for later placement.
-- **Don't assume context persists between sessions.** If you need information from the substrate, read it. Don't rely on memory or prior conversations — read the current state.
+- **Follow substrate conventions.** Folder structure, naming (lowercase hyphen-separated, date-prefix for time-sensitive files), README maintenance, nothing casual at root.
+- **Use the right access mode.** Filesystem when mounted, connector when not.
+- **Maintain discoverability.** When you create new folders or content, create or update READMEs with dependency links. When you create a new scope, set up or point to its scope skill.
+- **Respect the scope/context distinction.** When deciding where to save new material, apply the fuzzy-zone test. When in doubt, put it in `scratch/` and flag it for later placement.
+- **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.
+- **Surface only what's actually there.** Don't invent orgs, teams, scopes, or permissions. Read the files and report what you find.
+- **Keep git invisible.** For team substrates, all user-facing communication uses the verb vocabulary above. Git operations happen underneath; the user never needs to see them.

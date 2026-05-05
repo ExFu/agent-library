@@ -28,6 +28,8 @@ The knowledge base is ordinary files — markdown, mostly — stored in a cloud 
 
 What makes them special is where they live: in a place Claude can access from any surface, any device, any session. The same files that Claude reads in your desktop app are accessible when you're on mobile, in a scheduled task running at 7am, or in a conversation two weeks from now.
 
+The knowledge base stores shareable knowledge: context, conventions, plans, skills. It does not store personal data about other people (customer profiles, identifiable contact details, that kind of thing). That category of information is held separately, behind access control, and Claude reads it at runtime without it ever landing in the shared substrate. This keeps the knowledge base safe to share and version-control.
+
 ### 2. Skills
 
 Skills are how you tell Claude to behave. They're short instructions that load into a session and tell Claude what you want it to know and do automatically. A skill might say: "this is how to manage files in this user's knowledge base." Or: "this is how to handle reminders — where they live, how to create one, when to surface it." Or: "this is the user's about-me summary — read this at the start of every conversation."
@@ -104,8 +106,20 @@ A few things the substrate is not, worth saying plainly:
 
 ---
 
+## A note on teams, orgs, and multiple memberships
+
+The substrate works for solo users and for people who belong to one or more teams or organisations.
+
+If you're solo, the setup is simple: a personal knowledge base with the standard folders, and you're done.
+
+If you're in a team or org, the substrate adds dedicated folders for org-wide and team-wide context alongside your personal folders. If you're in multiple teams or orgs (a manager spanning departments, a consultant working across clients), that's supported too. Each gets its own folder, and there's no limit on how many you can have.
+
+The knowledge base root also contains a small guard file (`CLAUDE.md`) that tells Claude not to interact with the substrate unless the right skills are loaded. Think of it as a safety catch: it stops Claude from treating your knowledge base as a generic folder if it accidentally gets pointed there without the right context.
+
+---
+
 ## A note on this document
 
-The substrate guide (`context/ways-of-working/substrate-guide.md`) in your knowledge base covers the structural conventions, naming rules, folder purposes, and access patterns that Claude uses to navigate your setup. That document is Claude-facing — it's in your knowledge base for Claude to reference. This primer is human-facing — it's here for you to read before you install, so you know what you're getting into.
+The substrate guide in your knowledge base covers the structural conventions, naming rules, folder purposes, and access patterns that Claude uses to navigate your setup. That document is Claude-facing — it's in your knowledge base for Claude to reference. This primer is human-facing — it's here for you to read before you install, so you know what you're getting into.
 
 Both are worth having. They serve different readers.

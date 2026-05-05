@@ -1,7 +1,7 @@
 {
   "name": "exfu-solo",
-  "version": "0.1.0",
-  "description": "ExFu — install Claude as a real working collaborator. Solo edition for individuals.",
+  "version": "0.2.0",
+  "description": "ExFu: install Claude as a real working collaborator. Solo edition for individuals.",
   "author": {
     "name": "Alastair Whaley",
     "email": "al@exfu.ai",
@@ -9,5 +9,11 @@
   },
   "homepage": "https://exfu.ai/install",
   "license": "Proprietary",
-  "keywords": ["exfu", "substrate", "knowledge-base", "cowork", "personal-claude"]
+  "keywords": [
+    "exfu",
+    "substrate",
+    "knowledge-base",
+    "cowork",
+    "personal-claude"
+  ]
 }
