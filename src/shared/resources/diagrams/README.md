@@ -6,6 +6,6 @@ Current contents:
 
 - `substrate-diagram.png` — substrate overview. Ships in all 3 plugins.
 - `agent-typology.png` (TODO) — chat / cowork / coding / custom-hosted typology. Ships in all 3.
-- `personal-vs-team.png` (TODO) — personal substrate vs team substrate split. Ships in all 3 (catalogue marks it relevant for team and team-admin only; solo install agents won't reach for it).
+- `personal-vs-team-skills.png` (TODO) — personal substrate vs team substrate split. Ships in all 3 (catalogue marks it relevant for team and team-admin only; solo install agents won't reach for it).
 
 Path at runtime: `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/<slug>.png`.

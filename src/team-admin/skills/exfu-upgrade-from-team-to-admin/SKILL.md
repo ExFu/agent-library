@@ -17,7 +17,7 @@ You are handling an in-place upgrade: the user has the exfu-team plugin installe
 
 ## Step 1: Detection
 
-This skill is called from `exfu:install-team-admin` when it detects an existing team-plugin install. Detection criteria (any of these indicates the team plugin is present):
+This skill is called from `exfu-install-team-admin` when it detects an existing team-plugin install. Detection criteria (any of these indicates the team plugin is present):
 
 - A skill named `install-team` is installed in this Claude environment.
 - A skill named `git-substrate-sync` is installed but no skill named `install-team-admin` is.
@@ -128,4 +128,4 @@ If any check fails, report the specific failure and what to do about it. Do not 
 
 ## Step 7: Continue the team-admin install
 
-Return to `exfu:install-team-admin`. The upgrade is a pre-flight step — once it completes cleanly, the rest of the install-team-admin conversation proceeds normally from the post-upgrade state. The champion does not need to start from scratch; they can pick up from wherever makes sense (for example, skipping the about-me beat if their personal context is already well set up, and going straight to the admin-specific beats like shared-substrate seeding and onboarding-prep).
+Return to `exfu-install-team-admin`. The upgrade is a pre-flight step — once it completes cleanly, the rest of the install-team-admin conversation proceeds normally from the post-upgrade state. The champion does not need to start from scratch; they can pick up from wherever makes sense (for example, skipping the about-me beat if their personal context is already well set up, and going straight to the admin-specific beats like shared-substrate seeding and onboarding-prep).

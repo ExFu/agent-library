@@ -1,6 +1,6 @@
 # Teaching Artefacts Catalogue
 
-This catalogue is the single source of truth for all teaching artefacts available in the ExFu plugin suite. Install agents — `exfu:install-solo`, `exfu:install-team`, and `exfu:install-team-admin` — reference this file when looking for a visual to use at a calibration or orientation moment. Each entry gives you the format, path, what it teaches, and when to reach for it.
+This catalogue is the single source of truth for all teaching artefacts available in the ExFu plugin suite. Install agents (`exfu-install-solo`, `exfu-install-team`, and `exfu-install-team-admin`) reference this file when looking for a visual to use at a calibration or orientation moment. Each entry gives you the format, path, what it teaches, and when to reach for it.
 
 To show an artefact, load the file at the given path (relative to `${CLAUDE_PLUGIN_ROOT}`) and render or share it inline. When a diagram is relevant but the moment hasn't arrived yet, hold it — don't dump all of them at once. One diagram per moment of genuine need.
 
@@ -45,7 +45,7 @@ New artefacts can be added to this catalogue without changing the install skills
 | Field | Value |
 |---|---|
 | Format | PNG |
-| Path | `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/personal-vs-team.png` |
+| Path | `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/personal-vs-team-skills.png` |
 | Variant(s) | team, team-admin |
 | Source | ExFu original |
 

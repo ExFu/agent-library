@@ -31,7 +31,7 @@ This catalogue will age. Treat it as a starting point and use the deep-research 
 ### Anthropic skill documentation
 **URL:** Via https://docs.claude.com (skills section)
 **What it covers:** How Claude skills work — the format, the conventions, how they load, what they can do. Relevant for users who want to write their own skills after the install.
-**When to point at it:** When a user wants to understand how skills work under the hood, or wants to write a skill for a workflow ExFu doesn't cover out of the box. The `exfu:create-wow` skill handles the user's personal `wow`; for anything more custom, the Anthropic docs are the right starting point.
+**When to point at it:** When a user wants to understand how skills work under the hood, or wants to write a skill for a workflow ExFu doesn't cover out of the box. The `exfu-create-wow` skill handles the user's personal `wow`; for anything more custom, the Anthropic docs are the right starting point.
 
 ---
 
