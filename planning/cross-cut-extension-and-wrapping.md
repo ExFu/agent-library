@@ -1,5 +1,18 @@
 # Cross-cut: Extension and wrapping
 
+## When this applies
+
+**Most of this cross-cut applies only when ExFu is being used in a team or org context.** Solo installs don't have wrapping plugins, don't have a PII layer connector to integrate with, don't have org-specific compliance briefings, and don't need permission-aware substrate behaviour. A solo install Claude that encounters this material can safely skim or skip it.
+
+The two parts of this cross-cut that DO apply to solo installs:
+
+- The principle itself (ExFu provides patterns; specifics are resolved elsewhere) — useful framing even when the "elsewhere" is just the user's own answers during install.
+- The "Storage backends beyond the defaults" surface — solo users on something other than Box (Mac-mini, Obsidian, etc.) hit this.
+
+Everything else is team/org territory. If you're a solo install, you're done with this doc.
+
+---
+
 ## Why
 
 ExFu is a universal substrate plugin. It cannot make implementation decisions that vary org-by-org, install-by-install, or provider-by-provider. Many real-world specifics — which git provider, what PII storage looks like, which connectors exist, what permission model the org uses, what regulated data needs special handling — sit outside ExFu's scope by design.
@@ -61,17 +74,23 @@ The installing Claude's job here is to ask the right questions and write the ans
 
 ### Surfaces this pattern applies to
 
-Currently identified surfaces where ExFu provides shape and the wrapper or installing Claude resolves specifics:
+Currently identified surfaces where ExFu provides shape and the wrapper or installing Claude resolves specifics. Most are team/org-only; one or two touch solo too.
+
+**Team and org context only:**
 
 - **Git provider integration.** ExFu's `git-substrate-sync` is provider-neutral; provider-specific provisioning and permission lookups are wrapper or install-time decisions.
 - **PII layer.** ExFu defines the principle (PII never persisted in shareable substrate, accessed via a guarded connector at runtime). The connector's schema, access-control model, audit logging, and reference implementation belong to the wrapping plugin.
 - **Permission-aware skill behaviours.** ExFu's substrate skill (v0.2.0+) expects a permission lookup; what that lookup returns and how it integrates with the org's identity system is the wrapper's job.
-- **Storage backends beyond the defaults.** ExFu ships Box for solo and git for team. Anything else (Mac-mini-as-server, Obsidian Sync, S3, on-prem NFS) is wrapper or install-time territory.
 - **Compliance briefings.** ExFu ships a generic ISO 27001 briefing in the team-admin plugin. Vertical-specific briefings (HIPAA, FCA, SOC 2, GDPR specifics, on-prem regulator briefings) belong to the wrapper.
 - **Org-specific verb vocabulary.** ExFu's non-techie verbs (save / share for review / check for updates) are universal defaults. An org can override them in their wrapping plugin if their culture wants different language.
-- **Specific scope patterns.** ExFu provides the scope-skill template; the org's actual scopes (what scopes typically look like, naming conventions, default contents) are wrapper territory.
+- **Org-specific scope patterns.** ExFu provides the scope-skill template; what an org's typical scopes look like (naming conventions, default contents, who creates them) is wrapper territory.
 
-This list is not exhaustive. New surfaces will appear; the test is the same: does it vary org-by-org? If yes, it's not ExFu's call.
+**Applies in solo too:**
+
+- **Storage backends beyond the defaults.** ExFu ships Box for solo and git for team. Anything else (Mac-mini-as-server, Obsidian Sync, S3, on-prem NFS) is wrapper or install-time territory regardless of solo/team context.
+- **The principle itself.** Even without a wrapping plugin, the installing Claude makes per-user decisions during the install conversation. The pattern is the same: ExFu is the shape, the user's answers fill the specifics.
+
+This list is not exhaustive. New surfaces will appear; the test is the same: does it vary by user, org, or context? If yes, it's not ExFu's call.
 
 ### Guardrails
 
