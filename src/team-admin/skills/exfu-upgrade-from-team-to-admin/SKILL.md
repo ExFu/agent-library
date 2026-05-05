@@ -73,14 +73,14 @@ If you cannot determine which skills are bundled vs user-authored, ask the user 
 
 Install the team-admin plugin's full skill set from `${CLAUDE_PLUGIN_ROOT}/skills/`. This includes:
 
-- `exfu` (orchestrator)
-- `exfu:install-team-admin`
+- `exfu-start` (orchestrator — renamed from `exfu` in v0.2.0 to avoid plugin-name collision)
+- `exfu-install-team-admin`
 - `git-substrate-sync` (same skill, re-bundled from team-admin source)
 - `team-repo-provisioning`
 - `team-shared-skills-authoring`
 - `team-onboard-member`
-- `exfu:guides`
-- `exfu:create-wow`
+- `exfu-guides`
+- `exfu-create-wow`
 - `substrate`
 - All other shared and team-admin skills in the plugin
 

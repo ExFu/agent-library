@@ -173,7 +173,12 @@ Every install move is a small win. The same patterns as the solo install apply. 
 
 Invoke `exfu-create-wow`. It generates a personalised `wow` from the template, incorporating what you've built. The navigation map in `wow` should point at **both** the personal layer and the team's shared layer, with notes on what lives where.
 
-Install `wow` into Global Instructions so it loads in every new session.
+Install `wow` into Cowork's Global Instructions so it loads in every new session.
+
+Then install the two universal instruction resources alongside:
+
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — paste the contents into Cowork's Global Instructions field, alongside the user's personalised `wow`. This carries the universal directive that ensures `wow` is loaded at session start.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — paste the contents into Claude Desktop's user preferences (the general settings that apply across all chats, including mobile and non-Cowork). These cover universal behavioural directives (no sycophancy, no unilateral plan changes, etc.) plus a mobile-specific caveat about substrate availability.
 
 ### Step 10 — Close
 
@@ -209,6 +214,8 @@ All pre-installed via the plugin. No URL fetching needed.
 **Reference resources:**
 - `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md`
 - `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md`
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — universal user-preferences text installed during Step 9.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — universal Cowork Global Instructions text installed during Step 9.
 - Team's own `context/team-[name]/ways-of-working.md` (in the cloned repo, once connected)
 
 ---

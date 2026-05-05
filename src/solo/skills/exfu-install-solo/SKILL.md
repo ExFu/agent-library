@@ -152,7 +152,12 @@ Small-win patterns to reach for:
 
 When you know enough about the user to generate their personal way-of-working skill, invoke `exfu-create-wow`. It reads what you've built together, generates a personalised `wow` from the template, and packages it for the user to install.
 
-The `wow` does two things: it maps out where the user's setup lives (so future Claude sessions can navigate it), and it carries a thin kernel of always-on instructions. It should go into Global Instructions so it loads in every new session.
+The `wow` does two things: it maps out where the user's setup lives (so future Claude sessions can navigate it), and it carries a thin kernel of always-on instructions. It should go into Cowork's Global Instructions so it loads in every new session.
+
+Then install the two universal instruction resources alongside:
+
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — paste the contents into Cowork's Global Instructions field, alongside the user's personalised `wow`. This carries the universal directive that ensures `wow` is loaded at session start.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — paste the contents into Claude Desktop's user preferences (the general settings that apply across all chats, including mobile and non-Cowork). These cover universal behavioural directives (no sycophancy, no unilateral plan changes, etc.) plus a mobile-specific caveat about substrate availability.
 
 ### Step 8 — Close
 
@@ -185,6 +190,8 @@ What's available, all pre-installed via the plugin. No URL fetching needed. Skil
 **Reference resources (in the plugin, no fetching needed):**
 - `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` — the full reference for how the substrate works.
 - `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` — fold in if the user is on a team.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — universal user-preferences text installed during Step 7.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — universal Cowork Global Instructions text installed during Step 7.
 
 ---
 
