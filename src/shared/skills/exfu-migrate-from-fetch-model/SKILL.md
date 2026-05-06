@@ -1,6 +1,6 @@
 ---
 name: exfu-migrate-from-fetch-model
-description: Use when an install entrypoint detects that the user already has an ExFu setup installed via the old fetch model (fetching skills from exfu.ai/clients/ URLs). Signals include: a wow skill already present, substrate skill installed as a packaged .skill file rather than via plugin, or substrate folder structure already in place (context/me/, scopes/, databases/). Do not invoke this on a clean install.
+description: Handles users who already have an ExFu setup from before the plugin model existed — when skills were fetched individually from exfu.ai/clients/ URLs rather than bundled in a plugin. This skill replaces those old fetched-skill installations with plugin-managed equivalents while leaving the user's personal content entirely untouched. Agent-invoked: install entrypoints call this when they detect migration signals (a wow skill referencing the old URL pattern, bedrock skills installed as standalone packages, or existing substrate folder structure). Not user-triggered directly, but should also handle conversational signals like "I already had this set up before", "I used the old version", or "I set this up a while ago and things aren't working right".
 ---
 
 # ExFu Migrate from Fetch Model

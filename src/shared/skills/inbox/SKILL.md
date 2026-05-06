@@ -1,6 +1,6 @@
 ---
 name: inbox
-description: Lightweight quick-capture for thoughts, links, and loose items the user wants to save without deciding where they belong yet. Use when the user says "save this", "add to inbox", "capture that", "don't lose this thought", when they ask what's in their inbox, when they want to process or sort it, or at session start (called by the substrate skill) to flag pending items.
+description: Lightweight quick-capture for thoughts, links, and loose items the user wants to save without deciding where they belong yet. Use when the user wants to dump something out of their head without sorting it, when they ask what's piled up in their inbox, or when they want to process and sort captured items. Also called by the substrate skill at session start to flag pending items. Triggers on "save this", "capture that", "hold onto this", "jot this down for me", "I want to come back to this", "don't lose this thought", "this is important but I don't know where it goes yet", "what's in my inbox", "process my inbox", or any time the user wants frictionless capture of something that doesn't have a home yet.
 ---
 
 # Inbox

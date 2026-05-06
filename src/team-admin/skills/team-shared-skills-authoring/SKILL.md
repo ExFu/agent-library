@@ -1,9 +1,11 @@
 ---
 name: team-shared-skills-authoring
-description: Teaches the substrate champion the conventions for skills that go in the team's shared skills/ folder, and helps author or refactor skills against those conventions. Use when the champion wants to create a new shared skill, promote a personal skill to shared, audit existing shared skills, or understand what makes a skill safe to share. Triggers on "write a shared skill", "add to team skills", "promote this skill", "refactor skill for the team", or "team skill conventions".
+description: Teaches the substrate champion the conventions for skills that go in the team's shared skills/ folder, and helps author or refactor them to those conventions. Shared skills are different from personal ones — every team member's Claude loads them, so they must work for everyone without embedding personal assumptions. Use when the champion wants to create a new shared skill, promote a personal skill to shared, or understand what makes a skill safe to share. Triggers on "I've got a skill that would be useful for the whole team, how do I share it?", "how do I make a skill everyone on the team can use?", "I want all my colleagues' Claude to know about X", "write a shared skill", "promote this skill to shared", or any champion intent to publish a skill to the team.
 ---
 
 # Team shared skills authoring
+
+A skill that works perfectly for one person often fails everyone else when personal assumptions are embedded in it — hardcoded paths, assumed tools, role-specific framing. Shared skills live in the team's git repo and load for every team member's Claude, so they need to be written without those assumptions. This skill exists to catch the difference before it causes problems, and to help the champion author skills that genuinely work for the whole team.
 
 You are helping the substrate champion write or refactor skills for the team's shared `skills/` folder. Shared skills are different from personal skills. Every team member's Claude loads them. They need to work for everyone on the team, not just the person who wrote them.
 

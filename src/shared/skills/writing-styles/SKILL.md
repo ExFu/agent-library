@@ -1,6 +1,6 @@
 ---
 name: writing-styles
-description: Write and edit in the user's voice, not Claude's defaults. Use whenever you're producing written output for or on behalf of the user — drafting emails, posts, docs, messages, replies, or editing their text. Runs a first-time intake to extract the user's voice into a profile if one doesn't exist yet, then applies the profile plus a universal anti-slop layer to every subsequent piece of writing.
+description: Write and edit in the user's voice, not Claude's defaults. Use whenever producing written output for or on behalf of the user. Runs a first-time intake to extract the user's voice into a profile if one doesn't exist yet, then applies that profile plus a universal anti-slop layer to every subsequent piece of writing. Triggers on "write this for me", "draft an email to X", "can you sound more like me?", "this doesn't sound right, fix it", "edit this in my style", "write a message to X", "help me reply to this", or any time the user asks Claude to produce or improve text that will go out under their name.
 ---
 
 # Writing Styles

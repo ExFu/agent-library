@@ -3,6 +3,11 @@ name: wow
 description: The user's personal way of working. Claude loads this skill at the start of every session to learn how THIS user's substrate is laid out (the navigation map) and to pick up the thin always-on kernel of instructions and summaries that apply universally. Triggers on "wow", "way of working", on fresh sessions, or when referenced in Global Instructions. Auto-loads the `substrate` skill and any other always-on skills on activation.
 ---
 
+---
+**About this template:** This file is a template used by `exfu-create-wow` to generate each user's personal wow skill. The frontmatter above (`name: wow`, `description: ...`) is what the generated skill's frontmatter will look like — it is not describing this template file itself. Do not load this file as a skill. When `exfu-create-wow` runs, it fills in this template with the user's actual context and packages the result as their personal wow skill.
+
+---
+
 # Way of Working (personal)
 
 This is the user's personal `wow` skill — generated during setup and maintained as the user's substrate evolves. It is distinct from the generic `substrate` skill: `substrate` carries the shared architecture; `wow` carries the things specific to *this* user.

@@ -1,9 +1,11 @@
 ---
 name: team-repo-provisioning
-description: Walks the substrate champion through creating the team's shared substrate repo on their chosen git provider. Use when the champion is setting up a new team substrate from scratch and needs to provision the remote repo, configure access, seed the initial structure, and verify connectivity. Triggers on "set up team repo", "create team substrate repo", "provision team git repo", or when install-team-admin reaches the storage step and the champion does not yet have a repo.
+description: Walks the substrate champion through creating the team's shared git repo — the home for all shared context, conventions, skills, and scopes that every team member's Claude will read. Use when the champion is setting up a new team from scratch and needs to create the remote repo, configure access, seed the initial structure, and verify connectivity. Also invoked by exfu-install-team-admin at the storage step when no repo exists yet. Triggers on "how do I create the repo for the team?", "where should the team's shared stuff live?", "I need to set up a git repo for our Claude setup", "set up team repo", or when the champion reaches the storage step of their install.
 ---
 
 # Team repo provisioning
+
+The team's shared substrate needs a home: a private git repo that every team member clones and that the champion maintains. Without it, shared context, conventions, and skills have nowhere to live and cannot propagate to colleagues. This skill handles the one-time setup — creating the repo, configuring access, seeding the initial structure, and verifying connectivity — so the rest of the team install can proceed.
 
 You are helping the substrate champion create and seed the team's shared substrate repo. This is a one-time setup step. By the end of this skill, the repo will exist on their chosen provider, have the right access settings, contain the recommended initial folder structure, and be reachable from the champion's machine.
 

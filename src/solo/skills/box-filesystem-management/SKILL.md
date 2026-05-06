@@ -1,9 +1,11 @@
 ---
 name: box-filesystem-management
-description: How Claude manages the user's Box knowledge base. Use whenever Claude needs to read, write, organise, or clean up files in the Box store. Covers access mode selection (local filesystem vs Box MCP connector), CRUD workarounds for the connector's limitations, trash/recovery workflow, and naming conventions. Triggers include any mention of the Box store, knowledge base, file management, or instructions to save, update, move, or delete files.
+description: Governs how Claude manages files in the user's Box knowledge base — the cloud folder that serves as their persistent substrate storage. Because Box has limitations (no native move or delete in the MCP connector, offline-caching quirks), Claude needs specific workarounds to operate reliably on the user's behalf. Use whenever Claude needs to read, write, organise, or clean up files in this knowledge base. Triggers on "save this", "organise my files", "move this to the Acme folder", "where did that file go?", "get rid of that note", or any instruction involving reading, writing, moving, or deleting content in the knowledge base.
 ---
 
 # Box Filesystem Management
+
+Box is the storage layer for this user's substrate. Claude manages the knowledge base files on the user's behalf — the user rarely needs to touch Box directly. This skill exists because Box's MCP connector has real limitations (no native delete or move, offline-caching quirks) that require specific workarounds, and because naming and trash conventions need to be consistent across every session for the knowledge base to remain navigable.
 
 ## How Claude manages this knowledge base
 

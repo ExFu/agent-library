@@ -1,6 +1,6 @@
 ---
 name: scope-{{SCOPE_NAME}}
-description: {{ONE_LINE_DESCRIPTION — what this scope is, what kind of work happens in it, key entities or people involved. The description is what Claude matches against to decide whether to load this skill, so make it specific: who/what the scope is about, what triggers should fire it.}}
+description: {{ONE_LINE_DESCRIPTION — what this scope is, what kind of work happens in it, key entities or people involved. The description is what Claude matches against to decide whether to load this skill. Write it in the language users naturally bring to conversations, not the language of the skill system. A user will say "what's happening with Acme?" or "let's work on the product launch" — not "load the Acme scope". Good triggers name the real-world entities, people, and activities the scope covers so Claude recognises them when they come up naturally in conversation.}}
 ---
 
 # {{SCOPE_DISPLAY_NAME}}

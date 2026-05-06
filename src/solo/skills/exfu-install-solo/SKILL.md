@@ -1,11 +1,19 @@
 ---
 name: exfu-install-solo
-description: Use when the user is starting their ExFu install from scratch, wants to set up their personal substrate for the first time, or has just installed the ExFu solo plugin and needs to begin. Covers the full solo install conversation from first calibration through to a working setup. Also triggers if the user says "install me", "set up my substrate", or "let's start the install".
+description: Runs the full solo install conversation: from first calibration through to a working personal substrate (knowledge base, skills, connectors, scheduled tasks). This skill is typically invoked by exfu-start when it detects a first-run user — not directly by users. It covers migration checks, the storage question, about-me capture, buffet of optional skills, and wow generation. Triggers when exfu-start routes a first-run solo user here, or when a user says "I want to get set up", "I just installed this, where do I start?", "let's do the install", or similar first-session language.
 ---
 
 # ExFu Install — Solo
 
 You're setting someone up with Claude as a real working collaborator. This document is your context, principles, constraints, and component catalogue. Run the conversation conversationally, using your own judgement. It is not a script.
+
+---
+
+## On load — start moving
+
+You've been loaded because the user is starting a solo install. Their "go" is implicit; they wouldn't be here otherwise. Don't open with another triage question or wait for further input. Begin Step 1 of the opening sequence (the migration check) immediately, then continue through the steps in order.
+
+The user just installed the ExFu solo plugin. Greet them briefly if `exfu-start` hasn't already done so, then run Step 1 and proceed.
 
 ---
 
@@ -47,7 +55,7 @@ This is **not implementation-for-hire**. The teach-don't-do discipline is the wo
 
 People come in thinking of AI as a function — something you query, something that produces text. The actual experience of working with Claude well is cognitive. You start relying on it as a collaborative entity.
 
-The framing that unlocks this is **chief of staff**. People understand what it means to give a CoS context, standing instructions, access to systems, a daily routine. That's a working translation of what a well-installed Claude is.
+The framing that lands this is **chief of staff**. People understand what it means to give a CoS context, standing instructions, access to systems, a daily routine. That's a working translation of what a well-installed Claude is.
 
 Plant this framing through the **moves you make**, not as a tagline. *"Let's tell Claude about you so they don't have to ask twice."* *"Let's give Claude access to your calendar so they can see what's on your plate."* The metaphor lands when it's enacted.
 
@@ -104,7 +112,7 @@ Then give the user a concrete instruction:
 - **macOS:** In Finder, right-click the knowledge base folder inside your Box Drive folder. Look for "Make Available Offline" or "Always Keep on this Device" (the exact label varies by Box Drive version).
 - **Windows:** Right-click the folder in File Explorer within Box Drive. Select "Make Available Offline".
 
-**TODO: Verify exact Box Drive UI labels for current macOS and Windows versions. Surface as open question if in doubt — tell the user you're not certain of the exact menu wording and they should look for an "offline availability" or "keep downloaded" option in Box Drive's right-click menu.**
+**Known open item:** Box Drive UI labels for the offline-availability option vary by version and may not match the descriptions above exactly. If in doubt, tell the user you're not certain of the exact menu wording and they should look for an "offline availability" or "keep downloaded" option in Box Drive's right-click menu.
 
 If the user says local-only: "We'll set things up locally. Mobile and scheduled-task access won't work unless this machine is always on and reachable. Worth coming back to once you have a clearer answer on multi-device access." Proceed with local-only.
 

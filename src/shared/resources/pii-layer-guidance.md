@@ -111,7 +111,7 @@ These are access-control patterns the connector should implement. They are not r
 - Any vertical-specific compliance additions (HIPAA field handling, FCA data-residency requirements, etc.).
 - The justification prompts and UI for sensitive reads, if implemented.
 
-See `cross-cut-extension-and-wrapping.md` for the general principle of what ExFu owns versus what the wrapping plugin or installing Claude resolves.
+This distinction is part of ExFu's broader extension pattern: ExFu defines the contract and enforces the boundary; the wrapping plugin (or installing Claude) resolves the implementation details for the specific org context.
 
 ---
 

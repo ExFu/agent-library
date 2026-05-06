@@ -1,9 +1,11 @@
 ---
 name: team-onboard-member
-description: Generates an onboarding pack the substrate champion sends to a new team member. The joiner uses this pack to install the team plugin and connect to the team's shared substrate. Use when the champion is bringing a new person onto the team. Triggers on "onboard a new member", "create onboarding pack", "add someone to the team", or when install-team-admin reaches the onboarding-prep step.
+description: Generates a personalised onboarding pack — a markdown document the substrate champion sends to a new team member before or alongside the team plugin download link. The joiner pastes the pack into their install conversation, and the install skill reads it to pre-populate the git repo URL, team conventions, and contact details. Use when the champion is bringing someone new onto the team. Also invoked by exfu-install-team-admin at the onboarding-prep step. Triggers on "someone new is joining the team", "I need to get [person] set up", "how do I tell a new person to install this?", "my colleague just joined and needs to set up Claude", "create onboarding pack", or any champion intent to onboard a new team member.
 ---
 
 # Team onboard member
+
+The pack format exists for a specific reason: the joiner pastes it into their install conversation and the install skill reads it directly, using it to pre-populate the git remote URL, surface the team's conventions at the right moment, and personalise the flow without requiring the joiner to look anything up. A plain email introduction achieves none of that. The structured pack is what makes the joiner's install smooth rather than generic.
 
 You are helping the substrate champion generate an onboarding pack for a new team member. The pack is a markdown document the champion sends to the joiner before or alongside the team plugin download link. The joiner pastes it into their install conversation, and install-team reads it to personalise their flow.
 

@@ -1,6 +1,6 @@
 ---
 name: exfu-create-wow
-description: Use when the install flow reaches the wow-creation step, or when the user explicitly asks to regenerate, rebuild, or substantially update their personal way-of-working skill. Also triggers on "rebuild my wow", "regenerate my way of working", "create my wow skill", or equivalent phrasings.
+description: Generates the user's personal wow skill — a short custom skill that loads at every session start, maps out where their substrate is laid out, and carries a thin kernel of always-on instructions. Invoked by install entrypoints at the wow-creation moment in the install flow. Also available directly when the user's substrate has changed significantly and a full regeneration is needed — not for small edits, which can be made directly to the installed skill. Triggers when an install skill reaches the wow step, or when the user says "my folders have changed since we set this up", "things are different now and you're pointing at old locations", "I want to rebuild my way of working", "my setup has moved around", or any other indication that their substrate has evolved enough to warrant a full regeneration.
 ---
 
 # ExFu Create Wow

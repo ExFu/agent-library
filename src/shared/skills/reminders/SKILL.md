@@ -1,6 +1,6 @@
 ---
 name: reminders
-description: Manage the user's lightweight reminder system. Use when the user asks to be reminded of something ("remind me to X", "don't let me forget", "flag this for [date]"), when they ask what's on their reminder list, when they want to complete or snooze a reminder, or at session start (called by the substrate skill) to surface anything due or overdue.
+description: Manage the user's lightweight reminder system. Use when the user wants to be nudged about something at a future point, asks to see their reminder list, or wants to complete or snooze a reminder. Also called by the substrate skill at session start to surface anything due or overdue. Triggers on "remind me to X", "don't let me forget", "don't let that slip", "I'll forget this", "flag this for [date]", "ping me about this next week", "what did I say I'd follow up on?", "what have I got coming up?", or any time the user wants to ensure something surfaces later.
 ---
 
 # Reminders

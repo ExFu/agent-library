@@ -1,6 +1,6 @@
 ---
 name: exfu-guides
-description: Use when the user asks how something works, wants an explanation of the substrate, scopes, skills, or any ExFu concept, asks "what is X", "why does ExFu do Y", "explain the substrate", "what are scopes for", or any architecture-level or reference question about how the setup fits together.
+description: ExFu is a Claude setup tool that installs a persistent knowledge base, skills, and scheduled tasks for knowledge workers. This skill answers questions about how that setup works — for someone who just installed it or is curious about the architecture. Load it when the user asks how something in their Claude setup works, wants a concept explained, or is trying to understand why things are structured the way they are. Triggers on "how does this all work?", "can you explain how you remember things between sessions?", "what are these skills for?", "why does this use Box?", "what is wow?", "how do scopes work?", "what's the difference between a skill and an instruction?", or any other question about the setup's design or architecture.
 ---
 
 # ExFu Guides — reference and teaching surface

@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team-admin
-description: Use when the user is the substrate champion for their team and is installing the team-admin plugin for the first time. This skill sets up both the champion's personal substrate and the team's shared substrate, provisions or connects the team's git repo, seeds the initial shared structure, handles the IT briefing, and prepares the first onboarding pack. Triggers on "install me", "set up team admin", "champion install", or when the orchestrator routes an initial-setup user in the team-admin plugin variant.
+description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate — the substrate champion. That person decides where the shared knowledge base lives, provisions the team's git repo, authors shared conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
 ---
 
 # ExFu Install — Team Admin (Champion)
@@ -8,6 +8,14 @@ description: Use when the user is the substrate champion for their team and is i
 You're setting up the substrate champion for a team. This person does work that other team members never do: they decide where the team's shared substrate lives, provision the repo, author shared conventions, brief IT, and onboard colleagues. This install covers all of that, on top of their own personal setup.
 
 This document is your context, principles, constraints, and component catalogue. Run the conversation conversationally. It is not a script.
+
+---
+
+## On load — start moving
+
+You've been loaded because the user is starting a team-admin install. Their "go" is implicit; they wouldn't be here otherwise. Don't open with another triage question or wait for further input. Begin Step 1 of the opening sequence (the politeness check) immediately, then continue through the steps in order.
+
+The user just installed the ExFu team-admin plugin. Greet them briefly if `exfu-start` hasn't already done so, then run Step 1 and proceed.
 
 ---
 
@@ -100,7 +108,7 @@ First: `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/substrate-diagram.png`. Walk th
 
 Second: `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/personal-vs-team-skills.png`. Walk through the two-layer concept: personal layer (the champion's own, not in the team repo) and team's shared layer (git-synced, shared with colleagues). Make it concrete.
 
-Third: `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/admin-plane-vs-user-domain.png`. This is the admin-specific calibration. Walk through it: what the champion controls (repo structure, shared skills, conventions, onboarding packs) vs what each team member owns (their personal layer, their wow, their personal scopes and databases). The champion designs the shared layer; individuals own their own.
+Third: `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/admin-vs-user.png`. This is the admin-specific calibration. Walk through it: what the champion controls (repo structure, shared skills, conventions, onboarding packs) vs what each team member owns (their personal layer, their wow, their personal scopes and databases). The champion designs the shared layer; individuals own their own.
 
 Plant the two priors:
 **Teach-don't-do.** "We're doing this together. By the end you'll have a working setup and you'll be able to grow and maintain it yourself."

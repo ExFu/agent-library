@@ -1,9 +1,11 @@
 ---
 name: exfu-upgrade-from-team-to-admin
-description: Handles the upgrade path for users who have the exfu-team plugin installed and are now installing exfu-team-admin. Detects the existing team-plugin install, confirms intent, removes team-plugin skills, installs team-admin skills, and verifies the post-upgrade state. This skill fires once, only when a team-plugin install is detected during the team-admin install flow. Do not invoke it manually outside that context.
+description: Handles the in-place upgrade for a team member who is becoming their team's substrate champion. They already have the team plugin installed (with its personal substrate, wow skill, and git connection) and are now installing the team-admin plugin to gain the admin-only capabilities: repo provisioning, shared-skills authoring, compliance briefing, and onboarding-pack generation. This skill replaces the team plugin's bundled skills with the team-admin plugin's, preserving the personal substrate, wow, and team repo connection entirely. Agent-invoked only: exfu-install-team-admin calls this when it detects an existing team-plugin install. Do not invoke manually.
 ---
 
 # Upgrade from team to team-admin
+
+A team member becoming their team's substrate champion needs capabilities the team plugin doesn't include: the ability to provision or reconfigure the team's git repo, author skills for the whole team, generate onboarding packs for new joiners, and surface the compliance briefing for IT review. The upgrade path exists so they don't lose what they've built — their personal substrate, their wow skill, their git connection — while gaining the admin layer on top.
 
 You are handling an in-place upgrade: the user has the exfu-team plugin installed and is now installing exfu-team-admin. This skill replaces the team plugin's bundled skills with the admin plugin's, preserving everything else the user has built.
 
@@ -73,15 +75,15 @@ If you cannot determine which skills are bundled vs user-authored, ask the user 
 
 Install the team-admin plugin's full skill set from `${CLAUDE_PLUGIN_ROOT}/skills/`. This includes:
 
-- `exfu-start` (orchestrator — renamed from `exfu` in v0.2.0 to avoid plugin-name collision)
-- `exfu-install-team-admin`
-- `git-substrate-sync` (same skill, re-bundled from team-admin source)
-- `team-repo-provisioning`
-- `team-shared-skills-authoring`
-- `team-onboard-member`
-- `exfu-guides`
-- `exfu-create-wow`
-- `substrate`
+- `exfu-start` — the front-door orchestrator; detects first-run vs returning user and routes accordingly
+- `exfu-install-team-admin` — the full admin install conversation
+- `git-substrate-sync` — handles all git operations for the shared layer (same skill as the team plugin, re-bundled from the team-admin source)
+- `team-repo-provisioning` — walks the champion through creating or reconfiguring the team's shared substrate repo on their chosen git provider
+- `team-shared-skills-authoring` — helps the champion write or refactor skills for the team's shared skills/ folder, enforcing conventions that make skills work for everyone
+- `team-onboard-member` — generates personalised onboarding packs for new joiners to paste into their install conversation
+- `exfu-guides` — answers architecture and reference questions about the substrate
+- `exfu-create-wow` — generates the user's personal way-of-working skill from the template
+- `substrate` — the session-bootstrap skill; orients Claude to the knowledge base at the start of every conversation
 - All other shared and team-admin skills in the plugin
 
 Install each skill using the standard plugin skill installation method.

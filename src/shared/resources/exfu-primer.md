@@ -38,7 +38,7 @@ That second part matters. ExFu is not implementation-for-hire. The goal is that 
 
 ExFu is built for people who do knowledge work and are ready to invest a couple of hours to change how they work with Claude.
 
-The profile that benefits most: founders, senior operators, professionals who spend their days thinking, writing, deciding, managing relationships, and running projects. People with a lot of context to carry and a lot of tools to connect. People who are already using Claude and can tell there's more to unlock but haven't yet built the infrastructure.
+The profile that benefits most: founders, senior operators, professionals who spend their days thinking, writing, deciding, managing relationships, and running projects. People with a lot of context to carry and a lot of tools to connect. People who are already using Claude and can tell there's more available but haven't yet built the infrastructure to get to it.
 
 It's also available in team variants. The team-admin plugin is for the person who wants to set up a shared substrate for their whole team — the substrate champion who builds the shared layer, provisions the git repo, and onboards colleagues. The team plugin is for everyone else on that team — joining the shared substrate and building their personal layer on top.
 

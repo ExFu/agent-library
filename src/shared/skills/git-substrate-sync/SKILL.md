@@ -1,6 +1,6 @@
 ---
 name: git-substrate-sync
-description: Use when the user works in a team substrate that's git-synced — handles pull at session start, commits to shared substrate, push after changes, merge conflict resolution, and credential-leak prevention. Loads automatically when team-plugin or team-admin-plugin is active and any substrate read or write is happening.
+description: Manages all git operations for a team's shared substrate — pulling the latest at session start, committing changes as work happens, pushing to share with colleagues, and handling merge conflicts when two people edit the same content. The goal is to make git invisible when things go well, and clear when they don't. Loads automatically when the team or team-admin plugin is active and any substrate read or write is happening. Also triggers on "save my changes to the team", "pull the latest from the team", "check if anything changed", "did my colleague update this?", "I think there's a conflict", "share my notes with the team", or any time the user is interacting with the shared layer of their substrate.
 ---
 
 # Git Substrate Sync

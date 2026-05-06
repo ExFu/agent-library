@@ -1,57 +1,8 @@
 # Ecosystem References
 
-A curated catalogue of external resources for Claude and AI-assistant work. Install agents should reach for these rather than trying to re-teach everything in-house. When a user asks something well-covered by one of these, give a brief answer and point them at the resource. ExFu's value is the personal install experience, not exclusive content.
+A catalogue of external resources for Claude and AI-assistant work. Install agents should reach for these rather than trying to re-teach everything in-house. When a user asks something well-covered by one of these, give a brief answer and point them at the resource. ExFu's value is the personal install experience, not exclusive content.
 
-This catalogue will age. Treat it as a starting point and use the deep-research pattern (see below) when you need current best practice.
-
----
-
-## Anthropic-published resources
-
-### Claude 101
-**URL:** https://anthropic.skilljar.com/claude-101
-**What it covers:** Broad orientation to Claude — what it is, how it works, what you can do with it. Good for users who are new to Claude or want to understand the surface before or after an install.
-**When to point at it:** When a user wants general Claude grounding and the install isn't the right moment to cover it. Also good as a follow-up suggestion after install: "If you want to go deeper on Claude generally, start here."
-
-### Claude Code 101
-**URL:** Via Anthropic Skilljar (search "Claude Code" at anthropic.skilljar.com)
-**What it covers:** Introduction to Claude Code — the agentic coding surface. Distinct from Cowork. Relevant if the user is a developer who wants to understand where coding-specific Claude usage fits.
-**When to point at it:** When a user asks about using Claude for software development, code review, or automated coding tasks. This is outside the ExFu Cowork install scope — point them here rather than expanding scope.
-
-### Introduction to Claude Cowork
-**URL:** Via Anthropic Skilljar (search "Claude Cowork")
-**What it covers:** The Cowork surface that ExFu installs run on. Covers skills, Projects, Dispatch, scheduled tasks. Directly relevant to what ExFu sets up.
-**When to point at it:** When a user wants to understand the Cowork surface itself — what Claude can do natively before ExFu adds the substrate layer on top. Also useful for users who want to understand why ExFu uses certain Cowork primitives.
-
-### Anthropic docs
-**URL:** https://docs.claude.com and https://support.claude.com
-**What it covers:** Feature-specific reference. API documentation, model information, feature guides, support articles.
-**When to point at it:** When a user asks a feature-specific question (how does memory work, what's the difference between models, how do I connect a tool) and the answer is better covered by the docs than by a conversation. Also the right place for troubleshooting when something isn't working as expected.
-
-### Anthropic skill documentation
-**URL:** Via https://docs.claude.com (skills section)
-**What it covers:** How Claude skills work — the format, the conventions, how they load, what they can do. Relevant for users who want to write their own skills after the install.
-**When to point at it:** When a user wants to understand how skills work under the hood, or wants to write a skill for a workflow ExFu doesn't cover out of the box. The `exfu-create-wow` skill handles the user's personal `wow`; for anything more custom, the Anthropic docs are the right starting point.
-
----
-
-## Community and third-party resources
-
-### claude101.com
-**URL:** https://claude101.com
-**What it covers:** Third-party guides and tutorials covering Claude usage patterns. Useful framing alternatives to Anthropic's own material — sometimes a different explanation of the same concept lands better.
-**When to point at it:** When a user wants more than one perspective on how to use Claude well. Also useful for users who prefer video or step-by-step tutorial formats over documentation.
-**Note:** Third-party, not maintained by Anthropic. Content may lag or reflect different opinions. Use as a supplement, not a primary reference.
-
-### Superpowers
-**What it covers:** A well-respected community skill collection. Covers a range of Claude capabilities and workflows. Some overlap with ExFu's bundled skills; some goes further.
-**When to point at it:** When a user wants to explore Claude capabilities beyond what ExFu installs — more advanced skills, specialist workflows, community-developed patterns. Worth recommending for users who want to extend their substrate significantly after the initial install.
-**Note:** Community project. Quality is generally high but varies by skill. Review before installing anything.
-
-### oh-my-claude
-**What it covers:** Community framework with useful patterns for Claude configuration, especially around the Cowork surface. Patterns for skill development, substrate design, and Claude-as-collaborator workflows.
-**When to point at it:** When a user wants to understand the broader community approach to Claude substrates, or wants patterns and examples beyond what ExFu ships. Also useful as a reference when developing custom skills.
-**Note:** Community project. Active development; patterns evolve. Good complement to ExFu's opinionated approach.
+This catalogue will age. Treat it as a starting point and use the deep-research pattern (below) when you need current best practice. The deep-research section comes first because that pattern is more durable than any specific URL.
 
 ---
 
@@ -92,7 +43,60 @@ This is especially useful for:
 
 Point users toward the deep research move whenever:
 - They ask about something time-sensitive (model selection, new features, pricing)
-- The question is outside the ExFu install scope and the catalogue above doesn't cover it
+- The question is outside the ExFu install scope and the catalogue below doesn't cover it
 - You want to model good Claude-use practice — research as a first-class move, not a fallback
 
 The point is not that you don't know. The point is that fresh information is better than stale memory, and teaching the user this pattern means they carry it with them long after the install.
+
+---
+
+## Anthropic-published resources
+
+These are the resources ExFu trusts most right now for Anthropic's own guidance. Treat them as a strong starting point; check for updates if the topic is time-sensitive.
+
+### Claude 101
+**URL:** https://anthropic.skilljar.com/claude-101
+**What it covers:** Broad orientation to Claude — what it is, how it works, what you can do with it. Good for users who are new to Claude or want to understand the surface before or after an install.
+**When to point at it:** When a user wants general Claude grounding and the install isn't the right moment to cover it. Also good as a follow-up suggestion after install: "If you want to go deeper on Claude generally, start here."
+
+### Claude Code 101
+**URL:** Via Anthropic Skilljar (search "Claude Code" at anthropic.skilljar.com)
+**What it covers:** Introduction to Claude Code — the agentic coding surface. Distinct from Cowork. Relevant if the user is a developer who wants to understand where coding-specific Claude usage fits.
+**When to point at it:** When a user asks about using Claude for software development, code review, or automated coding tasks. This is outside the ExFu Cowork install scope — point them here rather than expanding scope.
+
+### Introduction to Claude Cowork
+**URL:** Via Anthropic Skilljar (search "Claude Cowork")
+**What it covers:** The Cowork surface that ExFu installs run on. Covers skills, Projects, Dispatch, scheduled tasks. Directly relevant to what ExFu sets up.
+**When to point at it:** When a user wants to understand the Cowork surface itself — what Claude can do natively before ExFu adds the substrate layer on top. Also useful for users who want to understand why ExFu uses certain Cowork primitives.
+
+### Anthropic docs
+**URL:** https://docs.claude.com and https://support.claude.com
+**What it covers:** Feature-specific reference. API documentation, model information, feature guides, support articles.
+**When to point at it:** When a user asks a feature-specific question (how does memory work, what's the difference between models, how do I connect a tool) and the answer is better covered by the docs than by a conversation. Also the right place for troubleshooting when something isn't working as expected.
+
+### Anthropic skill documentation
+**URL:** Via https://docs.claude.com (skills section)
+**What it covers:** How Claude skills work — the format, the conventions, how they load, what they can do. Relevant for users who want to write their own skills after the install.
+**When to point at it:** When a user wants to understand how skills work under the hood, or wants to write a skill for a workflow ExFu doesn't cover out of the box. The `exfu-create-wow` skill handles the user's personal `wow`; for anything more custom, the Anthropic docs are the right starting point.
+
+---
+
+## Community and third-party resources
+
+These are community-maintained resources ExFu finds useful. Quality is generally high but verify before recommending anything time-sensitive.
+
+### claude101.com
+**URL:** https://claude101.com
+**What it covers:** Third-party guides and tutorials covering Claude usage patterns. Useful framing alternatives to Anthropic's own material — sometimes a different explanation of the same concept lands better.
+**When to point at it:** When a user wants more than one perspective on how to use Claude well. Also useful for users who prefer video or step-by-step tutorial formats over documentation.
+**Note:** Third-party, not maintained by Anthropic. Content may lag or reflect different opinions. Use as a supplement, not a primary reference.
+
+### Superpowers
+**What it covers:** A well-respected community skill collection. Covers a range of Claude capabilities and workflows. Some overlap with ExFu's bundled skills; some goes further.
+**When to point at it:** When a user wants to explore Claude capabilities beyond what ExFu installs — more advanced skills, specialist workflows, community-developed patterns. Worth recommending for users who want to extend their substrate significantly after the initial install.
+**Note:** Community project. Quality is generally high but varies by skill. Review before installing anything.
+
+### oh-my-claude
+**What it covers:** Community framework with useful patterns for Claude configuration, especially around the Cowork surface. Patterns for skill development, substrate design, and Claude-as-collaborator workflows.
+**When to point at it:** When a user wants to understand the broader community approach to Claude substrates, or wants patterns and examples beyond what ExFu ships. Also useful as a reference when developing custom skills.
+**Note:** Community project. Active development; patterns evolve. Good complement to ExFu's opinionated approach.

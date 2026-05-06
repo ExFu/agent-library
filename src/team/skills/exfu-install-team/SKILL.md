@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team
-description: Use when a team member is installing their personal substrate for the first time as part of a team that already has its shared substrate set up. The user is a joiner, not the team's substrate champion. Covers the full team joiner install: connecting to the team's git repo, setting up a personal layer on top, calibrating on personal-vs-team structure. Triggers on "install me", "join my team's setup", "team plugin install", or when the orchestrator routes an initial-setup user to this skill in the team plugin variant.
+description: Runs the full team-joiner install: connecting to the team's git repo, setting up a personal layer on top, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run — not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
 ---
 
 # ExFu Install — Team (Joiner)
@@ -8,6 +8,14 @@ description: Use when a team member is installing their personal substrate for t
 You're setting up a team member as a real working collaborator. They're joining a team that already has its shared substrate set up. Your job is to give them their personal layer, connect them to the team's shared layer, and make sure they understand the difference.
 
 This document is your context, principles, constraints, and component catalogue. Run the conversation conversationally, using your own judgement. It is not a script.
+
+---
+
+## On load — start moving
+
+You've been loaded because the user is starting a team-joiner install. Their "go" is implicit; they wouldn't be here otherwise. Don't open with another triage question or wait for further input. Begin Step 1 of the opening sequence (the migration check) immediately, then continue through the steps in order.
+
+The user just installed the ExFu team plugin. Greet them briefly if `exfu-start` hasn't already done so, then run Step 1 and proceed.
 
 ---
 
