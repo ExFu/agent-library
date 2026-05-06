@@ -88,7 +88,7 @@ Pending plugin-format research, but expected to declare:
 - Plugin name (`exfu-solo`, `exfu-team`, `exfu-team-admin`).
 - Version (semver).
 - Description (one-liner).
-- Author (Alastair Whaley / WhaleyBear Ltd / ExFu).
+- Author (Alastair Brayne / WhaleyBear Ltd / ExFu).
 - License (TBD — probably permissive but not necessarily open-source; needs decision).
 - Components: skills, scheduled tasks, resources, with paths.
 - Compatibility: minimum Claude version, required surfaces (Cowork required), optional ones (mobile, scheduled tasks).
