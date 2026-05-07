@@ -233,13 +233,13 @@ What's available, all pre-installed via the plugin. No URL fetching needed. Skil
 **Bedrock — always installed:**
 - `skill-packaging` — how Claude packages skills into files for the user to install. Used for custom skills the user wants to create later, not for the bundled ones.
 - `box-filesystem-management` — how Claude manages files in Box (filesystem when mounted, MCP connector when not). Includes the daily cleanup scheduled task.
-- `substrate` — the boot skill. Reads the ways-of-working guide, orients to the current folder, surfaces reminders and inbox at session start.
+- `substrate` — the boot skill. Reads the ways-of-working guide, orients to the current folder, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 
 **Optional but high-value:**
-- `reminders` — time-triggered nudges in `databases/reminders/`. Introduce when the user mentions losing track of things.
-- `inbox` — quick-capture in `databases/inbox/`. Introduce when the user mentions thoughts they don't want to lose.
-- `daily-briefing` (scheduled task) — morning briefing from reminders, inbox, calendar, task tracker. Introduce after reminders, inbox, and at least one connector are in place.
-- `writing-styles` — voice intake plus anti-slop layer. Introduce if the user wants Claude to draft on their behalf.
+- `setup-reminders` — one-time intake that generates the user's personal `<username>-reminders` skill. Introduce when the user mentions losing track of things or wanting nudges.
+- `setup-inbox` — one-time intake that generates the user's personal `<username>-inbox` skill. Introduce when the user mentions thoughts they don't want to lose.
+- `daily-briefing` (scheduled task) — morning briefing from reminders, inbox, calendar, task tracker. Introduce after the user has run setup-reminders, setup-inbox, and has at least one connector in place.
+- `setup-writing-styles` — voice intake from writing samples that generates the user's personal `<username>-writing-styles` skill. Introduce if the user wants Claude to draft on their behalf.
 - `scope-skills` template — for creating per-scope discoverability skills. Use when the user has an active work area worth giving Claude continuity over.
 
 **Reference resources (in the plugin, no fetching needed):**

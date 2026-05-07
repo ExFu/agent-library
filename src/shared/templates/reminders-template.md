@@ -1,17 +1,21 @@
 ---
-name: reminders
-description: Manage the user's lightweight reminder system. Use when the user wants to be nudged about something at a future point, asks to see their reminder list, or wants to complete or snooze a reminder. Also called by the substrate skill at session start to surface anything due or overdue. Triggers on "remind me to X", "don't let me forget", "don't let that slip", "I'll forget this", "flag this for [date]", "ping me about this next week", "what did I say I'd follow up on?", "what have I got coming up?", or any time the user wants to ensure something surfaces later.
+name: {{username}}-reminders
+description: Manage {{username}}'s lightweight reminder system. Use when {{username}} wants to be nudged about something at a future point, asks to see their reminder list, or wants to complete or snooze a reminder. Also called by the substrate skill at session start to surface anything due or overdue. Triggers on "remind me to X", "don't let me forget", "don't let that slip", "I'll forget this", "flag this for [date]", "ping me about this next week", "what did I say I'd follow up on?", "what have I got coming up?", or any time the user wants to ensure something surfaces later.
 ---
 
-# Reminders
+**About this template:** This file is a template used by `setup-reminders` to generate each user's personal reminders skill. The frontmatter above is what the generated skill's frontmatter will look like. When `setup-reminders` runs, it fills in this template with the user's actual preferences and packages the result as their personal reminders skill.
+
+---
+
+# Reminders — {{username}}
 
 Lightweight reminder system. Not a task manager. Reminders are Claude's own nudges to the user ("ask me Monday if I still want to pursue Acme") — separate from whatever task tool they actually use.
 
 ## Where the data lives
 
-`databases/reminders/reminders.md` — a single markdown checklist, newest entries at the top.
+{{reminders_file_path}} — a single markdown checklist, newest entries at the top.
 
-If the file or the folder doesn't exist, create them on first use. Create `databases/reminders/README.md` alongside the data file describing what this folder is for. Then proceed.
+If the file or the folder doesn't exist, create them on first use. Create a README alongside the data file describing what the folder is for. Then proceed.
 
 ## File format
 
@@ -33,7 +37,7 @@ If the file or the folder doesn't exist, create them on first use. Create `datab
 Triggers: "remind me to X on Y", "don't let me forget Z", "flag this for [date]"
 
 1. Parse the date. Resolve natural language ("monday", "next week", "in three days") to YYYY-MM-DD using today's date.
-2. Prepend a new line to `databases/reminders/reminders.md`.
+2. Prepend a new line to the reminders file.
 3. Confirm: "Reminder saved for [date]: [what]."
 
 ### Check (called on session load by `substrate`)
@@ -71,12 +75,14 @@ Quarterly, offer to remove completed entries older than 90 days. Move them via t
 
 ## Conventions
 
-- New reminders go at the top of the file
+{{conventions}}
+
+- New reminders go at the top of the file.
 - Don't add reminders for things that belong in a real task manager (project work, multi-step deliverables). If the user's request looks task-shaped, ask: "This sounds like a task — want me to add it to [their task tool] instead of reminders?"
-- Don't spam on load. Use the summary form above if there are more than five.
+- Don't spam on load. Use the summary form if there are more than five.
 - Keep the file flat. One line per reminder.
 
 ## Dependencies
 
-- `substrate` skill delegates to this skill on session load
-- If `daily-briefing` is installed, it also delegates reminder surfacing to this skill
+- `substrate` skill delegates to this skill on session load.
+- If `daily-briefing` is installed, it also delegates reminder surfacing to this skill.

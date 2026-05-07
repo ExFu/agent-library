@@ -1,30 +1,29 @@
 ---
-name: writing-styles
-description: Write and edit in the user's voice, not Claude's defaults. Use whenever producing written output for or on behalf of the user. Runs a first-time intake to extract the user's voice into a profile if one doesn't exist yet, then applies that profile plus a universal anti-slop layer to every subsequent piece of writing. Triggers on "write this for me", "draft an email to X", "can you sound more like me?", "this doesn't sound right, fix it", "edit this in my style", "write a message to X", "help me reply to this", or any time the user asks Claude to produce or improve text that will go out under their name.
+name: {{username}}-writing-styles
+description: Write and edit in {{username}}'s voice, not Claude's defaults. Use whenever producing written output for or on behalf of {{username}}. Applies {{username}}'s personal voice profile plus a universal anti-slop layer to every piece of writing. Triggers on "write this for me", "draft an email to X", "can you sound more like me?", "this doesn't sound right, fix it", "edit this in my style", "write a message to X", "help me reply to this", or any time the user asks Claude to produce or improve text that will go out under their name.
 ---
 
-# Writing Styles
+**About this template:** This file is a template used by `setup-writing-styles` to generate each user's personal writing-styles skill. The frontmatter above is what the generated skill's frontmatter will look like. When `setup-writing-styles` runs, it fills in this template with the user's actual voice profile and packages the result as their personal writing-styles skill.
 
-Write in the user's voice, not Claude's. Two parts: a personal profile extracted once and reused, plus a universal anti-slop layer applied on top every time.
+---
 
-## First use: run the intake
+# Writing Styles — {{username}}
 
-If `context/me/writing-style.md` doesn't exist, run the intake before producing any writing for this user.
+Write in {{username}}'s voice, not Claude's. Two parts: a personal profile stored in the substrate and reused across sessions, plus a universal anti-slop layer applied on top every time.
 
-1. Ask them for three samples of their own writing. A range is useful — something casual, something professional, something longer.
-2. Read carefully. Pay attention to: sentence length and rhythm; vocabulary (words they use, words they avoid); openings and closings; register shifts between contexts; punctuation preferences (semicolons, exclamation marks); hedging vs directness; humour; how they handle disagreement.
-3. Write a profile at `context/me/writing-style.md` using the template below.
-4. Confirm with one line: "Profile saved. I'll use this whenever I'm writing for you. Tell me when it's wrong — the profile improves over time."
+## Voice profile
 
-Don't skip the intake. Writing in the wrong voice is worse than not writing — the user (and their readers) spot AI voice instantly and lose trust.
+{{username}}'s voice profile lives at `{{voice_profile_path}}`. Read it before producing any written output.
+
+If the file doesn't exist yet, tell {{username}} it's missing and offer to run `setup-writing-styles` to recreate it. Don't attempt to draft in their voice without it.
 
 ## Ongoing: apply the profile
 
 Before producing any written output:
 
-1. Read `context/me/writing-style.md`
-2. Draft using the profile
-3. Apply the anti-slop layer below
+1. Read `{{voice_profile_path}}`.
+2. Draft using the profile.
+3. Apply the anti-slop layer below.
 4. Re-read the draft. Anything still sounding like Claude? Rewrite.
 
 ## Anti-slop layer (universal)
@@ -80,44 +79,6 @@ These patterns signal AI-generated text regardless of the user's individual voic
 - Assume intelligence; don't lecture
 - State the point, then move on
 
-## Profile template
-
-Use this shape when writing `context/me/writing-style.md`:
-
-```
-# Writing style — [user name]
-
-version: 1
-last updated: YYYY-MM-DD
-
-## Voice
-One paragraph describing how they sound — the core feel of their writing.
-
-## Sentence patterns
-- Typical length
-- Rhythm (staccato / flowing / varied)
-- Punctuation preferences
-
-## Vocabulary
-- Words and phrases they use
-- Words and phrases they avoid
-
-## Register
-- When they're formal vs casual
-- How they open messages
-- How they close messages
-- How they handle disagreement
-
-## Hate list
-- Specific words, phrases, or patterns they've told me they dislike
-
-## Samples
-Two or three short excerpts from the intake — for reference when drafting.
-
-## Changelog
-- YYYY-MM-DD v1: Initial intake.
-```
-
 ## Drafting vs editing
 
 - **Drafting from scratch**: apply profile + anti-slop fully.
@@ -128,3 +89,8 @@ Two or three short excerpts from the intake — for reference when drafting.
 ## Iteration
 
 When the user pushes back ("I wouldn't say it like that", "too formal", "you still sound like AI"), update the profile and add a changelog entry. If a pattern keeps coming up, add it to the profile's hate list. The profile grows — that's the point.
+
+## Dependencies
+
+- Voice profile at `{{voice_profile_path}}`.
+- `setup-writing-styles` generates the initial profile and this skill.

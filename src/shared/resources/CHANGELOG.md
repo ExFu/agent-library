@@ -6,10 +6,11 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
-## Unreleased
+## v0.2.8 — 2026-05-07
 
 **Changed**
 - Substrate skill Step 1: when the substrate isn't accessible in the current session, the skill now invokes the working-folder picker (`request_cowork_directory`) directly rather than asking the user in text to add it. Hard constraint #6 added: never proceed without substrate access; no fallback to inference, guessed structure, or working from memory of prior sessions.
+- The `inbox`, `reminders`, and `writing-styles` skills have been split. The plugin now ships `setup-inbox`, `setup-reminders`, and `setup-writing-styles` — setup skills that capture user preferences and generate a per-user skill (`<username>-inbox`, `<username>-reminders`, `<username>-writing-styles`) that handles ongoing operations. The operational content lives in templates at `${CLAUDE_PLUGIN_ROOT}/templates/<name>-template.md`. Pattern parallel to how `exfu-create-wow` produces the `wow` skill. The substrate skill (Step 10) now delegates to whatever `*-reminders` or `*-inbox` skill is loaded in the session, rather than looking for the old generic names.
 
 **Added**
 - This CHANGELOG.md, for future-agent reference.

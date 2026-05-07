@@ -186,7 +186,7 @@ The team is managing sharing manually (emailing updates, a shared drive without 
 2. Tell the joiner plainly what this means: their Claude will read and write the local folder, but changes will not automatically reach teammates. They are responsible for sharing updates — by sending files directly, using whatever mechanism the team agreed on, or accepting that their substrate stays local.
 3. Make sure they've heard this clearly. Don't push them toward a different path, but don't minimise the trade-off either.
 
-Skills like `substrate`, `reminders`, and `inbox` work fine with a local folder. They just won't sync.
+Skills like `substrate` and any personal skills the user sets up (e.g. `<username>-reminders`, `<username>-inbox`) work fine with a local folder. They just won't sync.
 
 **Record the storage choice (do this before moving on).** Whichever path the joiner took, write `_meta/storage-backend.md` at the substrate root with two lines:
 
@@ -273,18 +273,18 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock — always installed:**
 - `skill-packaging` — for custom skills the joiner wants to create.
-- `substrate` — boot skill. Reads the ways-of-working guide, orients to both layers, surfaces reminders and inbox at session start.
+- `substrate` — boot skill. Reads the ways-of-working guide, orients to both layers, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 
 **Storage — activated based on the team's chosen backend (Step 5):**
 - `git-substrate-sync` — git path only. Handles pull, commit, push, and conflict surfacing for the shared layer.
 - `box-filesystem-management` — Box path only. Manages reads, writes, and file operations against the team's shared Box folder.
-- Local-only path: neither skill is registered as the storage layer. `substrate`, `reminders`, and `inbox` all work against the local folder directly.
+- Local-only path: neither skill is registered as the storage layer. `substrate` and any personal skills (e.g. `<username>-reminders`, `<username>-inbox`) work against the local folder directly.
 
 **Optional but high-value:**
-- `reminders` — personal reminders in the joiner's `databases/reminders/`.
-- `inbox` — personal quick-capture.
+- `setup-reminders` — one-time intake that generates the joiner's personal `<username>-reminders` skill for time-triggered nudges.
+- `setup-inbox` — one-time intake that generates the joiner's personal `<username>-inbox` skill for quick-capture.
 - `daily-briefing` (scheduled task) — morning briefing. Can include both personal and team-layer content.
-- `writing-styles` — voice intake plus anti-slop layer.
+- `setup-writing-styles` — voice intake from writing samples that generates the joiner's personal `<username>-writing-styles` skill.
 - `scope-skills` template — for creating discoverability skills for personal or shared scopes.
 
 **Reference resources:**

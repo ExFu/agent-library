@@ -199,7 +199,7 @@ No shared storage is provisioned via ExFu. Each team member's Claude works again
 
 1. Confirm the champion is choosing this deliberately. It is a valid choice — just be clear about the implications.
 2. Note that the team's wow navigation maps will each record `storage: local-only, sync managed by user`. Each member's Claude is isolated. If the champion later wants to introduce a sync layer, they can re-run the relevant setup steps.
-3. Substrate, reminders, and inbox all work fine locally. The install continues as normal; the shared-layer steps (seeding a shared context folder, shared scopes) are skipped or deferred.
+3. Substrate and any personal skills (e.g. `<username>-reminders`, `<username>-inbox`) all work fine locally. The install continues as normal; the shared-layer steps (seeding a shared context folder, shared scopes) are skipped or deferred.
 
 Make sure the champion understands: if they want colleagues to share context, they will need to send files manually. There is no automatic propagation.
 
@@ -316,18 +316,18 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock — always installed:**
 - `skill-packaging` — for custom skills the champion or team wants to create.
-- `substrate` — boot skill. Orients to both layers, surfaces reminders and inbox at session start.
+- `substrate` — boot skill. Orients to both layers, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 
 **Storage — activated based on the team's chosen backend (Step 6):**
 - `git-substrate-sync` — git path only. Handles pull, commit, push, and conflict surfacing for the shared layer and personal layer.
 - `box-filesystem-management` — Box path only. Manages reads, writes, and file operations against the team's shared Box folder.
-- Local-only path: neither skill is registered as the storage layer. Substrate, reminders, and inbox work against the local folder directly.
+- Local-only path: neither skill is registered as the storage layer. `substrate` and any personal skills (e.g. `<username>-reminders`, `<username>-inbox`) work against the local folder directly.
 
 **Optional but high-value (same as other plugins):**
-- `reminders` — personal reminders.
-- `inbox` — personal quick-capture.
+- `setup-reminders` — runs a one-time intake and generates the champion's personal `<username>-reminders` skill. That skill handles all ongoing reminder operations.
+- `setup-inbox` — runs a one-time intake and generates the champion's personal `<username>-inbox` skill. That skill handles all ongoing quick-capture and inbox review.
 - `daily-briefing` (scheduled task) — morning briefing, extensible to include team-layer content.
-- `writing-styles` — voice intake plus anti-slop layer.
+- `setup-writing-styles` — runs a voice intake from writing samples and generates the champion's personal `<username>-writing-styles` skill. That skill applies their voice profile to all subsequent writing.
 - `scope-skills` template — for personal or shared scopes.
 
 **Admin-only skills:**

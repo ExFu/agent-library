@@ -158,9 +158,11 @@ For solo installs without team context, there is typically no PII layer. That's 
 
 ### Step 10 — Check reminders and inbox
 
-If the `reminders` skill is installed, delegate to it: read the reminders file, surface anything due or overdue. If nothing is due, say nothing.
+Check whether a reminders skill is loaded in this session. The user's reminders skill is typically named `<username>-reminders` (e.g. `al-reminders`). Look for any installed skill whose name ends in `-reminders`. If one is loaded, delegate to it: read the reminders file, surface anything due or overdue. If nothing is due, say nothing.
 
-If the `inbox` skill is installed, delegate to it: check the count. If there are items, mention briefly ("Inbox has [n] items"). Don't force processing.
+Check whether an inbox skill is loaded in this session. The user's inbox skill is typically named `<username>-inbox`. Look for any installed skill whose name ends in `-inbox`. If one is loaded, delegate to it: check the count. If there are items, mention briefly ("Inbox has [n] items"). Don't force processing.
+
+If neither type of skill is loaded, skip these checks silently. Not every user has set up reminders or inbox yet — that's fine.
 
 These checks are fast and quiet. Session start is not a ceremony.
 
