@@ -1,0 +1,101 @@
+# ExFu plugins changelog
+
+This file tracks substantive changes to the ExFu plugin suite. Future Claude sessions can read it at `${CLAUDE_PLUGIN_ROOT}/resources/CHANGELOG.md` to understand what behaviour has shipped, when, and why. Useful for orientation when a skill's behaviour seems different from how it's described in older notes, or when reconstructing why a convention exists.
+
+Versions match the plugin manifests. Patch bumps cover bug fixes and small behaviour changes; minor bumps add features; major bumps make breaking changes.
+
+---
+
+## Unreleased
+
+**Changed**
+- Substrate skill Step 1: when the substrate isn't accessible in the current session, the skill now invokes the working-folder picker (`request_cowork_directory`) directly rather than asking the user in text to add it. Hard constraint #6 added: never proceed without substrate access; no fallback to inference, guessed structure, or working from memory of prior sessions.
+
+**Added**
+- This CHANGELOG.md, for future-agent reference.
+
+---
+
+## v0.2.6 — 2026-05-07
+
+**Added**
+- New `substrate-index` scheduled task (`shared/scheduled-tasks/substrate-index/`). Stdlib-only Python script walks every folder (skipping system folders, `_trash/`, `_meta/`), extracts Purpose + Contents from each README, writes `_meta/substrate-index.md`. Folder-only output, no allowlist; novel folders surfaced honestly. Caps fields at 120 chars, total at 50 KB.
+- `exfu-create-wow` skill: substrate-index registration is now a baseline part of every wow generation. Skill runs the indexer once on the spot for an immediate first index, creates the recurring scheduled task, hands it to the user for install. Not a buffet item.
+
+**Changed**
+- Substrate skill Step 4 now requires reading `_meta/substrate-index.md` on every load. Flags absence to the user with a clear remedy (register the scheduled task, or run the script manually).
+- `wow-template` gets a brief note: editorial layer (curated pointers) versus comprehensive layer (machine-walked nightly index).
+
+---
+
+## v0.2.5 — 2026-05-07
+
+**Added**
+- `_meta/storage-backend.md` handshake: install skills write a canonical record of the chosen storage backend (`git`, `box`, or `local`) at the substrate root. Substrate skill reads it on every session start to decide which verb vocabulary and storage-skill delegation to use.
+
+**Changed**
+- Substrate skill Step 1.5 detects storage backend from the handshake file (with inference fallback from `.git/` presence or Box-mount path heuristics).
+- Substrate skill Step 7 generalised with explicit subsections for git-backed, Box-backed, and local-only substrates. Each backend gets backend-appropriate verb vocabulary; the git-specific verb table is preserved but scoped clearly.
+- Substrate skill ongoing-behaviour: storage-skill delegation rule per backend (`git-substrate-sync` for git, `box-filesystem-management` plus `team-box-folders` for Box, direct filesystem for local-only).
+- All 3 install skills now write `_meta/storage-backend.md` after capturing the storage choice. Records also land in the wow navigation map for human-readable context.
+
+---
+
+## v0.2.4 — 2026-05-07
+
+**Added**
+- New `team-box-folders` skill (in `shared/skills/`, excluded from solo via build script). For team members and admins to organically create scope folders, share with colleagues, manage access. Covers the multi-folder reality of Box team substrates (per-org, per-team, per-scope sharing groups).
+
+**Changed**
+- `team-box-folder-provisioning`: removed the "if these dealbreakers, consider git" trade-off section. Decontamination principle: Box-using teams shouldn't see git referenced in their storage skills, and vice versa. Install entrypoints still mention all options because that's where the choice is made.
+- `box-filesystem-management` moved from `solo/skills/` to `shared/skills/`. Now ships in all 3 plugins so Box is a real option for team contexts.
+- Install-team Step 5 and install-team-admin Step 6 now offer three storage paths: git, Box shared folder, local-only.
+- `cross-cut-storage-architecture.md` (planning) rewritten for the 3-option model with trade-off table and multi-folder Box explanation.
+- `compliance-briefing.md` augmented with backend-specific commentary throughout: data flow, controls, ISO 27001 table notes, audit trail, backup, and access control all now cover git, Box, and local-only.
+
+---
+
+## v0.2.1 — 2026-05-05
+
+**Changed**
+- Plugin distribution format switched from `.tar.gz` to `.zip`. Build script writes versioned archives directly to `public/downloads/`.
+- `install.astro` page: archive section populated with v0.2.0 entries.
+
+---
+
+## v0.2.0 — 2026-05-05
+
+**Added** (initial v0.2.0 release; substantive substrate model revision)
+- Three-plugin split: `exfu-solo`, `exfu-team`, `exfu-team-admin`. Hard separation at plugin boundary; team-admin is a strict capability superset of team but installed separately so capability doesn't leak.
+- `substrate-guide.md` v5: top-level `orgs/` and `teams/` siblings, top-level `scopes/`, hard `context/` convention, two-layer model (substrate proper plus PII layer), CLAUDE.md guard at substrate root, permission-aware verb surfacing, non-techie verb vocabulary.
+- New `the-substrate-primer.md`: human-facing pre-install reading. Covers the four ingredients, discoverability asymmetry, build-by-doing, chief-of-staff framing.
+- New `exfu-primer.md`: human-facing intro to what ExFu is.
+- New `pii-layer-guidance.md`: framework-agnostic guidance for the two-layer model. Contract shape only; implementations are wrapping-plugin territory.
+- New `ecosystem-references.md`: catalogue of Anthropic and community resources, plus deep-research-as-a-move pattern.
+- New `teaching-artefacts.md`: catalogue of diagrams that ship with the plugins.
+- New `cross-cut-extension-and-wrapping.md` (planning): meta-principle that ExFu provides patterns; wrapping plugins (one per org, typically) or the installing Claude resolve org-specific decisions.
+- New `compliance-briefing.md` (team-admin only): material the substrate champion can hand to IT or security teams.
+- `exfu-start` orchestrator: first-run detection. New users get the install entrypoint loaded immediately, no triage menu.
+- 3 install entrypoints (one per variant) with multi-org/team question and CLAUDE.md guard creation.
+- New admin-only skills in team-admin: `team-repo-provisioning`, `team-shared-skills-authoring`, `team-onboard-member`, `exfu-upgrade-from-team-to-admin`.
+- New `git-substrate-sync` skill (shared, excluded from solo): wraps git operations safely for substrate use.
+- New `exfu-migrate-from-fetch-model` skill: handles the upgrade path from the previous fetch-from-URL install model.
+
+**Changed**
+- All 18 SKILL.md files: descriptions rewritten with thicker context (a Claude reading them cold has enough grounding) and real-user-language triggers (verbs and substance, not insider vocabulary). Bodies that lacked Why got a Why sentence added.
+- Substrate skill rewritten (98 → 265 lines): boot reads new v5 layout, creates CLAUDE.md guard at substrate root, multi-org/team aware, expects optional permission lookup and PII connector from wrapping plugin or install.
+- Author field corrected to `Alastair Brayne` across all manifests and references (was `Whaley`, derived incorrectly from the company name `WhaleyBear Ltd`).
+
+---
+
+## v0.1.0 — 2026-05-02
+
+Initial 3-plugin release. Replaces the previous fetch-from-URL install model with a self-contained Claude Code plugin install model.
+
+**Added**
+- exfu-solo: 11 skills including `box-filesystem-management` for solo storage.
+- exfu-team: 11 skills, `git-substrate-sync` as the team storage skill.
+- exfu-team-admin: 15 skills, including `team-repo-provisioning` and other admin-only skills.
+- Skills, resources, and templates ported from the previous fetch-from-URL install model.
+- Build pipeline (`plugin/build/build.sh`) with shared-plus-variant composition and `--dist` zip generation.
+- `install.astro` page with 3-plugin decision helper.

@@ -19,15 +19,34 @@ Read these before doing anything else. They apply for the entire session.
 
 5. **Respect the two-layer boundary at all times.** The substrate proper is for shareable, non-PII knowledge. The PII layer is for anything identifiable. This boundary is non-negotiable regardless of what the user asks.
 
+6. **Never proceed without substrate access.** If the substrate folder can't be reached in this session (not mounted as a working folder, no connector available, file reads return nothing), halt and ask the user to add it as a working folder before continuing. Do not fall back to inference, do not guess at folder structure, do not work from "memory" of past sessions, do not invent a degraded workflow. The substrate is the source of truth; without it you have nothing to operate on, and any attempt to keep going is hallucination.
+
 ---
 
 ## What to do when this skill loads
 
-### Step 1 — Find the substrate root
+### Step 1 — Find the substrate root and confirm access
 
-The substrate core lives in a knowledge base (Box for solo installs, a git repository for team installs). Check whether the folder is mounted in this session (filesystem access available) or whether you need to use the connector.
+The substrate core lives in a knowledge base. It must be readable in this session for the rest of the boot sequence to work. Two access modes:
 
-If you're not sure where the knowledge base is, check the Global Instructions — the path should be noted there. If it's not, ask the user.
+- **Filesystem (preferred when available).** The substrate folder is added as a working folder in Cowork. Direct reads/writes; supports delete, move, rename.
+- **Connector (when filesystem isn't available).** Mobile sessions, unmounted contexts. Reads and basic writes, slower than filesystem.
+
+Check, in order:
+
+1. Look at the Global Instructions for the substrate root path. The install conversation noted this there.
+2. Try to read the substrate root. If filesystem is mounted as a working folder, direct access works. If it isn't, the relevant connector should be available.
+3. If neither works, the substrate is not accessible from this session.
+
+**If the substrate isn't accessible, halt and surface the working-folder picker.** Don't ask the user in text to add the folder; invoke `request_cowork_directory` directly so they can pick the right folder via the dialog.
+
+Wrap the invocation with a brief plain-language note:
+
+> "I can't reach your substrate from this session. Picking your substrate folder now."
+
+Then call `request_cowork_directory`. When it returns, retry Step 1 from the top with the new path. If the picker is dismissed without a selection, tell the user the skill can't continue without substrate access and stop.
+
+Do not continue past this step without confirmed access. Per Hard constraint #6: no inference, no guessing, no "I'll work from what I remember". The substrate has to be there for this skill to do its job.
 
 ### Step 1.5 — Detect the storage backend
 
