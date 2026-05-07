@@ -55,6 +55,16 @@ If the file doesn't exist yet, the substrate may not be fully set up. Tell the u
 
 ### Step 4 — Orient to the directory structure
 
+Read `_meta/substrate-index.md` from the substrate root. This is the auto-generated folder map, updated nightly by the substrate-index scheduled task. It gives you a current, complete picture of every folder in the substrate with a one-line Purpose and Contents note for each.
+
+If the file is not there, flag this to the user: either the substrate-index scheduled task has not been registered yet, or it has not run yet. Suggest registering it via the Cowork Scheduled tab (the task prompt is in `${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/TASK.md`), or running the script manually for an immediate first index:
+
+```
+python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <substrate-root>
+```
+
+The index is part of the substrate's expected baseline. In steady state, a substrate without `_meta/substrate-index.md` is missing a key orientation aid.
+
 Read the top-level folder listing of the substrate root. You're looking for:
 
 - `context/` — personal/default context

@@ -51,6 +51,8 @@ Where things live in this user's substrate, especially where it differs from the
 - The substrate currently follows the standard ExFu starter layout: `context/`, `scopes/`, `databases/`, `scratch/`, plus `_meta/` and `_trash/`.
 - *(Note any deviations or additions here as they emerge — e.g. "scopes are organised under `scopes/clients/<client-name>/`", or "user has added a top-level `references/` folder for industry research".)*
 
+The substrate-index file at `_meta/substrate-index.md` is updated nightly with a fresh folder-level map. Treat the user-curated pointers above as the editorial layer ("here's what matters most, by hand"); treat the index as the comprehensive layer ("here's everything that exists, machine-walked").
+
 ### High-traffic files Claude should know exist
 
 Pointers to specific files Claude should be aware of without having to discover them:
