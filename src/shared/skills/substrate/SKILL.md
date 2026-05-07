@@ -29,6 +29,17 @@ The substrate core lives in a knowledge base (Box for solo installs, a git repos
 
 If you're not sure where the knowledge base is, check the Global Instructions — the path should be noted there. If it's not, ask the user.
 
+### Step 1.5 — Detect the storage backend
+
+Read `_meta/storage-backend.md` if it exists. The install conversation writes this file to record what the user picked: one of `git`, `box`, or `local`. The detected backend determines which verb vocabulary to surface, whether sync logic applies, and which storage skill to delegate to.
+
+If the file doesn't exist, infer:
+- A `.git/` directory at the substrate root means git-backed.
+- The substrate root path inside a Box mount or `~/Library/CloudStorage/Box-Box/...` style location means Box-backed.
+- Otherwise, default to `local` (no automated sync layer; the user manages propagation).
+
+Note the backend for the rest of the session. Subsequent steps adapt to it.
+
 ### Step 2 — Check for the CLAUDE.md guard
 
 At the substrate root, check whether `CLAUDE.md` exists.
@@ -75,17 +86,19 @@ Check whether a wrapping plugin is active. Look for a `_meta/wrapper.json` or `_
 
 If no wrapper is present, fall back to install-time-resolved values stored in `_meta/` (e.g. `_meta/permissions.md` or `_meta/pii-connector.md`). If neither exists, use safe defaults (member permissions, no PII layer).
 
-### Step 7 — Permission lookup (git-backed substrates only)
+### Step 7 — Permissions and verb surfacing
 
-For git-backed substrates, determine what operations to surface. The permission lookup is provider-specific and resolved by the wrapping plugin or at install time. The contract is:
+What this step does depends on the storage backend detected in Step 1.5.
+
+**Git-backed substrates.** Determine the user's permission level via a provider-specific lookup. The lookup is resolved by the wrapping plugin or at install time. Contract:
 
 ```
 lookup(remoteUrl: string) -> "admin" | "maintainer" | "member" | "read-only"
 ```
 
-The lookup is configured by the wrapping plugin or written into `_meta/` at install time. When no lookup is configured, default to `"member"` and surface a note to the user that permission detection wasn't available.
+Configured by the wrapper or written into `_meta/permissions.md` at install time. When no lookup is configured, default to `"member"` and surface a brief note that permission detection wasn't available.
 
-Based on the result, surface verbs as follows:
+Surface verbs based on the result:
 
 | Permission level | Verbs to surface |
 |---|---|
@@ -95,7 +108,11 @@ Based on the result, surface verbs as follows:
 
 Do not mention git commands at any point. Users interact through the verbs above.
 
-**When checking for updates:** prefer a non-LLM approach first. Compare the local HEAD commit hash against the remote HEAD hash. Only invoke a full sync process when there is a confirmed delta. Tokens are consumed only when needed.
+**When checking for updates (git only):** prefer a non-LLM approach first. Compare the local HEAD commit hash against the remote HEAD hash. Only invoke a full sync process when there is a confirmed delta. Tokens are consumed only when needed.
+
+**Box-backed substrates.** Box's own access controls determine what files the user can read and write; no separate permission lookup is needed. Surface a backend-appropriate verb set: `save` (write to the relevant Box folder), `check for updates` (rare; Box auto-syncs in most cases), `share for review` (notify a colleague to look — no built-in PR concept), `fix clashes` (walk the user through Box's version history if a sync conflict arose). The git-specific verbs (`approve change`, `review`, `reject`) do not apply.
+
+**Local-only substrates.** The user has full rights to their local filesystem. No permission lookup, no fallback note. Verbs collapse to direct filesystem operations: `save` (write the file), `check for updates` (no remote to check; could mean "show me what changed since last session" if useful). Sharing-and-review verbs do not apply because there is no automated propagation layer; the user handles distribution manually.
 
 ### Step 8 — Read the current folder's README
 
@@ -258,6 +275,7 @@ These are internalised here so they're available even when the guide hasn't been
 
 - **Follow substrate conventions.** Folder structure, naming (lowercase hyphen-separated, date-prefix for time-sensitive files), README maintenance, nothing casual at root.
 - **Use the right access mode.** Filesystem when mounted, connector when not.
+- **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Box-backed substrates, defer file CRUD to `box-filesystem-management` and folder/sharing changes to `team-box-folders` (or `team-box-folder-provisioning` if it's a champion's initial setup). For local-only substrates, direct filesystem operations are sufficient.
 - **Maintain discoverability.** When you create new folders or content, create or update READMEs with dependency links. When you create a new scope, set up or point to its scope skill.
 - **Respect the scope/context distinction.** When deciding where to save new material, apply the fuzzy-zone test. When in doubt, put it in `scratch/` and flag it for later placement.
 - **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.

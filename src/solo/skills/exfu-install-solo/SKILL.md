@@ -118,6 +118,17 @@ If the user says local-only: "We'll set things up locally. Mobile and scheduled-
 
 If the user names a different cloud provider: "Most cloud drives work structurally the same way — the substrate is just files in a folder. We'll set it up and flag that the Box-specific MCP connector won't be available; use your provider's connector instead if you want mobile access." Proceed.
 
+**Record the storage choice (do this before moving on).** Write `_meta/storage-backend.md` at the substrate root with two lines:
+
+```
+backend: <box|local|other>
+remote: <Box folder ID or path, "none" for local, or provider name for other>
+```
+
+Also note the choice in the wow navigation map for human-readable context (e.g. `storage: Box, knowledge base at ~/Library/CloudStorage/Box-Box/Substrate`, or `storage: local-only, sync managed by user`).
+
+The substrate skill reads `_meta/storage-backend.md` on every session start to know which verb vocabulary to surface and which storage skill to delegate to. Without it, the skill falls back to inference, which is less reliable.
+
 ### Step 4 — About-me
 
 *"Tell me about yourself — what you do, what your work week looks like, what's currently on your plate."*

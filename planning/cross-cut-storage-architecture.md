@@ -2,58 +2,97 @@
 
 ## Why
 
-Where the user's substrate files live determines what works and what breaks. Cloud-drive-mounted-locally has been the canonical answer (Box) but has real failure modes — most painfully, offline-cached files that don't auto-trigger downloads when Claude reads them, leading to silent empty-file failures. Shared cloud drives for teams have additional failure modes: contention, eventual-consistency surprises, multiple clients writing concurrently.
+Where the user's substrate files live determines what works and what breaks. Storage backend affects file access speed, conflict handling, audit trail, access control, backup story, and onboarding complexity. It's upstream of nearly everything else.
 
-The storage architecture is upstream of nearly everything else. All three plugins depend on it. We need a clear architectural decision, with the trade-offs visible, before T2 work proceeds on any plugin.
+The storage backend is a **runtime choice made during install**, not predetermined by which plugin variant the user has. Solo, team, and team-admin installs all offer the same three options. The champion or user picks based on their team's profile and constraints.
 
-## How
+---
 
-### Solo plugin: stay with Box for now, with caveats
+## Three options
 
-Box remains the canonical recommendation for solo users at v1, despite the offline-caching issue. Reason: nothing else is obviously better yet, and migrating to a different mechanism is a project of its own. Document the offline-caching limitation; explain to users that they should not rely on space-saving offlining for files Claude needs to access.
+### 1. Git repo
 
-**Add a planning task to keep exploring alternatives.** Candidates worth evaluating:
-- Direct local filesystem (no cloud drive at all) — fast, no caching issues, but loses mobile and multi-device access. Pair with a Mac-mini-as-always-on for users who want background scheduled tasks plus mobile access via MCP to that same machine.
-- Obsidian vault (local) — same trade-offs as direct local, plus optional Obsidian Sync for multi-device.
-- Other cloud-drive options — Google Drive, OneDrive, Dropbox — likely have similar failure modes to Box; worth checking.
-- Self-hosted sync (Syncthing, etc.) — control over caching behaviour, more setup overhead.
+Each user has a local clone of a private git repository. Pulling and pushing keeps everyone aligned. The substrate filesystem is local to each machine; git is the propagation layer.
 
-The right answer probably depends on the user's profile. A solo user with one machine and no need for mobile access can use direct local. A solo user spanning multiple devices needs *something* that reaches them all.
+**Fits when:** the team is comfortable with git, has a git hosting provider (GitHub, GitLab, Bitbucket, on-prem), or has compliance requirements that need a formal audit trail of content changes.
 
-### Team and team-admin plugins: git, not shared cloud drive
+**What you give up:** higher technical bar for joiners; personal substrates need to be managed separately from the shared repo; merge conflicts require resolution.
 
-Teams use git as the substrate-sync mechanism. Each user has a local clone of the team's substrate repo. Pulling and pushing keeps everyone aligned. The substrate filesystem is local to each machine; git is the propagation layer.
+**Compliance notes:** git history provides a full audit trail — every change records author, timestamp, and diff. This is the strongest posture for ISO 27001 / SOC 2 / regulated environments. Access control is at repo and branch level; consistent across all substrate content.
 
-The `git-substrate-sync` skill is shared between the team and team-admin plugins. One source file lives at `plugin/src/team/skills/git-substrate-sync/` and is bundled into both plugins at build time.
+**Skills:** `git-substrate-sync` (shared between team and team-admin plugins) handles pull-before-write, commit, push, and merge-conflict surfacing. `team-repo-provisioning` handles one-time repo creation for champions.
 
-Why this works better than shared cloud drives for teams:
-- No contention or eventual-consistency surprises. Conflicts surface as merge conflicts, which are explicit and resolvable.
-- Versioning and history are first-class. The team can see what changed, when, by whom.
-- Permissions are folder-level via git's branch and access controls (or via repo-level for simpler cases).
-- Works under most corporate IT policies that allow GitHub/GitLab/Bitbucket.
-- ISO 27001 friendly: data lives on controlled endpoints, propagated through controlled channels.
+### 2. Box shared folder(s)
 
-What this requires:
-- A git-substrate-sync skill that walks Claude through the safe operations (pull before write, commit with sensible messages, push after, handle merge conflicts gracefully).
-- Guidance on what should and shouldn't go in the team substrate (binaries, sensitive data, personal-only files).
-- A clear story for how a team member's *personal* substrate (`context/me/`, personal scopes) coexists with the team's substrate. Probably: personal substrate is a separate, non-shared local folder; the team substrate is the shared git repo. The user's `wow` skill points at both.
+The team's substrate lives in one or more Box shared folders. Each team member accesses their relevant folders via Box Drive mounted locally (or via the Box MCP connector on mobile). No git involved.
 
-### Cross-plugin
+**Fits when:** the team prefers familiar cloud-drive UX, has members not comfortable with git, or already has Box as the org's standard file-sharing tool.
 
-The substrate skill (`box-filesystem-management` and its successors) needs to abstract the access mechanism enough that Claude doesn't have to care whether it's Box, direct local, or git-synced. The skill teaches Claude *the right operations for this user's setup*, regardless of what's underneath.
+**What you give up:** no native file-diff version history (Box retains file versions but not content diffs); no merge-conflict surfacing (two members writing the same file in close succession can overwrite each other); audit trail is access-only (who opened what), not content-change history. More moving parts: team substrates in Box typically need multiple folders (see below).
 
-Worth considering: a generic `filesystem-management` skill that accommodates all variants, with the specific mechanism noted in the user's `wow` navigation map. Or per-mechanism skills (`box-filesystem`, `git-filesystem`, `local-filesystem`) and the install picks the right one based on the user's setup.
+**Compliance notes:** Box tracks access events but not file-level diffs. Acceptable for many enterprise contexts where Box's existing access controls and logs are already approved. Not the right fit for environments requiring a full content-change audit trail.
 
-## What (initial)
+**Skills:** `box-filesystem-management` handles reads, writes, and file operations. `team-box-folder-provisioning` handles one-time folder creation and sharing setup for champions.
 
-- Solo v1 stays on Box, with the caveat documented and a research task open to explore alternatives.
-- Team and team-admin v1 both use git. They share a single `git-substrate-sync` skill. T2 work for both team variants assumes git from the start.
-- The current `box-filesystem-management` skill probably becomes the basis for a generalised filesystem skill, or stays Box-specific while a new git-flavoured skill stands alongside it.
+#### Box and multiple folders
+
+A key difference from git: Box does not work like a single repo with uniform access. Different scopes have different access groups — some shared with the whole team, some with a subset. This means a team substrate in Box is typically **multiple folders**:
+
+- One folder per org (shared with everyone in the org) — holds org-wide context.
+- One folder per team — holds team-level conventions, databases, shared skills. Shared with all team members.
+- One folder per scope (project, deal, ongoing work area) — holds that scope's context and planning. Shared only with the people working on that scope.
+- Personal folders per team member — not shared; each person's `context/me/` and personal scopes.
+
+Each folder has its own sharing configuration. The champion creates and shares them; colleagues accept invitations. There is no single "clone" step like git.
+
+### 3. Local-only / custom
+
+Each team member's Claude works against a local folder on their own machine. No automatic sync. Sharing happens manually or via a mechanism the team manages themselves (their org's existing file infrastructure, manual file exchange, Obsidian Sync, Syncthing, etc.).
+
+**Fits when:** the team has no compliance requirement for a central audit trail, already has its own file-sharing infrastructure, or simply wants substrate that works without any additional tooling.
+
+**What you give up:** no automatic propagation of shared context; substrate champion must manually distribute any shared content; no central audit trail.
+
+**Compliance notes:** no central audit at all from ExFu's side. The team is responsible for whatever logging or backup their own mechanism provides. Not suitable for environments with formal audit requirements unless the team's own infrastructure covers it.
+
+**Skills:** neither `git-substrate-sync` nor `box-filesystem-management` is registered as the storage layer. The `substrate` skill still works, against the local folder directly.
+
+---
+
+## Trade-off summary
+
+| | Git | Box (multi-folder) | Local-only |
+|---|---|---|---|
+| Onboarding complexity | Medium (git CLI, clone) | Low (accept folder invitations) | Very low (nothing to set up) |
+| Access control | Repo/branch-level, consistent | Per-folder, varies by scope | None centrally |
+| Audit trail | Full (author, timestamp, diff) | Access logs only | None (unless team adds it) |
+| Conflict handling | Explicit merge conflicts | Silent overwrite risk | N/A (no shared writes) |
+| Backup | Remote is canonical backup | Box's version retention + org backup policy | Local machine backup only |
+| Per-scope sharing granularity | Coarse (whole repo or branch) | Fine (folder-by-folder) | N/A |
+| Good fit for regulated environments | Yes | Sometimes | No |
+
+---
+
+## The wrapping principle still applies
+
+Orgs can wrap any of these options with their own custom storage solutions. If an org wants a SharePoint backend, a proprietary sync layer, or a managed secrets vault, they can wrap the ExFu substrate conventions around that infrastructure. The skills describe patterns; the mechanism beneath can be swapped by anyone who wants to invest in the wrapping work.
+
+See `cross-cut-extension-and-wrapping.md` for the wrapping principle in full.
+
+---
+
+## Cross-plugin
+
+The storage skill (`box-filesystem-management` for Box, `git-substrate-sync` for git) abstracts the access mechanism. Skills and resources in the substrate don't need to know which backend is active — they read and write files; the storage skill handles the how.
+
+The install records the chosen backend in the `wow` navigation map (`storage: git`, `storage: box`, or `storage: local-only`) so every future session knows what mechanism is in play.
+
+---
 
 ## Open questions
 
-- Solo with multi-device access: what's the recommended path if the user has both a desktop and wants Claude on mobile? Box still wins on that axis despite the offline-cache pain, until something better appears. Worth surfacing as a "this is the trade-off" moment in install conversations.
-- Git for teams: does this work over private/internal git servers (GitLab on-prem, etc.) without modification, or are there install steps specific to the user's git setup? Probably the latter — flag for T2 of the team plugin.
-- Conflict-resolution UX: when two team members edit the same substrate file and create a merge conflict, how does the team member see and resolve it? Their Claude probably handles this via the git-sync skill, but the UX needs design.
-- Backup story: with git-sync, the remote is the backup. With Box, Box is the backup. With direct local, there is no backup unless the user adds one. Each path has different recommendations.
-- Encryption-at-rest: does the team plugin need to recommend or require disk encryption on participating machines? Likely yes for ISO 27001 conversations.
+- **Per-scope Box folder sharing:** when a scope changes team membership, the champion needs to update Box sharing manually. Is there a convention for surfacing when sharing configs are stale? (E.g. a `_meta/folder-map.md` that includes expected sharing groups, reviewed quarterly.)
+- **Cross-folder skills:** some skills may need to read across multiple Box folders (e.g. a daily briefing pulling from team context and a current-scope folder). What's the convention for substrate-spanning reads in Box? The skill currently needs the relevant folder IDs configured; this may need a more structured approach.
+- **Solo multi-device story:** a solo user spanning desktop and mobile still benefits from a cloud-backed option (Box or git). The right answer depends on their comfort with git vs Box. Worth surfacing as an explicit choice moment in the solo install rather than defaulting.
+- **Local-only backup:** no built-in backup story. The install should prompt local-only users to confirm they have machine-level backup in place, and include this in the onboarding reminder.
+- **Encryption at rest:** for all three backends, disk encryption on participating machines is recommended and required for many ISO 27001 implementations. The compliance briefing covers this; the install should confirm it.

@@ -1,17 +1,21 @@
 ---
 name: box-filesystem-management
-description: Governs how Claude manages files in the user's Box knowledge base — the cloud folder that serves as their persistent substrate storage. Because Box has limitations (no native move or delete in the MCP connector, offline-caching quirks), Claude needs specific workarounds to operate reliably on the user's behalf. Use whenever Claude needs to read, write, organise, or clean up files in this knowledge base. Triggers on "save this", "organise my files", "move this to the Acme folder", "where did that file go?", "get rid of that note", or any instruction involving reading, writing, moving, or deleting content in the knowledge base.
+description: Governs how Claude manages files in a Box knowledge base — the cloud folder that serves as persistent substrate storage. Applies to personal substrates (solo users) and to team-shared substrates where the team's champion has chosen Box as the shared storage backend. Because Box has limitations (no native move or delete in the MCP connector, offline-caching quirks), Claude needs specific workarounds to operate reliably. Use whenever Claude needs to read, write, organise, or clean up files in a Box-backed knowledge base. Triggers on "save this", "organise my files", "move this to the Acme folder", "where did that file go?", "get rid of that note", "save that for the team to see", "share this with the team's folder", "where does our team keep stuff?", or any instruction involving reading, writing, moving, or deleting content in a Box-backed knowledge base.
 ---
 
 # Box Filesystem Management
 
-Box is the storage layer for this user's substrate. Claude manages the knowledge base files on the user's behalf — the user rarely needs to touch Box directly. This skill exists because Box's MCP connector has real limitations (no native delete or move, offline-caching quirks) that require specific workarounds, and because naming and trash conventions need to be consistent across every session for the knowledge base to remain navigable.
+Box is the storage layer for this substrate. Claude manages the knowledge base files on the user's behalf — the user rarely needs to touch Box directly. This skill applies whether the knowledge base is a personal one (solo user) or a team-shared one (where the team's champion chose Box as the shared storage backend). The same workarounds, naming conventions, and hygiene rules apply in both cases.
+
+This skill exists because Box's MCP connector has real limitations (no native delete or move, offline-caching quirks) that require specific workarounds, and because naming and trash conventions need to be consistent across every session for the knowledge base to remain navigable.
 
 ## How Claude manages this knowledge base
 
 Claude is the primary manager of this Box knowledge base. The user will typically not interact with Box files directly — all organisation, filing, moving, and deletion is handled by Claude on their behalf.
 
 The user may occasionally browse Box Drive on their own machine — that's fine. They should not manually rename, move, or delete files. If Claude detects the user has made manual changes, reconcile the state at the start of the next session.
+
+**Team-shared substrates:** when Box is the team's shared storage backend, multiple team members access the same shared folder. Claude reads from and writes to it on behalf of each member. Box does not provide file-level conflict detection: two team members writing to the same file in close succession can overwrite each other's changes. Mitigate this by writing promptly after making changes and keeping shared files focused and single-author where possible. If a file's content looks inconsistent with what the team member last wrote, surface this before overwriting.
 
 ## Access mode: local filesystem vs Box connector
 
@@ -90,5 +94,6 @@ Apply these consistently regardless of access mode:
 ## Behaviour rules
 
 - **Confirm before destructive operations.** Before trashing a file or overwriting content, confirm with the user unless the instruction was unambiguous.
+- **No credentials or PII.** Never write API keys, passwords, government IDs, financial account numbers, or raw medical records into the knowledge base. This applies equally to personal and team-shared substrates. In a shared context, a credential written to Box is visible to every team member with folder access.
 - **External sharing constraint (connector only).** The Box connector restricts uploads to folders that are not externally shared. If an upload fails for this reason, report it clearly and suggest the user adjust the folder's sharing settings in Box Drive.
 - **Large binaries.** Flag move/copy limitations for files over ~10 MB before attempting. Offer to create a fresh version at the destination instead of retrieving and re-uploading the original.

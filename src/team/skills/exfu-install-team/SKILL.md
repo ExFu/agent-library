@@ -188,7 +188,16 @@ The team is managing sharing manually (emailing updates, a shared drive without 
 
 Skills like `substrate`, `reminders`, and `inbox` work fine with a local folder. They just won't sync.
 
-Record in the wow navigation map: `storage: local-only, sync managed by user`.
+**Record the storage choice (do this before moving on).** Whichever path the joiner took, write `_meta/storage-backend.md` at the substrate root with two lines:
+
+```
+backend: <git|box|local>
+remote: <repo URL for git, top-level Box folder ID/path for Box, "none" for local>
+```
+
+Also note the choice in the wow navigation map for human-readable context (e.g. `storage: git via github.com/team/repo`, `storage: Box shared folders under the team's drive`, or `storage: local-only, sync managed by user`).
+
+The substrate skill reads `_meta/storage-backend.md` on every session start to know which verb vocabulary to surface and which storage skill to delegate to. Without it, the skill falls back to inference, which is less reliable.
 
 ### Step 6 — Personal layer setup
 

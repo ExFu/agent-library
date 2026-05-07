@@ -203,6 +203,15 @@ No shared storage is provisioned via ExFu. Each team member's Claude works again
 
 Make sure the champion understands: if they want colleagues to share context, they will need to send files manually. There is no automatic propagation.
 
+**Record the storage choice (do this before moving on).** Whichever path the champion took, write `_meta/storage-backend.md` at the team substrate's root (and the champion's personal substrate root if separate) with two lines:
+
+```
+backend: <git|box|local>
+remote: <repo URL for git, top-level Box folder ID/path for Box, "none" for local>
+```
+
+Also note the choice in the wow navigation map for human-readable context. The substrate skill reads `_meta/storage-backend.md` on every session start to know which verb vocabulary to surface and which storage skill to delegate to. Without it, the skill falls back to inference, which is less reliable. The champion's onboarding pack template should also tell new joiners that their copy of `_meta/storage-backend.md` will be created by their install conversation, matching the team's choice.
+
 ### Step 7 — Shared-substrate seeding
 
 With the repo in place, set up the recommended initial structure. Walk the champion through each piece — not as checkbox execution, but as design decisions:

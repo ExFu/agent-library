@@ -14,13 +14,23 @@ This document covers what ExFu configures and controls. It does not cover Anthro
 
 ## 1. Data flow overview
 
-**What data the substrate holds.** The team substrate is a collection of plain-text files (primarily markdown) stored in a git repository. Contents typically include: team conventions and ways of working, shared context about the team and its work, shared skills (instructions for Claude), and personal substrates for each team member (context about them, their active work areas, their preferences). The substrate does not hold production data, customer records, or system credentials. See the hygiene rules section below for what must not be in the substrate.
+**What data the substrate holds.** The team substrate is a collection of plain-text files (primarily markdown). Contents typically include: team conventions and ways of working, shared context about the team and its work, shared skills (instructions for Claude), and personal substrates for each team member (context about them, their active work areas, their preferences). The substrate does not hold production data, customer records, or system credentials. See the hygiene rules section below for what must not be in the substrate.
 
-**Where it lives.** The git repository lives wherever the organisation chooses to host it: self-hosted on internal infrastructure, on a hosted git provider (GitHub, GitLab, Bitbucket), or a private instance. The choice of git remote is entirely within the organisation's control. ExFu does not operate or have access to the repository.
+**Where it lives.** The substrate lives wherever the substrate champion chose during install. Three options:
 
-**How it reaches team members.** Each team member's Claude instance pulls from the git repository via the `git-substrate-sync` skill. Sync happens on demand (at session start or when the user triggers it) and writes to the local filesystem. The substrate files live on each team member's local machine, inside their Claude substrate directory. There is no ExFu-controlled relay or intermediary.
+- **Git repository.** The repo lives wherever the organisation chooses to host it: self-hosted on internal infrastructure, or a hosted git provider (GitHub, GitLab, Bitbucket, or a private instance). The choice of git remote is entirely within the organisation's control. ExFu does not operate or have access to the repository.
+- **Box shared folder(s).** The substrate lives in one or more Box folders the champion created and shared with team members. Box is the org's own Box account; ExFu does not operate or have access to it. Team substrates in Box typically span multiple folders (one per org, one per team, one per scope) because different scopes have different sharing groups.
+- **Local-only / custom.** Each team member's substrate lives on their own machine. There is no shared central store via ExFu. Any propagation mechanism the team uses is outside ExFu's scope and control.
 
-**What ExFu receives.** Nothing. Once the plugin is installed, all operations happen locally and between the user's Claude instance and the git remote. ExFu does not receive telemetry, substrate contents, or any other data from installed plugins. The plugin is a bundle of files, not a connected service.
+**How it reaches team members.** Delivery depends on the chosen backend:
+
+- Git: each team member's Claude instance pulls from the git repository via the `git-substrate-sync` skill. Sync happens on demand and writes to the local filesystem.
+- Box: each team member accesses their shared folders via Box Drive mounted locally, or via the Box MCP connector. Files live in Box and are read by Claude on demand.
+- Local-only: no automatic propagation. Each member's Claude reads from their own local folder.
+
+In all cases, there is no ExFu-controlled relay or intermediary.
+
+**What ExFu receives.** Nothing. Once the plugin is installed, all operations happen locally and between the user's Claude instance and their chosen storage backend. ExFu does not receive telemetry, substrate contents, or any other data from installed plugins. The plugin is a bundle of files, not a connected service.
 
 **What Anthropic receives.** Anthropic processes the contents of Claude conversations in accordance with their standard terms. When Claude reads substrate files as part of a conversation, those file contents are part of the conversation context that Anthropic processes. Teams with strict data handling requirements should review Anthropic's enterprise data handling terms and consider whether a Claude enterprise agreement with appropriate data processing commitments is appropriate.
 
@@ -28,13 +38,25 @@ This document covers what ExFu configures and controls. It does not cover Anthro
 
 ## 2. Recommended controls
 
-**Git repository access control.** The substrate repository should use your standard git access management. At minimum: the substrate champion has write access; team members have read access; the repository is private. Use your organisation's existing git hosting access policies (SSH keys, SSO, short-lived tokens). Review access when team members leave.
+**Storage access control.** Access controls depend on the chosen backend:
 
-**Encryption at rest.** The substrate files live on each team member's local disk. Disk encryption (FileVault on macOS, BitLocker on Windows) is strongly recommended and is required by many ISO 27001 implementations. This is the team member's machine configuration, not the substrate's — but the substrate champion should confirm it is in place for everyone who handles sensitive substrate content.
+- *Git:* use your standard git access management. At minimum: the substrate champion has write access; team members have read access; the repository is private. Use your organisation's existing git hosting access policies (SSH keys, SSO, short-lived tokens). Review access when team members leave.
+- *Box:* access is managed via Box folder sharing. Each folder can have different sharing groups. The champion controls who is invited to each folder and at what permission level (Viewer, Editor, Co-owner). Remove team members from all shared folders when they leave. Because sharing is per-folder, access reviews require checking each folder independently.
+- *Local-only:* no central access control. Each member's substrate is on their own machine. Machine-level controls (login, disk encryption) are the relevant layer.
 
-**Encryption in transit.** Git operations use HTTPS or SSH — both encrypted in transit. No plaintext transport.
+**Encryption at rest.** The substrate files live on each team member's local disk, regardless of storage backend. Disk encryption (FileVault on macOS, BitLocker on Windows) is strongly recommended and is required by many ISO 27001 implementations. This is the team member's machine configuration, not the substrate's — but the substrate champion should confirm it is in place for everyone who handles sensitive substrate content.
 
-**Access review cadence.** When someone leaves the team, remove their access to the substrate repository and remove their personal substrate folder from the shared layer. Git history will retain a record; the live repository should not retain access for former members.
+**Encryption in transit.**
+
+- *Git:* uses HTTPS or SSH — both encrypted in transit.
+- *Box:* uses HTTPS for all file operations — encrypted in transit.
+- *Local-only:* no transit (files stay on the local machine). If the team uses a custom sync mechanism (e.g. Syncthing), ensure that mechanism is configured for encrypted transit.
+
+**Access review cadence.** When someone leaves the team:
+
+- *Git:* remove their access to the substrate repository and remove their personal substrate folder from the shared layer. Git history will retain a record; the live repository should not retain access for former members.
+- *Box:* remove them from all shared folders. Check each folder in the team's folder map.
+- *Local-only:* no central access to revoke. Confirm the former member no longer uses a copy of any shared content the team has distributed manually.
 
 **Claude enterprise agreement.** For teams with formal compliance requirements (ISO 27001, SOC 2, sector regulators), consider whether Anthropic's enterprise agreement with data processing addendum is appropriate. The ExFu substrate is local-first, but Claude conversations still flow through Anthropic's infrastructure.
 
@@ -44,17 +66,19 @@ This document covers what ExFu configures and controls. It does not cover Anthro
 
 The following is a best-effort mapping of this deployment to relevant ISO 27001:2022 controls. It is not a formal Statement of Applicability and should not be used as one without review by a qualified assessor.
 
+Some rows note where the applicable control differs by storage backend.
+
 | Control | ISO 27001 clause | How this deployment addresses it |
 |---|---|---|
-| Access control | A.5.15 | Git repository access managed via org's standard git hosting policies. Personal substrates are not accessible to other team members. |
+| Access control | A.5.15 | *Git:* repository access managed via org's standard git hosting policies. *Box:* per-folder sharing managed by the champion; each folder's sharing group should match its intended audience. *Local-only:* machine-level access controls only. Personal substrates are not accessible to other team members in any backend. |
 | Information classification | A.5.12 | Hygiene rules (below) define what must not enter the substrate. No formal classification scheme is built in; organisations with classification requirements should document this separately. |
-| Cryptography | A.8.24 | Git transport is encrypted (HTTPS/SSH). At-rest encryption depends on local disk encryption (recommended). |
+| Cryptography | A.8.24 | *Git:* transport encrypted via HTTPS/SSH. *Box:* transport encrypted via HTTPS. *Local-only:* no transport; custom sync mechanisms should use encrypted transit. At-rest encryption depends on local disk encryption (recommended) across all backends. |
 | Physical and environmental security | A.7.8 | Out of scope for this deployment — substrate files live on team members' existing workstations. |
-| Supplier relationships | A.5.19–A.5.22 | Anthropic is the primary supplier. Review Anthropic's security documentation and DPA. Git hosting provider (if external) is a secondary supplier. |
+| Supplier relationships | A.5.19–A.5.22 | Anthropic is the primary supplier. Review Anthropic's security documentation and DPA. *Git:* git hosting provider (if external) is a secondary supplier. *Box:* Box is a secondary supplier; your organisation's Box relationship and DPA applies. |
 | Information security in project management | A.5.8 | Substrate champion role provides a defined owner for the shared substrate. Role should be documented in the organisation's security roles register. |
 | Secure development | A.8.25–A.8.31 | Skills are plain-text instruction files. No compiled code or executed binaries in the standard substrate. Custom skills should be reviewed before deployment to the shared layer. |
-| Logging and monitoring | A.8.15–A.8.16 | Git history provides an audit trail for all changes to shared substrate content. |
-| Backup | A.8.13 | Git hosting provider's backup policies apply to the remote. Local substrate files should be covered by the organisation's standard endpoint backup. |
+| Logging and monitoring | A.8.15–A.8.16 | *Git:* git history provides an audit trail for all changes to shared substrate content (author, timestamp, content diff). *Box:* Box's access logs record who accessed or uploaded files, but do not retain content diffs. *Local-only:* no central audit log. See audit trail section below. |
+| Backup | A.8.13 | *Git:* git hosting provider's backup policies apply to the remote. *Box:* Box's version retention and your org's Box backup policy. *Local-only:* relies on individual machines being backed up. See backup section below. |
 | Vulnerability management | A.8.8 | Claude model updates are managed by Anthropic. Plugin updates are versioned and distributed by ExFu. No network-facing services are deployed by this installation. |
 
 ---
@@ -72,7 +96,7 @@ This should be a prerequisite confirmed before onboarding a team member to the s
 
 ## 5. Hygiene rules
 
-These are standing rules for what must not be placed in the substrate — personal or shared. The substrate is routinely accessed cloud storage and a frequently-read AI context. These categories do not belong there:
+These are standing rules for what must not be placed in the substrate — personal or shared, regardless of storage backend. The substrate is routinely accessed storage and a frequently-read AI context. These categories do not belong there:
 
 **No credentials.** API keys, passwords, access tokens, SSH private keys, OAuth secrets. Use a password manager or secrets vault. If an operation requires a credential, pass it in at the moment of use — do not store it in the substrate.
 
@@ -80,25 +104,35 @@ These are standing rules for what must not be placed in the substrate — person
 
 **No regulated content.** This includes: government identifiers (SSNs, passport numbers, national insurance numbers), full payment card numbers, bank account numbers, raw health and medical records, and any data subject to sector-specific regulation (HIPAA, FCA-regulated data, etc.).
 
-**No confidential data beyond team scope.** If a piece of information is marked confidential and its audience is smaller than the team, it should not be in the shared substrate. The shared substrate is visible to all team members with repository access.
+**No confidential data beyond team scope.** If a piece of information is marked confidential and its audience is smaller than the team, it should not be in the shared substrate. The shared substrate is visible to all team members with access.
 
-The test: would it matter if this file appeared in a data breach or an accidental git push to a public repository? If yes, it should not be in the substrate.
+The test: would it matter if this file appeared in a data breach or an accidental exposure? If yes, it should not be in the substrate.
 
 ---
 
 ## 6. Audit trail
 
-Git history provides a full audit trail for all changes to shared substrate content. Every commit records who made a change, when, and what changed. This log is append-only (without force-push access, which should be restricted). The substrate champion should retain git history in accordance with the organisation's data retention policy.
+The audit trail available to the team depends on which storage backend they chose.
 
-For personal substrate content, changes are local to each team member's machine. There is no centralised audit log for personal substrate changes. Teams that require audit logging of all AI-context changes should note this gap and decide whether their requirements extend to personal substrates.
+**Git.** Git history provides a full audit trail for all changes to shared substrate content. Every commit records who made a change, when, and what changed (content diff). This log is append-only (without force-push access, which should be restricted). The substrate champion should retain git history in accordance with the organisation's data retention policy. Git is the recommended backend for environments where a content-change audit trail is a compliance requirement.
+
+**Box.** Box tracks access events: who opened a file, when, who uploaded a version. It does not retain a native content diff history over time (it keeps file versions, but not a structured record of what changed between them). This means the audit trail is access-only, not content-change-level. If IT or security ask about audit trail specifics, make this distinction clear. Box is acceptable for environments where access logging is sufficient and a content-diff trail is not required.
+
+**Local-only.** There is no central audit log. Each team member's substrate changes are local to their machine. Teams that choose local-only are responsible for any logging or audit requirements their own mechanism provides. If audit trail is a compliance requirement, local-only is not an appropriate backend.
+
+**Personal substrate content (all backends).** Personal substrate changes are local to each team member's machine regardless of backend. There is no centralised audit log for personal substrate content. Teams that require audit logging of all AI-context changes should note this gap and decide whether their requirements extend to personal substrates.
 
 ---
 
 ## 7. Backup
 
-**Shared substrate (git remote).** Backed up according to the git hosting provider's policies. For self-hosted git, ensure the repository is included in the organisation's standard infrastructure backup. Verify recovery procedures.
+**Shared substrate — by backend:**
 
-**Personal substrates (local).** Each team member's local substrate files should be covered by the organisation's standard endpoint backup. The substrate champion should confirm this during onboarding. Personal substrate files are also effectively backed up in the git remote for the shared layer components; personal-only files are not.
+- *Git remote:* backed up according to the git hosting provider's policies. For self-hosted git, ensure the repository is included in the organisation's standard infrastructure backup. Verify recovery procedures.
+- *Box shared folders:* backed up according to Box's version retention and your organisation's Box backup policy. Confirm with your IT team what version retention is configured for your org's Box account.
+- *Local-only:* each team member's substrate files should be covered by the organisation's standard endpoint backup. The substrate champion should confirm this during onboarding and periodically. There is no central backup; each member is responsible for their own machine.
+
+**Personal substrates (local, all backends).** Each team member's local personal substrate files should be covered by the organisation's standard endpoint backup. The substrate champion should confirm this during onboarding.
 
 **Plugin files.** The ExFu plugin itself is re-downloadable from exfu.ai. It does not need to be separately backed up, though retaining the installed version is good practice for rollback purposes.
 
@@ -106,13 +140,13 @@ For personal substrate content, changes are local to each team member's machine.
 
 ## 8. What this is, what it isn't
 
-**This is** a set of plain-text files, skills (instruction documents), and scheduled tasks deployed within Claude Cowork. It uses Claude's standard plugin mechanism and git for distribution. It is local-first and does not connect to any ExFu-controlled infrastructure after install.
+**This is** a set of plain-text files, skills (instruction documents), and scheduled tasks deployed within Claude Cowork. It uses Claude's standard plugin mechanism and a team-chosen storage backend (git, Box, or local-only) for shared distribution. It is local-first and does not connect to any ExFu-controlled infrastructure after install.
 
 **This is not** an Anthropic product. ExFu is an independent service that builds on Anthropic's publicly available infrastructure. Anthropic does not endorse, certify, or support ExFu specifically.
 
 **This does not** grant the team any Claude capabilities they don't already have through their Anthropic account. The substrate improves how Claude is configured and what context it has; it does not change what the underlying model can do or bypass any Anthropic policies.
 
-**This does not** include any data processing services operated by ExFu. There is no ExFu server, no ExFu telemetry, no ExFu-controlled data store. The substrate champion's responsibility is to manage the git repository and the shared content in it. ExFu's responsibility ends at delivering the plugin.
+**This does not** include any data processing services operated by ExFu. There is no ExFu server, no ExFu telemetry, no ExFu-controlled data store. The substrate champion's responsibility is to manage the team's chosen storage backend and the shared content in it. ExFu's responsibility ends at delivering the plugin.
 
 ---
 
