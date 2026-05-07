@@ -212,6 +212,12 @@ build_variant() {
         continue
       fi
 
+      # Exclusion rule: team-box-folders is excluded from solo
+      if [[ "$variant" == "solo" && "$skill_name" == "team-box-folders" ]]; then
+        info "Excluding team-box-folders from solo (team/team-admin only)"
+        continue
+      fi
+
       mkdir -p "${output_dir}/skills"
       cp -r "$skill_dir" "${output_dir}/skills/${skill_name}"
     done

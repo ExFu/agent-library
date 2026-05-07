@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team
-description: Runs the full team-joiner install: connecting to the team's git repo, setting up a personal layer on top, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run — not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
+description: Runs the full team-joiner install: connecting to the team's shared layer (git repo, Box shared folder, or local-only depending on what the champion set up), setting up a personal layer on top, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run — not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
 ---
 
 # ExFu Install — Team (Joiner)
@@ -132,22 +132,63 @@ You're at least on one team — that's why you're here. But some people span mor
 
 The team folders in the personal layer hold the joiner's personal context *about* each team — not the team's shared content, which lives in the cloned repo. Make this distinction clear when you create the folders.
 
-### Step 5 — Storage: connect to the team repo
+### Step 5 — Storage: connect to the team's shared layer
 
-The storage mechanism for the team plugin is git. The joiner clones the team's shared substrate repo; `git-substrate-sync` handles all subsequent operations.
+Ask early — before anything is cloned or created:
 
-Walk through this:
+*"How does your team share their substrate? Your champion will have set this up already, so they should have told you. Three options: git repo, Box shared folder, or local-only."*
+
+Most joiners will know the answer from the onboarding pack. If the pack was silent on this, tell the joiner to check with their champion before continuing.
+
+---
+
+**Path A — Git repo**
+
+Clone the team's shared substrate repo; `git-substrate-sync` handles all subsequent operations.
 
 1. Get the git remote URL (from the onboarding pack or by asking).
-2. Ask where they want to keep the local clone on their machine. Use `request_cowork_directory` for the folder picker.
+2. Ask where they want to keep the local clone. Use `request_cowork_directory` for the folder picker.
 3. Clone the repo into that location.
 4. Walk through `git-substrate-sync` so the joiner understands the rhythm: pull before writing to shared content, commit with a short message that says what changed and why, push after substantive shared changes.
 
-Key things to establish clearly:
-- **Pull before write.** Before editing anything in the shared layer, pull first. This avoids conflicts.
-- **Commit hygiene.** Short, descriptive commit messages. "Updated team context: added Acme deal to context/team-x" is better than "updated stuff".
-- **Personal content doesn't go in the git repo.** The joiner's `context/me/`, personal scopes, personal databases — these live in their personal local folder, not in the cloned repo. This is an important distinction to make concrete.
-- **Read-only or read-write?** Some teams use branch protection that requires a PR for shared changes; others give direct push access. Ask: *"Does your team's repo require PRs for changes, or do you have direct push access?"* The `git-substrate-sync` skill adapts to the answer.
+Key points to establish:
+- Pull before write. Before editing anything in the shared layer, pull first.
+- Short, descriptive commit messages. "Updated team context: added Acme deal to context/team-x" is better than "updated stuff".
+- Personal content stays out of the git repo. The joiner's `context/me/`, personal scopes, personal databases — these live in their personal local folder, not in the cloned repo.
+- Read-only or read-write? Ask: *"Does your team's repo require PRs for changes, or do you have direct push access?"* The `git-substrate-sync` skill adapts to the answer.
+
+Record in the wow navigation map: `storage: git` with the remote URL.
+
+---
+
+**Path B — Box shared folder**
+
+The team's shared substrate lives in a Box folder the champion set up. The joiner connects to it using `box-filesystem-management`.
+
+1. Get the shared folder path or folder ID from the onboarding pack, or ask the joiner to request it from their champion.
+2. Ask where the joiner has their Box Drive mounted locally. Use `request_cowork_directory` for the folder picker to locate the shared folder.
+3. Walk through `box-filesystem-management` so the joiner understands the basics: Claude reads from and writes to the shared folder on their behalf; they should not manually rename, move, or delete files in Box.
+4. Surface the offline-caching caveat: if Box Drive is in space-saver mode, files may come back empty. Recommend setting the shared folder to always available offline (right-click in Finder, "Make Available Offline").
+
+Key point: Box does not auto-resolve conflicts. If two team members write to the same file at the same time, one will overwrite the other. Keep shared files focused and avoid simultaneous editing where possible.
+
+When the joiner needs to create new scope folders or share folders with colleagues going forward, that is handled by `team-box-folders`.
+
+Record in the wow navigation map: `storage: box` with the shared folder path.
+
+---
+
+**Path C — Local only / custom**
+
+The team is managing sharing manually (emailing updates, a shared drive without our skill, a custom mechanism, or no sharing at all). No automatic sync layer is set up via ExFu.
+
+1. Get the local folder path. Use `request_cowork_directory` for the folder picker.
+2. Tell the joiner plainly what this means: their Claude will read and write the local folder, but changes will not automatically reach teammates. They are responsible for sharing updates — by sending files directly, using whatever mechanism the team agreed on, or accepting that their substrate stays local.
+3. Make sure they've heard this clearly. Don't push them toward a different path, but don't minimise the trade-off either.
+
+Skills like `substrate`, `reminders`, and `inbox` work fine with a local folder. They just won't sync.
+
+Record in the wow navigation map: `storage: local-only, sync managed by user`.
 
 ### Step 6 — Personal layer setup
 
@@ -223,8 +264,12 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock — always installed:**
 - `skill-packaging` — for custom skills the joiner wants to create.
-- `git-substrate-sync` — handles all git operations for the shared layer (pull, commit, push, conflict surfacing). The joiner's primary interface to the team repo.
 - `substrate` — boot skill. Reads the ways-of-working guide, orients to both layers, surfaces reminders and inbox at session start.
+
+**Storage — activated based on the team's chosen backend (Step 5):**
+- `git-substrate-sync` — git path only. Handles pull, commit, push, and conflict surfacing for the shared layer.
+- `box-filesystem-management` — Box path only. Manages reads, writes, and file operations against the team's shared Box folder.
+- Local-only path: neither skill is registered as the storage layer. `substrate`, `reminders`, and `inbox` all work against the local folder directly.
 
 **Optional but high-value:**
 - `reminders` — personal reminders in the joiner's `databases/reminders/`.
@@ -245,7 +290,10 @@ All pre-installed via the plugin. No URL fetching needed.
 ## What must be true by the end
 
 - Settings configured for full Cowork capability.
-- Git remote URL confirmed, team repo cloned, `git-substrate-sync` operational. Joiner understands pull-before-write and commit hygiene.
+- Storage backend confirmed (git, Box, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
+- For git: remote URL confirmed, repo cloned, `git-substrate-sync` operational. Joiner understands pull-before-write and commit hygiene.
+- For Box: shared folder located, `box-filesystem-management` operational. Joiner understands the no-conflict-detection caveat and the offline-caching fix.
+- For local-only: joiner understands that substrate changes will not automatically reach teammates and knows how they'll manage sharing.
 - Personal layer established (separate local folder). Knowledge base folder identified via folder picker.
 - `substrate` installed and ways-of-working guide in place.
 - A personal `wow` skill generated with navigation map pointing at both layers. Installed in Global Instructions.
@@ -269,7 +317,7 @@ Avoid: "leverage", "harness", "seamless", "delve", "let's dive in", anything tha
 
 State this clearly if the joiner asks:
 
-- It does not provision the team's git repo. The champion did that.
+- It does not provision the team's shared storage (git repo or Box folder). The champion did that.
 - It does not allow writing to the team's shared `skills/` folder via any plugin skill. (The joiner can make changes via raw git, but the plugin gives them no tooling for this. That's intentional.)
 - It does not ship the compliance briefing. The champion has that.
 - It does not include admin diagrams.

@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team-admin
-description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate — the substrate champion. That person decides where the shared knowledge base lives, provisions the team's git repo, authors shared conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
+description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate — the substrate champion. That person decides where the shared knowledge base lives (git repo, Box shared folder, or local-only), provisions the team's shared storage, authors shared conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
 ---
 
 # ExFu Install — Team Admin (Champion)
@@ -32,7 +32,7 @@ Things you **must** do:
 Things you **must never** do:
 
 - **Don't overwrite the user's personal substrate without explicit consent.**
-- **Don't provision a git repo without the user's active participation.** Walk them through the provisioning; don't do it silently.
+- **Don't provision the team's shared storage without the user's active participation.** Whether that's a git repo or a Box shared folder, walk them through it. Don't do it silently.
 - **Don't put workflow logic in `wow`.** Navigation map plus thin always-on kernel only.
 - **Don't expose internal vocabulary to the user.** The diagrams give terms their context; don't lead with "substrate", "JTBD", or "discoverability asymmetry" in plain conversation.
 - **Don't store credentials, government IDs, financial account numbers, or raw medical records in the knowledge base or the team repo.**
@@ -140,21 +140,33 @@ Before touching any folder structure, clarify the scope:
 
 This shapes the repo structure the champion is about to provision. Don't skip it.
 
-### Step 6 — Storage: repo provisioning or connection
+### Step 6 — Storage: choose and provision the team's shared layer
 
-The storage mechanism is git. The shared substrate lives in a git repo that every team member clones. The champion is the one who sets it up.
+This is the champion's decision. It shapes how every team member's Claude interacts with the shared substrate. Make the choice explicit before doing anything.
 
-Two paths:
+Ask:
 
-**Path A — Existing repo:**
-*"Do you already have a git repo set up for the team's shared substrate?"* If yes, collect the remote URL, clone it, and proceed to the seeding step. Skip provisioning.
+*"How would you like your team to share their substrate? Three options:*
 
-**Path B — Provisioning a new repo:**
-Delegate to `team-repo-provisioning`. That skill walks the champion through creating the repo on their git provider of choice (GitHub, GitLab, Bitbucket, on-prem), recommends initial settings (private, team-level read-write access), and seeds the initial commit. The champion runs the commands; the skill guides them through the exact steps for their chosen provider.
+*1. Git repo — recommended if your team is technical or already uses git. You get version history, audit trail, conflict handling, and provider-level access controls. Higher technical bar for joiners.*
 
-Once the repo is provisioned or connected:
+*2. Box shared folder — recommended if your team prefers familiar cloud-drive UX or has members who aren't comfortable with git. Easier for joiners to connect. No automatic conflict resolution or file-level version history.*
 
-Walk through `git-substrate-sync` so the champion understands the rhythm:
+*3. Local only — each team member keeps their substrate on their own machine. Sharing happens manually: you send files directly, use your org's existing file system, or don't share at all. No automatic sync. Substrate still works fully; you just manage propagation yourself."*
+
+The champion decides for the team. Don't steer them beyond surfacing the trade-offs. Once they've chosen, proceed down the matching path.
+
+---
+
+**Path A — Git repo**
+
+Two sub-paths:
+
+*Existing repo:* collect the remote URL, clone it, proceed to the seeding step.
+
+*New repo:* delegate to `team-repo-provisioning`. That skill walks the champion through creating the repo on their git provider of choice (GitHub, GitLab, Bitbucket, on-prem), recommends initial settings (private, team-level read-write access), and seeds the initial commit. The champion runs the commands; the skill guides them through the exact steps for their chosen provider.
+
+Once the repo is provisioned or connected, walk through `git-substrate-sync` so the champion understands the rhythm:
 - Pull before writing shared content.
 - Commit with short, descriptive messages ("Added Acme shared scope skeleton", "Updated team conventions: added writing-style guidelines").
 - Push after substantive shared changes.
@@ -162,6 +174,34 @@ Walk through `git-substrate-sync` so the champion understands the rhythm:
 - Personal content never goes in the team repo.
 
 Ask: *"Does your team's repo require PRs for changes, or will team members have direct push access?"* The `git-substrate-sync` skill adapts to the answer.
+
+Record in the wow navigation map: `storage: git` with the remote URL.
+
+---
+
+**Path B — Box shared folder**
+
+Delegate to `team-box-folder-provisioning`. That skill walks the champion through the full folder setup: which folders to create (one per org, one per team, one per scope), how to structure them, how to share each one with the right people, and how to document the folder map in `_meta/folder-map.md`. A key point to surface before delegating:
+
+*"Box doesn't work like git — there's no single repo everyone clones. Your team's substrate will be a set of folders, each shared with a different group depending on the scope. The team-box-folder-provisioning skill will walk you through that."*
+
+Once the champion returns from `team-box-folder-provisioning`, walk through `box-filesystem-management` so they understand how Claude reads and writes the folders on behalf of each team member.
+
+For ongoing folder work after the initial setup — creating scope folders as new projects start, sharing folders with joiners, revoking access when people leave — the `team-box-folders` skill handles that.
+
+Record in the wow navigation map: `storage: box` with the team folder path (and org folder path if applicable).
+
+---
+
+**Path C — Local only / custom**
+
+No shared storage is provisioned via ExFu. Each team member's Claude works against their own local folder. Sharing happens manually or via a mechanism the team manages themselves.
+
+1. Confirm the champion is choosing this deliberately. It is a valid choice — just be clear about the implications.
+2. Note that the team's wow navigation maps will each record `storage: local-only, sync managed by user`. Each member's Claude is isolated. If the champion later wants to introduce a sync layer, they can re-run the relevant setup steps.
+3. Substrate, reminders, and inbox all work fine locally. The install continues as normal; the shared-layer steps (seeding a shared context folder, shared scopes) are skipped or deferred.
+
+Make sure the champion understands: if they want colleagues to share context, they will need to send files manually. There is no automatic propagation.
 
 ### Step 7 — Shared-substrate seeding
 
@@ -267,8 +307,12 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock — always installed:**
 - `skill-packaging` — for custom skills the champion or team wants to create.
-- `git-substrate-sync` — handles all git operations for the shared layer and personal layer. Pull, commit, push, conflict surfacing. Shared with the team plugin; same skill, different capability context.
 - `substrate` — boot skill. Orients to both layers, surfaces reminders and inbox at session start.
+
+**Storage — activated based on the team's chosen backend (Step 6):**
+- `git-substrate-sync` — git path only. Handles pull, commit, push, and conflict surfacing for the shared layer and personal layer.
+- `box-filesystem-management` — Box path only. Manages reads, writes, and file operations against the team's shared Box folder.
+- Local-only path: neither skill is registered as the storage layer. Substrate, reminders, and inbox work against the local folder directly.
 
 **Optional but high-value (same as other plugins):**
 - `reminders` — personal reminders.
@@ -278,7 +322,8 @@ All pre-installed via the plugin. No URL fetching needed.
 - `scope-skills` template — for personal or shared scopes.
 
 **Admin-only skills:**
-- `team-repo-provisioning` — walks the champion through creating the team's git repo on their chosen provider.
+- `team-repo-provisioning` — walks the champion through creating the team's git repo on their chosen provider (git path only).
+- `team-box-folder-provisioning` — walks the champion through creating and sharing the Box folders that form the team's shared substrate (Box path only). Covers the multi-folder structure (org, team, scope) and the folder map convention.
 - `team-shared-skills-authoring` — teaches the champion the conventions for shared skills and helps them author or refactor skills against those conventions.
 - `team-onboard-member` — generates onboarding packs for new team members.
 - `exfu-upgrade-from-team-to-admin` — handles the case where the champion already has the team plugin installed and wants to move to team-admin.
@@ -296,7 +341,10 @@ All pre-installed via the plugin. No URL fetching needed.
 ## What must be true by the end
 
 - Settings configured for full Cowork capability.
-- Team git repo provisioned or connected. Remote URL confirmed. Initial structure seeded with a first commit. Champion understands the git rhythm.
+- Storage backend chosen (git, Box, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
+- For git: repo provisioned or connected, remote URL confirmed, initial structure seeded with a first commit, champion understands the git rhythm.
+- For Box: shared folder created and structured, access set for the team, `box-filesystem-management` operational, champion understands the no-conflict-detection caveat and the audit trail distinction.
+- For local-only: champion understands that changes will not automatically reach teammates and has a plan for propagation.
 - Champion's personal layer established. Knowledge base folder identified via folder picker.
 - `substrate` installed and ways-of-working guide in place (both the plugin resource and the team's conventions doc in the repo).
 - Personal `wow` generated with navigation map pointing at both layers. Installed in Global Instructions. Noted as team-admin variant.
