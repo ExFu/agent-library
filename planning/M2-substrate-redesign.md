@@ -25,7 +25,7 @@ Until M2 ships, everything downstream is blocked or building against the wrong m
 
 The work has a strict dependency chain:
 
-1. **Convention base first.** Build `exfu/v0.3/` with the folder-type catalogue (ontology/, context/, docs/, skills/, librarians/, todo/, reminders/, inbox/, databases/). Each folder-type needs its agent.md template -- the upstream convention that scopes will reference. This is the foundation; nothing else can reference it until it exists.
+1. **Convention base first.** Build `exfu/v0.3/` with the folder-type catalogue (ontology/, context/, docs/, skills/, librarians/, todo/, reminders/, inbox/, databases/, visualisations/). Each folder-type needs its agent.md template -- the upstream convention that scopes will reference. This is the foundation; nothing else can reference it until it exists.
 
 2. **Scope model second.** Implement scope.md format (name, purpose, parent, version pin, protective header), the `scopes/` nesting convention, and the reference+delta agent.md pattern. Validate that a scope can reference exfu/v0.3/ conventions, record local deviations, and declare its parent.
 
