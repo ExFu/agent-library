@@ -106,6 +106,8 @@ These are the parallelisable workstreams. Each gets its own T2 plan. Names are w
 
 7. **`T2-website-changes.md`** — the new download/install page (now offering three plugins), retiring the old `public/clients/*` URLs (or redirecting them), any marketing copy.
 
+8. **`T2-substrate-architecture.md`** — the structural model of the substrate itself: scopes, folder-type catalogue, convention management (reference+delta), versioning, ontology model, discovery, the global index. Added for v0.3.0; this is the domain that defines what agents build into and navigate through.
+
 Cross-cuts (already in flight) are not T2 workstreams; they're dependencies. New cross-cuts can emerge as T2 work surfaces them.
 
 ### Work shape

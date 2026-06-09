@@ -92,12 +92,24 @@ M2 draws from multiple T2 domains:
 
 | T2 workstream | What M2 takes from it |
 |---|---|
-| T2-shared-skills-and-resources | Convention base content, skill packaging patterns |
+| T2-substrate-architecture | Primary domain: scope model, folder-types, conventions, versioning, discovery |
+| T2-shared-skills-and-resources | Convention base content, skill packaging patterns, nightly index |
 | T2-build-and-distribution | Build system extension |
 | T2-solo-plugin | Box storage constraints (symlink question) |
 | T2-team-plugin / T2-team-admin-plugin | Git storage patterns, shared/personal layer model |
 
-T3 implementation plans for M2 work will reference both this milestone (for sequencing) and the relevant T2 (for domain architecture).
+### T3 implementation plans
+
+Six T3 plans, in dependency order. Each references both this milestone (sequencing) and its T2 domain (architecture).
+
+| T3 | Deliverable | T2 domain | Prerequisites |
+|---|---|---|---|
+| `T3-convention-base.md` | exfu/v0.3/ convention templates | T2-substrate-architecture | None (first) |
+| `T3-scope-model.md` | scope.md, scopes/, reference+delta | T2-substrate-architecture | T3-convention-base |
+| `T3-versioning.md` | Version dirs, symlink, derived/ | T2-substrate-architecture | T3-convention-base |
+| `T3-example-prototype.md` | Rebuilt plugin/example/ | T2-substrate-architecture | T3-convention-base, T3-scope-model, T3-versioning |
+| `T3-nightly-index.md` | Global version-aware index | T2-substrate-architecture, T2-shared-skills-and-resources | T3-convention-base, T3-scope-model, T3-versioning |
+| `T3-build-system.md` | build.sh extension | T2-build-and-distribution | T3-convention-base |
 
 ---
 
@@ -106,4 +118,5 @@ T3 implementation plans for M2 work will reference both this milestone (for sequ
 - This file: `plugin/planning/M2-substrate-redesign.md`
 - Design decisions: `plugin/planning/v0.3.0-reconciliation.md`
 - M1 (what's been done): `plugin/planning/M1-plugin-foundation.md`
+- Domain: `plugin/planning/T2-substrate-architecture.md`
 - Skills audit (feeds M3): `plugin/planning/audit-skills-and-resources.md`
