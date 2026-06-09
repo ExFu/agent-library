@@ -128,11 +128,13 @@ We're not writing code in this planning round, so deep-research can wait. When i
 
 ## Where this plan lives
 
-- This file: `plugin/planning/T1-overview.md` — the durable anchor.
-- Cross-cuts: flat, prefixed `cross-cut-…` in the same folder.
-- T2 plans: flat, prefixed `T2-…`, one per workstream.
-- T3 plans: flat, prefixed `T3-…`, one per implementation topic.
+- This file: `plugin/planning/T1-overview.md` -- the durable anchor.
+- Cross-cuts: flat, prefixed `cross-cut-...` in the same folder.
+- T2 plans: flat, prefixed `T2-...`, one per workstream (domain-oriented).
+- Milestones: flat, prefixed `M<n>-...`, one per sequenced delivery goal. T2s describe areas of work; milestones describe what ships and when. See `cross-cut-planning-approach.md` for the full concept.
+- T3 plans: flat, prefixed `T3-...`, one per implementation topic. Parented by both a T2 (domain context) and an Mn (sequencing context).
+- v0.3.0 design decisions: `v0.3.0-reconciliation.md` is the definitive reference. Supersedes both `v0.3.0pre-direction.md` and `v0.3.0-substrate-revision.md`.
 - Research notes: `plugin/planning/research/`, one file per topic.
-- Side-quests, reviews, ad-hoc explorations: flat, prefixed `side-quest-…` or `review-…` so they self-organise visually.
-- Plugin source: `plugin/src/` — populated when T2/T3 are firm and implementation begins.
+- Side-quests, reviews, ad-hoc explorations: flat, prefixed `side-quest-...` or `review-...` so they self-organise visually.
+- Plugin source: `plugin/src/` -- populated when T2/T3 are firm and implementation begins.
 - Built plugin: copied to `public/` for distribution.

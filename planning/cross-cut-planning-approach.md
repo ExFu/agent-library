@@ -16,9 +16,24 @@ This is harder than it sounds. The instinct is to skip Why because it feels obvi
 
 ### Three tiers
 
-- **T1 (overview).** Single document, read by everyone. The shared context — what we're building, why it matters, the high-level How, the candidate workstreams, the open questions. Anything anyone working anywhere on the plan should know.
-- **T2 (workstream).** One file per parallelisable workstream. Each T2 should be reachable from T1 raw or via a rich summary. T2 lays out the workstream's own Why-How-What and identifies T3 topics within it.
-- **T3 (implementation).** One file per implementation-ready topic. Detailed enough that a Claude Code agent can execute against it with minimal back-and-forth. Anchored in its T2 context and the T1 Whys.
+- **T1 (overview).** Single document, read by everyone. The shared context -- what we're building, why it matters, the high-level How, the candidate workstreams, the open questions. Anything anyone working anywhere on the plan should know.
+- **T2 (workstream).** One file per parallelisable workstream. Each T2 should be reachable from T1 raw or via a rich summary. T2 lays out the workstream's own Why-How-What and identifies T3 topics within it. T2s are *domain-oriented* -- they describe areas of work (shared skills, solo plugin, teaching artefacts), not when things ship.
+- **T3 (implementation).** One file per implementation-ready topic. Detailed enough that a Claude Code agent can execute against it with minimal back-and-forth. Anchored in its T2 context, the T1 Whys, and the milestone it belongs to.
+
+### Milestones
+
+- **Mn (milestone).** One file per sequenced delivery goal. Milestones answer "in what order do we ship, and what must exist before the next thing can start?" -- a different axis from T2 workstreams, which answer "what areas of work exist?"
+
+Milestones follow the golden circle:
+- **Why** -- who this milestone is for, what it unlocks, why it matters now.
+- **How** -- process-focused: sequencing, dependencies between deliverables, how work will be validated, what "done" looks like. (Contrast with T2's How, which is architecture-focused.)
+- **What** -- the concrete deliverables for this milestone.
+
+T3 implementation plans are parented by *both* a T2 (domain) and an Mn (milestone). The T2 gives the agent architectural context; the milestone gives it sequencing context and tells it what's in scope for this delivery.
+
+Milestones can be retrospective (capturing what was done, for future agents who need to understand the project's history) or prospective (capturing what's next).
+
+Version numbers and milestones are not the same thing. Versions track breaking changes in deliverables (what users see). Milestones are internal planning (what the team ships and when). Multiple milestones may land within a single version; a single milestone may span preparatory work that doesn't ship to users at all.
 
 ### Cross-cuts
 
