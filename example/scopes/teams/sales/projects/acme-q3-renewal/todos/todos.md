@@ -1,8 +1,0 @@
-- [ ] 2026-05-26 — Chase Jamie on Proposal v1; check if Pat (CFO) has reviewed.
-- [ ] 2026-05-28 — Follow-up call with Casey on the dashboards questions (Jordan to lead, Alex on the call).
-- [ ] 2026-06-05 — Decision needed: multi-year discount terms. Internal Sales review before Jamie sees it.
-- [ ] 2026-06-15 — Draft Proposal v2 incorporating multi-year and Operations seats.
-- [ ] 2026-07-01 — Mid-cycle check: are we on track for end-of-Q3 signature? Reassess if not.
-- [x] 2026-05-10 — (done 2026-05-10) Send Proposal v1 to Jamie.
-- [x] 2026-04-22 — (done 2026-04-21) Casey introduction call; established renewal conversation.
-- [x] 2026-04-15 — (done 2026-04-15) Initial renewal touchpoint with Jamie; relationship opened.

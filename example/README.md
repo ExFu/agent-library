@@ -1,47 +1,30 @@
-# ExFu v0.3.0 substrate — worked example
+# Example substrate (v0.3.0)
 
-## Purpose
+A browsable reference implementation of the v0.3.0 substrate design. Shows what a real substrate looks like for a solo user with two top-level scopes and one level of nesting.
 
-A demonstrative snapshot of what a v0.3.0 ExFu substrate looks like once a user has it installed and has been working in it. This is not a runtime substrate, not a template, and not consumed by the build. It exists so contributors and design reviewers can see the v0.3.0 shape in concrete form instead of inferring it from `plugin/planning/v0.3.0-direction.md`.
+## What this demonstrates
 
-Read this file first, then walk the tree. Every folder has its own `README.md` orienting you to what's inside.
+1. **exfu/ as special location.** No scope.md, but internally structured with standard folder-types inside v0.3/.
+2. **Versioned exfu/.** v0.3/ directory, latest.txt fallback, derived/ with example index.
+3. **Minimal scope.md.** Every scope.md is YAML frontmatter + protective header. No entities, no status fields.
+4. **Scope nesting via scopes/.** acme/ has scopes/q3-renewal/. The nested scope declares parent: Acme.
+5. **Reference+delta agent.md.** Every agent.md has a protective header, Follows: line, and optional Local deviations.
+6. **Store-or-point.** user/todo/ and acme/todo/ demonstrate pointers (ClickUp). side-project/inbox/ stores data locally.
+7. **Unversioned user/.** user/scope.md has no exfu: field.
+8. **Protective headers.** Every scope.md and agent.md starts with the standard blockquote.
+9. **Principles and recommendations in context/.** exfu/v0.3/context/ contains principles.md and recommendations.md.
+10. **Example index output.** derived/index.json shows what the nightly index produces.
 
-## Contents
+## Structure
 
-Substrate root with the three reserved containers populated and one realistic scope path showing the nesting pattern:
+```
+exfu/           convention base, versioning infra, global index
+user/           personal workspace (unversioned)
+scopes/
+  acme/         client scope with nested q3-renewal project
+  side-project/ minimal scope showing store pattern
+```
 
-- `CLAUDE.md` — the guard file at root.
-- `_meta/` — ExFu plumbing (storage backend record, substrate index).
-- `_trash/` — soft-delete area (empty here; just shows the placeholder).
-- `exfu/` — ExFu-delivered material, materialised at install. Contains examples of every ontology type that ships in the box: principles, conventions, ontologies, librarians, recommendations, skills, templates.
-- `user/` — the personal-tier scope. Carries `scope.md` like any other scope. Shows `context/me/`, `databases/`, `scratch/`, and a user-tier `todos/` folder demonstrating the `agent.md` convention snapshot.
-- `scopes/` — the work-area scope container. Holds one realistic nested path: `scopes/teams/sales/team/` (the Sales team-as-scope) and `scopes/teams/sales/projects/acme-q3-renewal/` (a project leaf scope under the Sales grouping).
+## Design reference
 
-## How to read this example
-
-Three things to notice as you walk it:
-
-1. **Three tiers, same vocabulary.** The ontology types (todos, librarians, etc.) appear at `exfu/` (ExFu defaults), `user/` (personal), and inside scope folders (scope-specific). Same naming convention; precedence is local-first.
-
-2. **`scope.md` is the marker.** Any folder containing `scope.md` is a scope. Find-all-scopes is a recursive search for `scope.md`. The user-tier `user/scope.md` makes the personal layer a scope by shape.
-
-3. **`agent.md` is the convention snapshot.** When a typed folder (e.g. `todos/`) is created, the relevant `agent.md` template from `exfu/conventions/<type>/agent.md` (or `exfu/ontologies/<type>/agent.md`) is *copied* into the new folder. Compare `exfu/ontologies/todos/agent.md` with `user/todos/agent.md` and `scopes/teams/sales/projects/acme-q3-renewal/todos/agent.md` — the latter two are snapshots of the former at the moment the folder was created.
-
-## What this example deliberately omits
-
-To keep the snapshot legible:
-
-- Most ontology types ship only one or two example atoms here; a real `exfu/principles/` would carry more principles, a real `exfu/recommendations/` would carry many more entries, etc.
-- The Sales team-as-scope and the Acme project-as-scope have minimal content (just enough to show shape).
-- No `_trash/` contents; no real `_meta/substrate-index.md` regeneration; no live librarian runs.
-- The user's `wow` skill (installed in Claude as a packaged skill) is not represented here because it lives in `~/.claude/skills/`, not in the substrate. The substrate-side companion of `wow` is the navigation map embedded in `user/scope.md`.
-
-## Dependencies
-
-- `plugin/planning/v0.3.0-direction.md` — the design this example illustrates.
-- `plugin/planning/v0.2.0-substrate-revision.md` — what v0.3.0 supersedes structurally.
-- `plugin/src/shared/resources/substrate-guide.md` — the current (v0.2.x) shipped guide, for comparison with the new shape.
-
-## Status
-
-Illustrative. Not built by `build.sh`. Not shipped with any plugin variant. Living document; expected to evolve as v0.3.0 design decisions land.
+See `plugin/planning/v0.3.0-reconciliation.md` for the resolved design decisions this example implements.

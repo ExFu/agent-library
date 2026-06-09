@@ -1,224 +1,347 @@
 #!/usr/bin/env python3
 """
-Substrate Folder Index
+Substrate Index (v0.3.0)
 
-Walks the substrate folder tree and generates a folder-level map at
-_meta/substrate-index.md. Each folder is annotated with its Purpose and a
-brief note on what it holds, extracted from the folder's README.md.
+Walks the substrate directory tree, discovers scopes via scope.md files,
+and produces a global JSON index at exfu/derived/index.json.
+
+The index gives any agent a whole-substrate picture in one read: every scope,
+its tree position, which folder-types are populated, and version pins.
 
 Usage:
     python3 index.py /path/to/substrate-root
 """
 
 import argparse
+import json
 import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Folders to skip entirely (never indexed, never recursed into).
-# Only system/hidden folders and the two reserved substrate areas are excluded.
-# Every other folder — including custom ones the user has created — is indexed.
+# Standard folder-types in the catalogue
+FOLDER_TYPES = [
+    "ontology", "context", "docs", "skills", "librarians",
+    "todo", "reminders", "inbox", "databases", "visualisations",
+]
+
+# Directories to skip when walking
 SKIP_NAMES = {
-    ".git",
-    ".hg",
-    ".svn",
-    "node_modules",
-    "__pycache__",
-    ".DS_Store",
-    "_trash",   # soft-delete area; not indexed
-    "_meta",    # system infrastructure; the index itself lives here
-    ".idea",
-    ".vscode",
-    ".claude",
+    ".git", ".hg", ".svn", "node_modules", "__pycache__",
+    ".DS_Store", ".idea", ".vscode", ".claude", ".omc",
 }
 
-# Cap individual description fields at this many characters
-MAX_FIELD_CHARS = 120
-
-# Rough cap on total output size (bytes). Index is truncated with a note if exceeded.
-MAX_OUTPUT_BYTES = 50 * 1024  # 50 KB
+# Phrases that indicate a pointer (external system) in agent.md
+POINTER_PHRASES = [
+    "tasks are tracked in",
+    "lives in",
+    "managed by",
+    "use the",
+    "connector",
+    "not stored locally",
+]
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Generate a substrate folder index")
+    parser = argparse.ArgumentParser(description="Generate substrate index (v0.3)")
     parser.add_argument("root", help="Path to the substrate root folder")
     return parser.parse_args()
 
 
-def _first_sentences(text: str, max_chars: int) -> str:
-    """Return the first 1-2 sentences of text, capped at max_chars."""
-    text = text.strip()
-    if not text:
-        return ""
-    # Split on sentence-ending punctuation followed by whitespace or end-of-string
-    sentence_end = re.compile(r"(?<=[.!?])\s+")
-    parts = sentence_end.split(text, maxsplit=2)
-    result = parts[0].rstrip()
-    if len(parts) > 1 and len(result) + 1 + len(parts[1]) <= max_chars:
-        result = result + " " + parts[1].rstrip()
-    if len(result) > max_chars:
-        result = result[:max_chars].rstrip() + "..."
+def parse_yaml_frontmatter(text):
+    """
+    Extract YAML frontmatter from a markdown file.
+    Returns a dict of key-value pairs (simple single-line values only).
+    """
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return {}
+
+    fields = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        match = re.match(r"^(\w[\w-]*):\s*(.+)$", line)
+        if match:
+            fields[match.group(1)] = match.group(2).strip()
+    return fields
+
+
+def read_scope_md(scope_dir):
+    """
+    Read and parse scope.md in the given directory.
+    Returns parsed fields dict, or None if scope.md doesn't exist.
+    """
+    scope_file = scope_dir / "scope.md"
+    if not scope_file.exists():
+        return None
+    try:
+        text = scope_file.read_text(encoding="utf-8", errors="replace")
+        return parse_yaml_frontmatter(text)
+    except OSError:
+        return None
+
+
+def detect_folder_type_status(folder_dir):
+    """
+    Determine the status of a folder-type directory.
+    Returns "data", "pointer", or "empty".
+    """
+    if not folder_dir.exists() or not folder_dir.is_dir():
+        return "empty"
+
+    # Check what files exist
+    try:
+        files = list(folder_dir.iterdir())
+    except PermissionError:
+        return "empty"
+
+    file_names = {f.name for f in files if f.is_file()}
+    boilerplate = {"agent.md", "readme.md"}
+    has_content = bool(file_names - boilerplate)
+
+    # Check for pointer pattern in agent.md
+    agent_md = folder_dir / "agent.md"
+    if agent_md.exists():
+        try:
+            agent_text = agent_md.read_text(encoding="utf-8", errors="replace").lower()
+            for phrase in POINTER_PHRASES:
+                if phrase in agent_text:
+                    return "pointer"
+        except OSError:
+            pass
+
+    # Has files beyond boilerplate, or subdirectories with content
+    if has_content:
+        return "data"
+
+    # Check subdirectories for content
+    subdirs = [f for f in files if f.is_dir() and f.name not in SKIP_NAMES]
+    for subdir in subdirs:
+        try:
+            if any(subdir.iterdir()):
+                return "data"
+        except PermissionError:
+            pass
+
+    return "empty"
+
+
+def scan_folder_types(scope_dir):
+    """
+    Scan a scope directory for folder-types and their status.
+    Returns dict of folder-type name to status, including only
+    types that are present (data or pointer) or in the standard catalogue.
+    """
+    result = {}
+    for ft in FOLDER_TYPES:
+        ft_dir = scope_dir / ft
+        if ft_dir.exists():
+            status = detect_folder_type_status(ft_dir)
+            result[ft] = status
     return result
 
 
-def _cap(text: str) -> str:
-    """Cap text at MAX_FIELD_CHARS."""
-    if len(text) <= MAX_FIELD_CHARS:
-        return text
-    return text[:MAX_FIELD_CHARS].rstrip() + "..."
-
-
-def extract_section(readme_text: str, heading: str) -> str:
+def scan_scopes_dir(scopes_dir, parent_name):
     """
-    Extract the body of a markdown section identified by a heading.
+    Recursively scan a scopes/ directory for child scopes.
+    Returns a list of scope entry dicts.
 
-    Looks for `## <heading>` (case-insensitive) and returns the text up to
-    the next same-or-higher-level heading, or end of file.
+    Handles grouping folders (directories without scope.md) by
+    recursing into them looking for actual scopes.
     """
-    pattern = re.compile(
-        r"^##\s+" + re.escape(heading) + r"\s*$",
-        re.IGNORECASE | re.MULTILINE,
-    )
-    match = pattern.search(readme_text)
-    if not match:
-        return ""
+    if not scopes_dir.exists() or not scopes_dir.is_dir():
+        return []
 
-    start = match.end()
-    # Find the next ## or # heading after this one
-    next_heading = re.search(r"^#{1,2}\s+", readme_text[start:], re.MULTILINE)
-    if next_heading:
-        body = readme_text[start : start + next_heading.start()]
-    else:
-        body = readme_text[start:]
-
-    return body.strip()
-
-
-def first_paragraph(text: str) -> str:
-    """Return the first non-empty paragraph of text."""
-    paragraphs = re.split(r"\n\s*\n", text.strip())
-    for p in paragraphs:
-        p = p.strip()
-        # Skip headings and empty lines
-        if p and not p.startswith("#"):
-            # Collapse internal newlines (common in soft-wrapped markdown)
-            return re.sub(r"\s*\n\s*", " ", p)
-    return ""
-
-
-def parse_readme(folder_path: Path):
-    """
-    Parse a README.md in the given folder.
-
-    Returns (why, holds) as strings. Either may be empty.
-    - why: first 1-2 sentences of the Purpose section (or first paragraph)
-    - holds: first sentence of the Contents section (or "(not specified)")
-    """
-    readme = folder_path / "README.md"
-    if not readme.exists():
-        return None, None  # Signal: no README
-
+    children = []
     try:
-        text = readme.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return None, None
+        entries = sorted(scopes_dir.iterdir())
+    except PermissionError:
+        return []
 
-    # Try Purpose section first
-    purpose_body = extract_section(text, "Purpose")
-    if purpose_body:
-        why = _first_sentences(first_paragraph(purpose_body) or purpose_body, MAX_FIELD_CHARS)
-    else:
-        # Fall back to first non-heading paragraph in the whole file
-        why = _first_sentences(first_paragraph(text), MAX_FIELD_CHARS)
+    for entry in entries:
+        if not entry.is_dir() or entry.name in SKIP_NAMES or entry.name.startswith("."):
+            continue
 
-    why = _cap(why) if why else ""
-
-    # Try Contents section
-    contents_body = extract_section(text, "Contents")
-    if contents_body:
-        holds = _cap(_first_sentences(first_paragraph(contents_body) or contents_body, MAX_FIELD_CHARS))
-    else:
-        holds = ""
-
-    return why, holds
-
-
-def collect_folders(root: Path):
-    """
-    Walk the folder tree and return a list of (rel_path, depth) tuples,
-    sorted in tree order (parents before children, alphabetically within
-    each level).
-    """
-    folders = []
-
-    def _walk(current: Path, depth: int):
-        try:
-            entries = sorted(current.iterdir())
-        except PermissionError:
-            return
-        for entry in entries:
-            if not entry.is_dir():
-                continue
-            if entry.name in SKIP_NAMES or entry.name.startswith("."):
-                continue
-            rel = entry.relative_to(root)
-            folders.append((rel, depth))
-            _walk(entry, depth + 1)
-
-    _walk(root, 1)
-    return folders
-
-
-def heading_level(depth: int) -> str:
-    """Map folder depth to a markdown heading level (max level 6)."""
-    level = min(depth + 1, 6)  # depth 1 -> ##, depth 2 -> ###, etc.
-    return "#" * level
-
-
-def build_index(root: Path) -> tuple[str, int]:
-    """
-    Build the index markdown string.
-
-    Returns (markdown_text, folder_count).
-    """
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    folders = collect_folders(root)
-
-    lines = [
-        "# Substrate folder index",
-        "",
-        f"Auto-generated {now} (machine local time). Do not edit by hand.",
-        "",
-        "This is a folder-only map of the substrate. Files are not listed; for that, scan a folder directly. Each folder is annotated with its Purpose and a brief note on what it holds, drawn from the folder's own README.md.",
-        "",
-        "---",
-        "",
-    ]
-
-    for rel_path, depth in folders:
-        abs_path = root / rel_path
-        why, holds = parse_readme(abs_path)
-
-        hdr = heading_level(depth)
-        # Show path with trailing slash for clarity
-        lines.append(f"{hdr} {rel_path}/")
-
-        if why is None:
-            # No README at all
-            lines.append("**Why:** (no README — purpose unknown)")
-            lines.append("**Holds:** (no README — contents unknown)")
+        fields = read_scope_md(entry)
+        if fields is not None:
+            # This is a scope
+            scope_entry = build_scope_entry(entry, fields, parent_name)
+            children.append(scope_entry)
         else:
-            why_str = why if why else "(not specified)"
-            holds_str = holds if holds else "(not specified)"
-            lines.append(f"**Why:** {why_str}")
-            lines.append(f"**Holds:** {holds_str}")
+            # Grouping folder -- recurse looking for scopes inside
+            deeper = scan_scopes_dir(entry, parent_name)
+            children.extend(deeper)
 
-        lines.append("")
+    return children
 
-    return "\n".join(lines), len(folders)
+
+def build_scope_entry(scope_dir, fields, default_parent):
+    """
+    Build a scope entry dict from a scope directory and its parsed fields.
+    """
+    name = fields.get("name", scope_dir.name)
+    parent = fields.get("parent", default_parent)
+    exfu_version = fields.get("exfu")
+    folder_types = scan_folder_types(scope_dir)
+
+    # Only include folder-types that aren't all empty
+    folder_types = {k: v for k, v in folder_types.items() if v != "empty"} or \
+                   {k: v for k, v in scan_folder_types(scope_dir).items()}
+
+    entry = {
+        "name": name,
+        "path": None,  # set by caller with relative path
+        "type": "scope",
+        "parent": parent if parent != "none" else None,
+        "exfu_version": exfu_version,
+        "folder_types": folder_types,
+    }
+
+    # Recurse into scopes/ for children
+    child_scopes = scan_scopes_dir(scope_dir / "scopes", name)
+    if child_scopes:
+        entry["children"] = child_scopes
+
+    return entry
+
+
+def discover_versions(exfu_dir):
+    """
+    Discover exfu version directories and which is latest.
+    Returns a dict of version info.
+    """
+    versions = {}
+    if not exfu_dir.exists():
+        return versions
+
+    # Find version directories (match v followed by digits)
+    for entry in sorted(exfu_dir.iterdir()):
+        if entry.is_dir() and re.match(r"v\d", entry.name):
+            versions[entry.name] = {"is_latest": False, "scopes_using": []}
+
+    # Determine latest
+    latest = None
+    latest_link = exfu_dir / "latest"
+    latest_txt = exfu_dir / "latest.txt"
+
+    if latest_link.is_symlink():
+        target = latest_link.resolve().name
+        latest = target
+    elif latest_txt.exists():
+        try:
+            latest = latest_txt.read_text(encoding="utf-8").strip()
+        except OSError:
+            pass
+
+    if latest and latest in versions:
+        versions[latest]["is_latest"] = True
+    elif versions:
+        # Default to highest version
+        highest = sorted(versions.keys())[-1]
+        versions[highest]["is_latest"] = True
+
+    return versions
+
+
+def set_relative_paths(scopes, root, base_path):
+    """
+    Recursively set relative paths on scope entries.
+    """
+    for scope in scopes:
+        scope_name_lower = scope["name"].lower().replace(" ", "-")
+        # Try to find the actual directory
+        if "children" in scope:
+            set_relative_paths(scope["children"], root, base_path)
+
+
+def build_index(root):
+    """
+    Build the complete index for a substrate root.
+    Returns the index dict.
+    """
+    root = Path(root).resolve()
+    exfu_dir = root / "exfu"
+
+    # Discover versions
+    versions = discover_versions(exfu_dir)
+
+    scopes = []
+
+    # 1. Scan user/ scope
+    user_dir = root / "user"
+    user_fields = read_scope_md(user_dir)
+    if user_fields is not None:
+        folder_types = scan_folder_types(user_dir)
+        user_entry = {
+            "name": user_fields.get("name", "user"),
+            "path": "user/",
+            "type": "user",
+            "parent": None,
+            "exfu_version": user_fields.get("exfu"),
+            "folder_types": folder_types,
+        }
+        scopes.append(user_entry)
+
+    # 2. Scan scopes/ directory
+    scopes_dir = root / "scopes"
+    if scopes_dir.exists():
+        try:
+            for entry in sorted(scopes_dir.iterdir()):
+                if not entry.is_dir() or entry.name in SKIP_NAMES or entry.name.startswith("."):
+                    continue
+
+                fields = read_scope_md(entry)
+                if fields is not None:
+                    scope_entry = build_scope_entry(entry, fields, "root")
+                    scope_entry["path"] = f"scopes/{entry.name}/"
+                    # Set paths on children recursively
+                    _set_child_paths(scope_entry, f"scopes/{entry.name}/")
+                    scopes.append(scope_entry)
+                else:
+                    # Grouping folder
+                    deeper = scan_scopes_dir(entry, "root")
+                    for s in deeper:
+                        s["path"] = f"scopes/{entry.name}/{s.get('name', '').lower().replace(' ', '-')}/"
+                    scopes.extend(deeper)
+        except PermissionError:
+            pass
+
+    # Populate version usage
+    _collect_version_usage(scopes, versions)
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    index = {
+        "generated": now,
+        "substrate_root": str(root),
+        "exfu_versions": versions,
+        "scopes": scopes,
+    }
+
+    return index
+
+
+def _set_child_paths(scope_entry, parent_path):
+    """Recursively set path on child scopes."""
+    if "children" not in scope_entry:
+        return
+    for child in scope_entry["children"]:
+        child_slug = child.get("name", "").lower().replace(" ", "-")
+        child["path"] = f"{parent_path}scopes/{child_slug}/"
+        _set_child_paths(child, child["path"])
+
+
+def _collect_version_usage(scopes, versions):
+    """Walk scope tree and populate version usage lists."""
+    for scope in scopes:
+        ver = scope.get("exfu_version")
+        if ver and ver in versions:
+            versions[ver]["scopes_using"].append(scope["name"])
+        if "children" in scope:
+            _collect_version_usage(scope["children"], versions)
 
 
 def main():
@@ -235,29 +358,24 @@ def main():
 
     start = time.monotonic()
 
-    # Build index
-    index_text, folder_count = build_index(root)
+    index = build_index(root)
 
-    # Check size; append a note if over limit
-    if len(index_text.encode("utf-8")) > MAX_OUTPUT_BYTES:
-        index_text += (
-            "\n---\n\n"
-            "_Note: this substrate is large. The index above covers all folders found "
-            "but the output approached the size limit. If some entries appear truncated, "
-            "scan the folder directly._\n"
-        )
+    # Ensure exfu/derived/ exists
+    derived_dir = root / "exfu" / "derived"
+    derived_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ensure _meta/ exists
-    meta_dir = root / "_meta"
-    meta_dir.mkdir(exist_ok=True)
-
-    output_path = meta_dir / "substrate-index.md"
-    output_path.write_text(index_text, encoding="utf-8")
+    output_path = derived_dir / "index.json"
+    output_path.write_text(
+        json.dumps(index, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
     elapsed = time.monotonic() - start
+    scope_count = len(index["scopes"])
+    version_count = len(index["exfu_versions"])
     print(
-        f"Indexed {folder_count} folders, wrote _meta/substrate-index.md, "
-        f"took {elapsed:.2f}s."
+        f"Indexed {scope_count} scopes across {version_count} version(s), "
+        f"wrote exfu/derived/index.json, took {elapsed:.2f}s."
     )
 
 

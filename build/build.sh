@@ -279,14 +279,25 @@ build_variant() {
     ok "Variant resources copied ($variant/resources/)"
   fi
 
-  # 3h. Variant-specific scripts → output/scripts/
+  # 3h. Shared substrate → output/substrate/ (convention base, templates)
+  safe_copy_dir \
+    "${src_shared}/substrate" \
+    "${output_dir}/substrate" \
+    "shared substrate"
+  if [[ -d "${src_shared}/substrate" && \
+        $(find "${src_shared}/substrate" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ') -gt 0 ]]; then
+    ok "Shared substrate copied"
+  fi
+
+  # 3i. Variant-specific scripts → output/scripts/
+  #     (was 3h before substrate step was added)
   if [[ -d "${src_variant}/scripts" ]]; then
     mkdir -p "${output_dir}/scripts"
     cp -r "${src_variant}/scripts"/. "${output_dir}/scripts/"
     ok "Variant scripts copied ($variant/scripts/)"
   fi
 
-  # 3i. Manifest → output/.claude-plugin/plugin.json
+  # 3j. Manifest → output/.claude-plugin/plugin.json
   mkdir -p "${output_dir}/.claude-plugin"
   cp "$manifest_src" "${output_dir}/.claude-plugin/plugin.json"
   ok "Manifest copied"

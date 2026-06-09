@@ -1,6 +1,0 @@
-- [ ] 2026-05-26 — Review v0.3.0-direction.md cold and check it self-orients per the principle.
-- [ ] 2026-05-28 — Decide on schema format (YAML vs JSON Schema vs custom) for ontologies.
-- [ ] 2026-06-02 — Book haircut.
-- [ ] 2026-06-05 — Renew driving licence.
-- [x] 2026-05-21 — (done 2026-05-21) Capture v0.3.0 dictation into a T1 planning doc.
-- [x] 2026-05-21 — (done 2026-05-21) Build worked example of v0.3.0 substrate shape.
