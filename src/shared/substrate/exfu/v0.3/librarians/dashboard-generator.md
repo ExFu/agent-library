@@ -11,7 +11,7 @@ reads:
   - "*/reminders/"
   - "*/inbox/"
 writes:
-  - "exfu/derived/dashboard/index.html"
+  - "exfu/visualisations/dashboard/index.html"
 depends_on:
   - nightly-index
 description: Generates a static HTML dashboard showing substrate map, librarian health, and workspace views
@@ -19,7 +19,7 @@ description: Generates a static HTML dashboard showing substrate map, librarian 
 
 # Dashboard generator librarian
 
-The substrate is powerful but invisible: the user interacts with it through conversation and never sees the whole picture at once. This librarian produces a single-page HTML dashboard at `exfu/derived/dashboard/index.html` -- open one file and see your scopes, their health, what ran overnight, and what's on your plate. It is a snapshot of the last run, not a live feed.
+The substrate is powerful but invisible: the user interacts with it through conversation and never sees the whole picture at once. This librarian produces a single-page HTML dashboard at `exfu/visualisations/dashboard/index.html` -- open one file and see your scopes, their health, what ran overnight, and what's on your plate. It is a snapshot of the last run, not a live feed.
 
 ## Instructions
 
@@ -32,7 +32,7 @@ The substrate is powerful but invisible: the user interacts with it through conv
    Assembling HTML from the derived JSON files is deterministic; the script is the tool for that. Do not hand-build the page.
 
 2. Check the result:
-   - `exfu/derived/dashboard/index.html` exists and was just modified.
+   - `exfu/visualisations/dashboard/index.html` exists and was just modified.
    - It is non-trivial in size (an established substrate produces at least several KB).
    - If the script errored, this run is a failure; put the error in your detail line.
 
@@ -47,7 +47,7 @@ The substrate is powerful but invisible: the user interacts with it through conv
 ## What it touches
 
 - Reads: the derived JSON files (index, registry, log) plus todo/, reminders/, and inbox/ content across scopes (via the script)
-- Writes: `exfu/derived/dashboard/index.html` (overwritten each run)
+- Writes: `exfu/visualisations/dashboard/index.html` (overwritten each run)
 
 ## Why it matters
 

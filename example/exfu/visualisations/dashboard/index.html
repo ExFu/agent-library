@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExFu Dashboard</title>
+  <style>
+    :root {
+      --bg: #faf6f1;
+      --bg-card: #ffffff;
+      --bg-card-hover: #fdf9f4;
+      --bg-user: #f5ede3;
+      --border: #e0d5c8;
+      --border-light: #ebe3d8;
+      --text: #3d3428;
+      --text-muted: #8a7d6e;
+      --text-light: #a69882;
+      --accent: #c4883a;
+      --accent-light: #e8c9a0;
+      --green: #5a8a3c;
+      --green-bg: #eef5e8;
+      --amber: #c4883a;
+      --amber-bg: #fdf3e6;
+      --red: #b04a3a;
+      --red-bg: #faeae8;
+      --blue: #4a7fa5;
+      --blue-bg: #eaf2f8;
+      --grey: #b8a898;
+      --tab-active: #c4883a;
+      --tab-inactive: #d4c8b8;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    header .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab {
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.75rem;
+      transition: background 0.15s;
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .card.user-scope {
+      background: var(--bg-user);
+      border-color: var(--accent-light);
+    }
+
+    .card.user-scope:hover {
+      background: #f0e6d8;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-badge {
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      background: var(--border-light);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .card-purpose {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Folder-type dots */
+    .folder-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .folder-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .folder-dot .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Scope nesting */
+    .scope-children {
+      margin-left: 1.5rem;
+      padding-left: 0.75rem;
+      border-left: 2px solid var(--border-light);
+    }
+
+    /* Librarian cards */
+    .lib-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.75rem;
+      align-items: start;
+    }
+
+    .lib-health-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-top: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .lib-info {
+      min-width: 0;
+    }
+
+    .lib-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .lib-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .lib-meta {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .lib-meta-item {
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .lib-meta-item strong {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .lib-status {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .lib-status-label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.15rem 0.55rem;
+      border-radius: 10px;
+    }
+
+    .status-healthy { background: var(--green-bg); color: var(--green); }
+    .status-warning { background: var(--amber-bg); color: var(--amber); }
+    .status-failing { background: var(--red-bg); color: var(--red); }
+    .status-unknown { background: var(--border-light); color: var(--text-muted); }
+
+    .lib-last-run {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      margin-top: 0.25rem;
+    }
+
+    /* Run history */
+    .run-history {
+      margin-top: 1.5rem;
+    }
+
+    .run-history h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+    }
+
+    .run-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.82rem;
+    }
+
+    .run-entry:last-child {
+      border-bottom: none;
+    }
+
+    .run-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .run-cadence {
+      color: var(--text-muted);
+      min-width: 4rem;
+    }
+
+    .run-time {
+      color: var(--text-light);
+      min-width: 7rem;
+    }
+
+    .run-results {
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    /* Workspace views */
+    .workspace-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .workspace-section h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .workspace-scope {
+      margin-bottom: 0.75rem;
+    }
+
+    .workspace-scope-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .workspace-pointer {
+      font-size: 0.82rem;
+      color: var(--blue);
+      background: var(--blue-bg);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .workspace-content {
+      font-size: 0.82rem;
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: var(--mono);
+      line-height: 1.6;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .workspace-empty {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    /* Cadence groups */
+    .cadence-section {
+      margin-top: 1.5rem;
+    }
+
+    .cadence-header {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .cadence-meta {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      float: right;
+    }
+
+    /* Empty states */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-light);
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    /* Responsive */
+    /* View toggle bar + graph filters */
+    .view-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    .view-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .view-toggle button {
+      border: none;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.35rem 0.9rem;
+      cursor: pointer;
+    }
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .graph-filters {
+      display: inline-flex;
+      gap: 1rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .graph-filters label { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+    .graph-mount svg { width: 100%; height: auto; display: block; }
+    .gnode:hover circle { stroke: var(--accent); stroke-width: 2; }
+    .gnode text { font-family: var(--font); }
+    .card[data-scope] { cursor: pointer; }
+    .card[data-scope]:hover { background: var(--bg-card-hover); border-color: var(--accent-light); }
+
+    /* Container boxes for grouping folders */
+    .group-box {
+      border: 1.5px dashed var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 0.9rem 0.2rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .group-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Guidance + hints */
+    .guidance {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      background: var(--bg-user);
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      margin: 1rem 0 0.5rem;
+    }
+    .hint {
+      display: inline-block;
+      position: relative;
+      width: 1rem;
+      height: 1rem;
+      line-height: 1rem;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-light);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      margin-left: 0.4rem;
+      cursor: help;
+      vertical-align: middle;
+    }
+    .hint-pop {
+      display: none;
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 240px;
+      background: var(--text);
+      color: #f7f3ee;
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.4;
+      text-align: left;
+      text-transform: none;
+      letter-spacing: normal;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      z-index: 30;
+    }
+    .hint:hover .hint-pop, .hint:focus .hint-pop { display: block; }
+
+    /* Agent groups */
+    details.agent-group {
+      margin-bottom: 0.75rem;
+    }
+    details.agent-group > summary {
+      cursor: pointer;
+      list-style: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.4rem 0.2rem;
+      color: var(--text);
+    }
+    details.agent-group > summary::before {
+      content: "\25B8";
+      display: inline-block;
+      margin-right: 0.5rem;
+      color: var(--text-light);
+      transition: transform 0.15s;
+    }
+    details.agent-group[open] > summary::before { transform: rotate(90deg); }
+    .group-count {
+      display: inline-block;
+      background: var(--bg-user);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 0.05rem 0.5rem;
+      margin-left: 0.5rem;
+    }
+    details.exfu-group > summary { color: var(--text-muted); }
+    details.exfu-group .card { opacity: 0.85; }
+
+    /* Node sidebar */
+    #side-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 320px;
+      max-width: 88vw;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border);
+      box-shadow: -6px 0 24px rgba(61, 52, 40, 0.08);
+      padding: 1.2rem 1.2rem 2rem;
+      overflow-y: auto;
+      z-index: 40;
+    }
+    #side-panel h3 { font-size: 1.1rem; margin-bottom: 0.2rem; }
+    #side-panel p { font-size: 0.88rem; color: var(--text-muted); margin: 0.4rem 0; }
+    .panel-tag { font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+    .panel-section {
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin: 0.9rem 0 0.25rem;
+    }
+    .panel-mono { font-family: var(--mono); font-size: 0.78rem; color: var(--text-muted); }
+    .panel-muted { color: var(--text-light); font-size: 0.8rem; }
+    .panel-guidance {
+      margin-top: 1.2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-user);
+      border-radius: 8px;
+      padding: 0.5rem 0.7rem;
+    }
+    .panel-prose { font-size: 0.83rem; color: var(--text); }
+    .panel-prose .ws-heading { margin-top: 0.45rem; }
+    details.panel-doc {
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 0.35rem 0.6rem;
+      margin: 0.3rem 0;
+      background: var(--bg-card);
+    }
+    details.panel-doc > summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    details.panel-doc > summary::before {
+      content: "\25B8";
+      display: inline-block;
+      margin-right: 0.4rem;
+      color: var(--text-light);
+      transition: transform 0.15s;
+    }
+    details.panel-doc[open] > summary::before { transform: rotate(90deg); }
+    details.panel-doc[open] > summary { margin-bottom: 0.3rem; }
+    .path-link { color: var(--blue); text-decoration: none; border-bottom: 1px dotted var(--blue); }
+    .path-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .copy-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 0.68rem;
+      border-radius: 9px;
+      padding: 0.05rem 0.5rem;
+      margin-left: 0.4rem;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent-light); }
+
+    .panel-close {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.8rem;
+      border: none;
+      background: none;
+      font-size: 1.3rem;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    /* Map meta + legend */
+    .map-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .map-legend { display: inline-flex; gap: 1rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .legend-item .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    .card-eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 0.15rem;
+    }
+
+    .card-dim { opacity: 0.65; }
+
+    .kind-badge {
+      background: var(--amber-bg);
+      color: var(--amber);
+      font-size: 0.72rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+    }
+
+    /* Workspace rendering */
+    .chip {
+      display: inline-block;
+      background: var(--blue-bg);
+      color: var(--blue);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.6rem;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .chip-quiet {
+      background: var(--bg-user);
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+    .ws-pointer-row { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+    .ws-pointer-detail { color: var(--text-muted); font-size: 0.85rem; }
+    .ws-heading {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin: 0.6rem 0 0.3rem;
+    }
+    .ws-task { display: flex; gap: 0.5rem; align-items: baseline; padding: 0.15rem 0; font-size: 0.9rem; }
+    .ws-box {
+      width: 1rem;
+      height: 1rem;
+      flex: none;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      line-height: 1rem;
+      text-align: center;
+      color: var(--green);
+      background: var(--bg-card);
+    }
+    .ws-done { color: var(--text-light); }
+    .ws-done .ws-box { background: var(--green-bg); border-color: var(--green-bg); }
+    .ws-done span:last-child { text-decoration: line-through; }
+    .ws-bullet { padding: 0.12rem 0 0.12rem 1rem; position: relative; font-size: 0.9rem; }
+    .ws-bullet::before { content: "\2022"; position: absolute; left: 0.25rem; color: var(--accent-light); }
+    .ws-line { padding: 0.12rem 0; font-size: 0.9rem; }
+    .ws-more { color: var(--text-light); font-size: 0.8rem; padding: 0.3rem 0; font-style: italic; }
+    .ws-filename { font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem; }
+    .ws-body { margin-bottom: 0.4rem; }
+
+    .inbox-card {
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      margin: 0.4rem 0;
+      background: var(--bg-card);
+    }
+    .inbox-title { font-weight: 600; font-size: 0.9rem; }
+    .inbox-snippet { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.1rem; }
+    .inbox-age { color: var(--text-light); font-size: 0.75rem; margin-top: 0.2rem; }
+
+    @media (max-width: 700px) {
+      .container { padding: 1rem; }
+      .lib-card { grid-template-columns: auto 1fr; }
+      .lib-status { grid-column: 1 / -1; text-align: left; }
+      .scope-children { margin-left: 0.75rem; }
+      .tab { padding: 0.5rem 0.8rem; font-size: 0.82rem; }
+    }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ExFu Dashboard</h1>
+      <div class="subtitle">Substrate snapshot -- generated 2026-06-10 14:37 UTC</div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="tab-map">Your scopes</button>
+      <button class="tab" data-tab="tab-librarians">Agents</button>
+      <button class="tab" data-tab="tab-workspace">Workspace</button>
+    </div>
+
+    <div id="tab-map" class="tab-panel active">
+      <div class="view-bar"><div class="view-toggle"><button class="active" data-view="scopes-list">List</button><button data-view="scopes-graph">Map</button></div><div class="graph-filters" data-pane="scopes-graph" style="display:none"><label><input type="checkbox" id="f-groups" checked> grouping folders</label><label><input type="checkbox" id="f-agents"> agents</label></div></div>
+      <div data-pane="scopes-list">
+      <div class="map-meta">
+<span class="map-conventions">Conventions: ExFu v0.3, the latest -- followed by 3 scopes</span>
+<span class="map-legend"><span class="legend-item"><span class="dot" style="background:#5a8a3c"></span>stored here</span><span class="legend-item"><span class="dot" style="background:#4a7fa5"></span>managed elsewhere</span></span>
+</div>
+<div class="card user-scope" data-scope="Alastair">
+<div class="card-header">
+<span class="card-name">Alastair</span>
+<span class="card-badge">personal</span>
+</div>
+<div class="card-purpose">Personal workspace and global defaults</div>
+<div class="folder-dots">
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#b8a898"></span>inbox</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>ontology</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>reminders</span>
+<span class="folder-dot"><span class="dot" style="background:#4a7fa5"></span>todo</span>
+</div>
+</div>
+<div class="card" data-scope="Acme">
+<div class="card-header">
+<span class="card-name">Acme</span>
+<span class="card-badge">v0.3</span>
+</div>
+<div class="card-purpose">Client relationship and commercial engagement with Acme Corp</div>
+<div class="folder-dots">
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>ontology</span>
+<span class="folder-dot"><span class="dot" style="background:#4a7fa5"></span>todo</span>
+</div>
+</div>
+<div class="scope-children">
+<div class="card" data-scope="Q3 Renewal">
+<div class="card-header">
+<span class="card-name">Q3 Renewal</span>
+<span class="card-badge">v0.3</span>
+</div>
+<div class="card-purpose">Track and close the Acme Q3 2026 contract renewal and expansion</div>
+<div class="folder-dots">
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>todo</span>
+</div>
+</div>
+</div>
+<div class="card" data-scope="Side Project">
+<div class="card-header">
+<span class="card-name">Side Project</span>
+<span class="card-badge">v0.3</span>
+</div>
+<div class="card-purpose">Weekend experiment with a recipe recommendation engine</div>
+<div class="folder-dots">
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>scheduled</span>
+</div>
+</div>
+<div class="guidance">To create a scope, tell your AI: "Set up a new scope for ..." -- it scaffolds the folders and the next index picks it up.</div>
+      </div>
+      <div data-pane="scopes-graph" style="display:none">
+        <div id="scope-graph" class="graph-mount"></div>
+        <div class="guidance">Click any node to see what lives there. You sit in the middle; every scope radiates out from you.</div>
+      </div>
+    </div>
+
+    <div id="tab-librarians" class="tab-panel">
+      <div class="view-bar"><div class="view-toggle"><button class="active" data-view="agents-list">List</button><button data-view="agents-graph">Map</button></div><div class="graph-filters" data-pane="agents-graph" style="display:none"><label><input type="checkbox" id="f-lib" checked> librarians</label><label><input type="checkbox" id="f-biz" checked> business agents</label><label><input type="checkbox" id="f-exfu"> ExFu agents</label></div></div>
+      <div data-pane="agents-list">
+      <div class="map-meta"><span><strong>Nightly</strong>: 2h ago &nbsp;&middot;&nbsp; <strong>Weekly</strong>: 2h ago</span><span class="map-conventions"><span class="hint" tabindex="0">?<span class="hint-pop">Agents are recurring jobs your AI runs for you on a schedule (e.g. Claude Cowork Scheduled tasks). Librarians are special agents that keep the substrate itself tidy; business agents do your domain work, like scanning listings or drafting digests.</span></span> what's an agent?</span></div>
+<details class="agent-group" open>
+<summary>Side Project<span class="group-count">1</span></summary>
+<div class="card">
+<div class="lib-card">
+<div class="lib-health-dot" style="background:#5a8a3c"></div>
+<div class="lib-info">
+<div class="lib-name">weekly-trends-scan</div>
+<div class="lib-meta">
+<span class="lib-meta-item"><strong>Cadence:</strong> weekly</span>
+<span class="kind-badge">business agent</span>
+</div>
+</div>
+<div class="lib-status">
+<span class="lib-status-label status-healthy">Healthy</span>
+<div class="lib-last-run">2h ago</div>
+</div>
+</div>
+</div>
+</details>
+<details class="agent-group exfu-group">
+<summary>ExFu agents<span class="group-count">3</span><span class="hint" tabindex="0">?<span class="hint-pop">These ship with ExFu and keep the foundations healthy: the index that maps your scopes, the inbox sweep, and this dashboard. You rarely need to touch them.</span></span></summary>
+<div class="card">
+<div class="lib-card">
+<div class="lib-health-dot" style="background:#5a8a3c"></div>
+<div class="lib-info">
+<div class="lib-name">nightly-index</div>
+<div class="lib-meta">
+<span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+</div>
+</div>
+<div class="lib-status">
+<span class="lib-status-label status-healthy">Healthy</span>
+<div class="lib-last-run">2h ago</div>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="lib-card">
+<div class="lib-health-dot" style="background:#5a8a3c"></div>
+<div class="lib-info">
+<div class="lib-name">inbox-triage</div>
+<div class="lib-meta">
+<span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+</div>
+</div>
+<div class="lib-status">
+<span class="lib-status-label status-healthy">Healthy</span>
+<div class="lib-last-run">2h ago</div>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="lib-card">
+<div class="lib-health-dot" style="background:#5a8a3c"></div>
+<div class="lib-info">
+<div class="lib-name">dashboard-generator</div>
+<div class="lib-meta">
+<span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+</div>
+</div>
+<div class="lib-status">
+<span class="lib-status-label status-healthy">Healthy</span>
+<div class="lib-last-run">this run</div>
+</div>
+</div>
+</div>
+</details>
+<div class="guidance">To create an agent, describe the job to your AI in a conversation: "Every Monday, scan ... and note anything new in scope X." It writes the definition into that scope and stages it here for your approval.</div>
+<div class="run-history">
+<h3>Recent runs</h3>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">weekly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">weekly-trends-scan: success -- 3 items noted in trends-notes.md</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">dashboard-generator: success -- Dashboard rendered: 4 scopes, 4 scheduled agents</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">inbox-triage: success -- All inboxes empty; nothing to triage</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">nightly-index: success -- Indexed 4 scopes; all pins resolve to v0.3; no anomalies</span></div>
+</div>
+      </div>
+      <div data-pane="agents-graph" style="display:none">
+        <div id="agents-graph" class="graph-mount"></div>
+        <div class="guidance">Each agent hangs off the scope it works for. Click one for its story.</div>
+      </div>
+    </div>
+
+    <div id="tab-workspace" class="tab-panel">
+      <div class="workspace-section">
+<h3>Todo</h3>
+<div class="workspace-scope">
+<div class="workspace-scope-name">Alastair</div>
+<div class="ws-pointer-row"><span class="chip">Managed in ClickUp</span><span class="ws-pointer-detail">Tasks are tracked in ClickUp, not stored locally</span></div>
+</div>
+<div class="workspace-scope">
+<div class="workspace-scope-name">Acme</div>
+<div class="ws-pointer-row"><span class="chip">Managed in ClickUp</span><span class="ws-pointer-detail">Tasks are tracked in ClickUp, not stored locally</span></div>
+</div>
+<div class="workspace-scope">
+<div class="workspace-scope-name">Q3 Renewal</div>
+<div class="ws-body"><div class="ws-task"><span class="ws-box"></span><span>Confirm renewal pricing with finance</span></div>
+<div class="ws-task"><span class="ws-box"></span><span>Draft the renewal proposal deck</span></div></div>
+</div>
+</div>
+<div class="workspace-section">
+<h3>Reminders</h3>
+</div>
+    </div>
+
+    <footer>
+      Generated by the ExFu dashboard librarian -- index from 2026-06-10 14:18 UTC
+    </footer>
+  </div>
+
+  <div id="side-panel" hidden>
+    <button class="panel-close" aria-label="Close">&times;</button>
+    <div class="panel-body"></div>
+  </div>
+
+  <script>window.EXFU_DATA = {"scopes": [{"name": "Alastair", "path": "user/", "type": "user", "parent": null, "version": null, "purpose": "Personal workspace and global defaults", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer", "reminders": "data", "inbox": "empty"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">Personal context, preferences, and defaults that apply across everything I work on.<\/div>", "context": [{"title": "About me", "html": "<div class=\"ws-heading\">About Alastair<\/div>\n<div class=\"ws-line\">Alastair Brayne. Founder of WhaleyBear Ltd, which trades as ExFu (the AI collaborator install service this substrate supports). Based in the UK. Twenty-plus years in product and engineering leadership; the last few years going deep on agentic AI as the next platform shift.<\/div>\n<div class=\"ws-heading\">What I do<\/div>\n<div class=\"ws-line\">1. <strong>ExFu.<\/strong> Designing and shipping the installable substrate that turns Claude into a real working collaborator. Plugin development, install conversations, planning, the website at exfu.ai, and paid installs with founders and small teams.<\/div>\n<div class=\"ws-line\">2. <strong>Lope (lope.works).<\/strong> Bespoke skill engineering, agentic workflow development, and internal training for teams that want deeper engagement than ExFu&#x27;s install model.<\/div>\n<div class=\"ws-heading\">How I work<\/div>\n<div class=\"ws-line\">I think visually. I dictate a lot. I want concise responses, not preambles. I prefer prose over bullets for explanations, bullets for actual lists of things. I will tell you when I want detail; default to short.<\/div>\n<div class=\"ws-line\">I plan deliberately using golden-circle (Why, How, What) and tiered planning (T1, T2, T3). I expect the same of agents that work with me.<\/div>\n<div class=\"ws-line\">I don&#x27;t use em-dashes. Ever. Use commas, semicolons, or full stops instead.<\/div>\n<div class=\"ws-line\">I don&#x27;t want unilateral action on commits, merges, colour changes, or anything visual. Ask first.<\/div>"}], "contextMore": 0}, {"name": "Acme", "path": "scopes/acme/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Client relationship and commercial engagement with Acme Corp", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer"}, "group": "", "children": ["Q3 Renewal"], "aboutHtml": "<div class=\"ws-line\">Everything related to the Acme Corp account: relationship history, deal context, project scopes, and task tracking.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background on Acme Corp, relationship history, and key contacts.<\/div>"}, {"title": "Account overview", "html": "<div class=\"ws-heading\">Acme Corp<\/div>\n<div class=\"ws-line\">Mid-market manufacturing company, headquartered in Manchester. Roughly 1,200 employees. Family-owned for three generations; recent professionalisation of management under a new CFO.<\/div>\n<div class=\"ws-heading\">Relationship history<\/div>\n<div class=\"ws-bullet\">2024-Q3: First contract signed. 5 seats for the Sales team.<\/div>\n<div class=\"ws-bullet\">2025-Q1: Renewal, small expansion (5 to 8 seats).<\/div>\n<div class=\"ws-bullet\">2026-Q2: Casey signals interest in extending to Operations team. Renewal conversation opens with Jamie (Head of Procurement).<\/div>\n<div class=\"ws-heading\">Current commercial position<\/div>\n<div class=\"ws-bullet\">Contract: 8 seats, annual, expires 2026-09-30.<\/div>\n<div class=\"ws-bullet\">They want: multi-year discount on a 12-seat upgrade.<\/div>\n<div class=\"ws-bullet\">We want: signed multi-year before Q3 end, ideally with Operations seats included.<\/div>\n<div class=\"ws-heading\">Key people<\/div>\n<div class=\"ws-bullet\"><strong>Jamie Rivera<\/strong> -- Head of Procurement. Decision authority on the contract.<\/div>\n<div class=\"ws-bullet\"><strong>Casey Wong<\/strong> -- Head of Sales Operations. Our champion; influencer on the renewal.<\/div>\n<div class=\"ws-bullet\"><strong>Pat Singh<\/strong> -- CFO. Sign-off required above a threshold value.<\/div>"}], "contextMore": 0}, {"name": "Q3 Renewal", "path": "scopes/acme/scopes/q3-renewal/", "type": "scope", "parent": "Acme", "version": "v0.3", "purpose": "Track and close the Acme Q3 2026 contract renewal and expansion", "folderTypes": {"context": "data", "todo": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">The active deal to renew and expand Acme&#x27;s contract before September 2026.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Deal brief and background for the Q3 renewal.<\/div>"}, {"title": "Deal brief", "html": "<div class=\"ws-heading\">Q3 Renewal deal brief<\/div>\n<div class=\"ws-heading\">The deal<\/div>\n<div class=\"ws-line\">Renew Acme&#x27;s annual contract (8 seats, expires 2026-09-30) and expand to 12 seats with a multi-year commitment. Target close: before Q3 end.<\/div>\n<div class=\"ws-heading\">What&#x27;s happened<\/div>\n<div class=\"ws-bullet\">Jamie (Procurement) is leading from their side. New to the role; methodical, wants clear pricing.<\/div>\n<div class=\"ws-bullet\">Casey (our champion) is supportive but doesn&#x27;t sign.<\/div>\n<div class=\"ws-bullet\">CFO (Pat) needs to approve anything above the threshold. We haven&#x27;t met Pat directly.<\/div>\n<div class=\"ws-bullet\">Acme wants predictable pricing. They don&#x27;t care about new features; they want stability and responsive support.<\/div>\n<div class=\"ws-heading\">Next steps<\/div>\n<div class=\"ws-bullet\">Send the multi-year pricing proposal to Jamie.<\/div>\n<div class=\"ws-bullet\">Schedule a call with Jamie and Casey to walk through the terms.<\/div>\n<div class=\"ws-bullet\">Prepare a one-pager for Pat (via Casey) covering ROI of the expansion.<\/div>\n<div class=\"ws-heading\">Risk<\/div>\n<div class=\"ws-line\">Jamie is new and cautious. If the proposal has any ambiguity, it will slow down. Keep everything clean and specific.<\/div>"}], "contextMore": 0}, {"name": "Side Project", "path": "scopes/side-project/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Weekend experiment with a recipe recommendation engine", "folderTypes": {"context": "data", "scheduled": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">A personal side project. Low priority, no deadlines.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background for the recipe recommendation side project. Just getting started; nothing here yet.<\/div>"}, {"title": "Project brief", "html": "<div class=\"ws-heading\">Recipe engine -- project brief<\/div>\n<div class=\"ws-line\">A weekend experiment: a small recommendation engine that suggests recipes from<\/div>\n<div class=\"ws-line\">what&#x27;s already in the fridge. Stack is Python plus a local embedding model.<\/div>\n<div class=\"ws-line\">Success looks like a working prototype that my partner actually uses twice in<\/div>\n<div class=\"ws-line\">one week. No deadlines, no stakeholders, fun first.<\/div>"}, {"title": "Trends notes", "html": "<div class=\"ws-heading\">Trends notes<\/div>\n<div class=\"ws-line\">Appended weekly by the weekly-trends-scan agent. Newest at the top.<\/div>\n<div class=\"ws-heading\">2026-06-10<\/div>\n<div class=\"ws-bullet\">Open Recipe Format 0.4 released, adds ingredient quantity normalisation -- https://example.org/orf<\/div>\n<div class=\"ws-bullet\">Blog post on embedding ingredient lists with small local models -- https://example.org/embed-pantry<\/div>\n<div class=\"ws-bullet\">A fridge-photo-to-ingredients demo got traction on HN -- https://example.org/fridge-vision<\/div>"}], "contextMore": 0}], "agents": [{"name": "nightly-index", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "inbox-triage", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "dashboard-generator", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "weekly-trends-scan", "kind": "agent", "cadence": "weekly", "description": "", "scope": "Side Project", "origin": "user", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}], "root": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example"};</script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var tabs = document.querySelectorAll('.tab');
+      var panels = document.querySelectorAll('.tab-panel');
+
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          var target = tab.getAttribute('data-tab');
+
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          panels.forEach(function(p) { p.classList.remove('active'); });
+
+          tab.classList.add('active');
+          var panel = document.getElementById(target);
+          if (panel) panel.classList.add('active');
+        });
+      });
+    });
+    </script>
+  <script>
+(function () {
+  var D = window.EXFU_DATA || { scopes: [], agents: [] };
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function trunc(s, n) { return s.length > n ? s.slice(0, n - 1) + '...' : s; }
+  function px(v) { return Math.round(v * 10) / 10; }
+
+  var COL = {
+    border: '#e0d5c8', text: '#3d3428', muted: '#8a7d6e', light: '#a69882',
+    accent: '#c4883a', user: '#f5ede3', card: '#ffffff',
+    green: '#5a8a3c', amber: '#c4883a', red: '#b04a3a', grey: '#b8a898',
+    blue: '#4a7fa5'
+  };
+  function healthColor(st) {
+    if (st === 'healthy') return COL.green;
+    if (st === 'warning') return COL.amber;
+    if (st === 'failing') return COL.red;
+    return COL.grey;
+  }
+
+  function scopeByName(n) {
+    for (var i = 0; i < D.scopes.length; i++) if (D.scopes[i].name === n) return D.scopes[i];
+    return null;
+  }
+  function agentsForScope(name) {
+    return D.agents.filter(function (a) { return a.scope === name && a.origin !== 'exfu'; });
+  }
+
+  /* ---- radial layout ---- */
+  function layoutScopeGraph(showGroups, showAgents) {
+    var nodes = [], edges = [];
+    var user = null, tops = [], byName = {};
+    D.scopes.forEach(function (s) {
+      byName[s.name] = s;
+      if (s.type === 'user') user = s;
+      else if (s.parent === 'root') tops.push(s);
+    });
+    var cx = 450, cy = 320;
+    nodes.push({ id: 'u', x: cx, y: cy, r: 30, stype: 'user', name: user ? user.name : 'You', data: user });
+
+    var ring = [], seenGroups = {};
+    tops.forEach(function (s) {
+      if (s.group && showGroups) {
+        if (!seenGroups[s.group]) {
+          seenGroups[s.group] = true;
+          ring.push({ kind: 'group', label: s.group,
+                      members: tops.filter(function (t) { return t.group === s.group; }) });
+        }
+      } else {
+        ring.push({ kind: 'scope', scope: s });
+      }
+    });
+
+    var weights = ring.map(function (e) {
+      if (e.kind === 'group') return Math.max(1.6, e.members.length);
+      var w = 1 + (e.scope.children || []).length * 0.6;
+      if (showAgents) w += agentsForScope(e.scope.name).length * 0.3;
+      return w;
+    });
+    var total = weights.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var angle = -Math.PI / 2;
+
+    function addScopeNode(s, x, y, baseAngle, span) {
+      var fts = s.folderTypes || {};
+      var size = 13 + Math.min(12, Object.keys(fts).length * 2);
+      var id = 's:' + s.name;
+      nodes.push({ id: id, x: x, y: y, r: size, stype: 'scope', name: s.name, data: s });
+      var kids = (s.children || []).map(function (n) { return byName[n]; }).filter(Boolean);
+      kids.forEach(function (k, i) {
+        var ka = baseAngle + (i - (kids.length - 1) / 2) * Math.min(0.5, span / Math.max(1, kids.length));
+        var kx = cx + Math.cos(ka) * (Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) + 115);
+        var ky = cy + Math.sin(ka) * (Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) + 115);
+        edges.push({ x1: x, y1: y, x2: kx, y2: ky, dash: false });
+        addScopeNode(k, kx, ky, ka, span / 2);
+      });
+      if (showAgents) {
+        var ags = agentsForScope(s.name);
+        ags.forEach(function (a, i) {
+          var aa = baseAngle + (i - (ags.length - 1) / 2) * 0.22 + 0.0;
+          var rr = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) + 70;
+          var ax = cx + Math.cos(aa) * rr, ay = cy + Math.sin(aa) * rr;
+          edges.push({ x1: x, y1: y, x2: ax, y2: ay, dash: true });
+          nodes.push({ id: 'a:' + a.name, x: ax, y: ay, r: 7, stype: 'agent', name: a.name, data: a });
+        });
+      }
+    }
+
+    ring.forEach(function (e, idx) {
+      var span = (weights[idx] / total) * Math.PI * 2;
+      var mid = angle + span / 2;
+      angle += span;
+      var R1 = 165;
+      var x = cx + Math.cos(mid) * R1, y = cy + Math.sin(mid) * R1;
+      if (e.kind === 'group') {
+        nodes.push({ id: 'g:' + e.label, x: x, y: y, r: 12, stype: 'group', name: e.label, data: e });
+        edges.push({ x1: cx, y1: cy, x2: x, y2: y, dash: true });
+        e.members.forEach(function (m, i) {
+          var ma = mid + (i - (e.members.length - 1) / 2) * Math.min(0.45, span / e.members.length);
+          var mx = cx + Math.cos(ma) * (R1 + 120), my = cy + Math.sin(ma) * (R1 + 120);
+          edges.push({ x1: x, y1: y, x2: mx, y2: my, dash: false });
+          addScopeNode(m, mx, my, ma, span / Math.max(1, e.members.length));
+        });
+      } else {
+        edges.push({ x1: cx, y1: cy, x2: x, y2: y, dash: false });
+        addScopeNode(e.scope, x, y, mid, span);
+      }
+    });
+    return { nodes: nodes, edges: edges, w: 900, h: 640 };
+  }
+
+  function layoutAgentsGraph(showLib, showBiz, showExfu) {
+    var nodes = [], edges = [];
+    var cx = 450, cy = 300;
+    nodes.push({ id: 'u', x: cx, y: cy, r: 28, stype: 'user', name: 'You', data: null });
+    var hubs = {};
+    D.agents.forEach(function (a) {
+      if (a.origin === 'exfu') { if (!showExfu) return; }
+      else if (a.kind === 'librarian' && !showLib) return;
+      else if (a.kind === 'agent' && !showBiz) return;
+      var hub = a.origin === 'exfu' ? 'ExFu' : (a.scope || 'Your substrate');
+      (hubs[hub] = hubs[hub] || []).push(a);
+    });
+    var names = Object.keys(hubs);
+    var n = names.length || 1;
+    names.forEach(function (h, i) {
+      var ang = -Math.PI / 2 + (i / n) * Math.PI * 2;
+      var hx = cx + Math.cos(ang) * 150, hy = cy + Math.sin(ang) * 150;
+      var hubScope = scopeByName(h);
+      nodes.push({ id: 'h:' + h, x: hx, y: hy, r: 14,
+                   stype: hubScope ? 'scope' : 'group', name: h, data: hubScope || { label: h } });
+      edges.push({ x1: cx, y1: cy, x2: hx, y2: hy, dash: false });
+      hubs[h].forEach(function (a, j) {
+        var aa = ang + (j - (hubs[h].length - 1) / 2) * 0.3;
+        var ax = cx + Math.cos(aa) * 255, ay = cy + Math.sin(aa) * 255;
+        edges.push({ x1: hx, y1: hy, x2: ax, y2: ay, dash: true });
+        nodes.push({ id: 'a:' + a.name, x: ax, y: ay, r: 8, stype: 'agent', name: a.name, data: a });
+      });
+    });
+    return { nodes: nodes, edges: edges, w: 900, h: 600 };
+  }
+
+  function drawGraph(mount, model) {
+    var s = '<svg viewBox="0 0 ' + model.w + ' ' + model.h + '" xmlns="http://www.w3.org/2000/svg">';
+    model.edges.forEach(function (e) {
+      s += '<line x1="' + px(e.x1) + '" y1="' + px(e.y1) + '" x2="' + px(e.x2) + '" y2="' + px(e.y2) +
+           '" stroke="' + COL.border + '" stroke-width="1.3"' + (e.dash ? ' stroke-dasharray="4 4"' : '') + '/>';
+    });
+    model.nodes.forEach(function (nd) {
+      s += '<g class="gnode" data-stype="' + nd.stype + '" data-name="' + esc(nd.name) + '" cursor="pointer">';
+      var fill = COL.card, stroke = COL.border, dash = '';
+      if (nd.stype === 'user') { fill = COL.user; stroke = COL.accent; }
+      if (nd.stype === 'group') { fill = '#faf6f1'; dash = ' stroke-dasharray="3 3"'; }
+      if (nd.stype === 'agent') {
+        fill = healthColor(nd.data && nd.data.status);
+        stroke = 'none';
+        if (nd.data && nd.data.status === 'unregistered') { fill = COL.card; stroke = COL.grey; dash = ' stroke-dasharray="3 2"'; }
+      }
+      s += '<circle cx="' + px(nd.x) + '" cy="' + px(nd.y) + '" r="' + nd.r + '" fill="' + fill + '"' +
+           (stroke === 'none' ? '' : ' stroke="' + stroke + '" stroke-width="1.5"') + dash + '/>';
+      var fs = nd.stype === 'user' ? 13 : (nd.stype === 'agent' ? 10 : 12);
+      var fw = nd.stype === 'agent' ? 'normal' : '600';
+      var col = nd.stype === 'agent' ? COL.muted : COL.text;
+      s += '<text x="' + px(nd.x) + '" y="' + px(nd.y + nd.r + (nd.stype === 'agent' ? 11 : 15)) +
+           '" text-anchor="middle" font-size="' + fs + '" font-weight="' + fw + '" fill="' + col + '">' +
+           esc(trunc(nd.name, 18)) + '</text>';
+      s += '</g>';
+    });
+    s += '</svg>';
+    mount.innerHTML = s;
+  }
+
+  /* ---- sidebar ---- */
+  function dotRow(label, color) {
+    return '<span class="folder-dot"><span class="dot" style="background:' + color + '"></span>' + esc(label) + '</span>';
+  }
+  function openPanel(html) {
+    var p = document.getElementById('side-panel');
+    p.querySelector('.panel-body').innerHTML = html;
+    p.hidden = false;
+  }
+  function panelForScope(sc) {
+    if (!sc) return;
+    var h = '<h3>' + esc(sc.name) + '</h3>';
+    if (sc.type === 'user') h += '<div class="panel-tag">your personal scope</div>';
+    if (sc.purpose) h += '<p>' + esc(sc.purpose) + '</p>';
+    if (sc.aboutHtml) {
+      h += '<div class="panel-section">About</div><div class="panel-prose">' + sc.aboutHtml + '</div>';
+    }
+    var absPath = (D.root || '') + '/' + (sc.path || '');
+    h += '<div class="panel-section">Where</div><div class="panel-mono">' +
+         '<a class="path-link" href="file://' + encodeURI(absPath) + '">' + esc(sc.path || '') + '</a>' +
+         ' <button class="copy-btn" data-copy="' + esc(absPath) + '">copy</button>' +
+         '</div>';
+    if (sc.version) h += '<div class="panel-section">Conventions</div><div>ExFu ' + esc(sc.version) + '</div>';
+    var fts = sc.folderTypes || {};
+    var keys = Object.keys(fts).sort();
+    if (keys.length) {
+      h += '<div class="panel-section">What lives here</div><div class="folder-dots">';
+      keys.forEach(function (k) {
+        h += dotRow(k, fts[k] === 'pointer' ? COL.blue : COL.green);
+      });
+      h += '</div>';
+    }
+    var ags = agentsForScope(sc.name);
+    if (ags.length) {
+      h += '<div class="panel-section">Agents</div>';
+      ags.forEach(function (a) {
+        h += '<div>' + dotRow(a.name, healthColor(a.status)) +
+             ' <span class="panel-muted">' + esc(a.cadence || '') + '</span></div>';
+      });
+    }
+    if ((sc.children || []).length) {
+      h += '<div class="panel-section">Inside it</div><div>' + sc.children.map(esc).join(', ') + '</div>';
+    }
+    if (sc.context && sc.context.length) {
+      h += '<div class="panel-section">Context</div>';
+      sc.context.forEach(function (c, i) {
+        h += '<details class="panel-doc"' + (i === 0 ? ' open' : '') + '>' +
+             '<summary>' + esc(c.title) + '</summary>' +
+             '<div class="panel-prose">' + c.html + '</div></details>';
+      });
+      if (sc.contextMore) {
+        h += '<div class="panel-muted">... and ' + sc.contextMore + ' more in the folder</div>';
+      }
+    }
+    h += '<div class="panel-guidance">Ask your AI about this scope by name -- it knows where everything lives.</div>';
+    openPanel(h);
+  }
+  function panelForAgent(a) {
+    if (!a) return;
+    var h = '<h3>' + esc(a.name) + '</h3>';
+    h += '<div class="panel-tag">' + (a.kind === 'agent' ? 'business agent' : 'librarian') +
+         (a.origin === 'exfu' ? ' &middot; ships with ExFu' : '') + '</div>';
+    if (a.description) h += '<p>' + esc(a.description) + '</p>';
+    h += '<div class="panel-section">Status</div><div>' + dotRow(
+      a.registered ? a.status : 'not installed', healthColor(a.status)) + '</div>';
+    if (a.cadence) h += '<div class="panel-section">Cadence</div><div>' + esc(a.cadence) + '</div>';
+    if (a.scope) h += '<div class="panel-section">Scope</div><div>' + esc(a.scope) + '</div>';
+    h += '<div class="panel-guidance">' + (a.registered
+      ? 'To change or pause it, just tell your AI.'
+      : 'Staged, not yet running. Tell your AI "install ' + esc(a.name) + '" to switch it on.') + '</div>';
+    openPanel(h);
+  }
+  function panelForGroup(g) {
+    var label = g && (g.label || g.name) || '';
+    var h = '<h3>' + esc(label) + ' /</h3>' +
+            '<div class="panel-tag">grouping folder</div>' +
+            '<p>Organisation only -- it gathers related scopes but is not a scope itself.</p>';
+    var members = D.scopes.filter(function (s) { return s.group === label; });
+    if (members.length) {
+      h += '<div class="panel-section">Contains</div><div>' +
+           members.map(function (m) { return esc(m.name); }).join(', ') + '</div>';
+    }
+    openPanel(h);
+  }
+
+  function onNodeClick(g) {
+    var t = g.getAttribute('data-stype'), n = g.getAttribute('data-name');
+    if (t === 'agent') panelForAgent(D.agents.filter(function (a) { return a.name === n; })[0]);
+    else if (t === 'group') panelForGroup({ label: n });
+    else panelForScope(scopeByName(n));
+  }
+
+  /* ---- wiring ---- */
+  function renderGraphs() {
+    var sg = document.getElementById('scope-graph');
+    if (sg && sg.offsetParent !== null) {
+      drawGraph(sg, layoutScopeGraph(
+        document.getElementById('f-groups').checked,
+        document.getElementById('f-agents').checked));
+    }
+    var ag = document.getElementById('agents-graph');
+    if (ag && ag.offsetParent !== null) {
+      drawGraph(ag, layoutAgentsGraph(
+        document.getElementById('f-lib').checked,
+        document.getElementById('f-biz').checked,
+        document.getElementById('f-exfu').checked));
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.view-toggle button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var bar = btn.closest('.tab-panel');
+        bar.querySelectorAll('.view-toggle button').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var target = btn.getAttribute('data-view');
+        bar.querySelectorAll('[data-pane]').forEach(function (p) {
+          p.style.display = p.getAttribute('data-pane') === target ? '' : 'none';
+        });
+        renderGraphs();
+      });
+    });
+    document.querySelectorAll('.graph-filters input').forEach(function (cb) {
+      cb.addEventListener('change', renderGraphs);
+    });
+    document.addEventListener('click', function (ev) {
+      var g = ev.target.closest ? ev.target.closest('.gnode') : null;
+      if (g) { onNodeClick(g); return; }
+      var card = ev.target.closest ? ev.target.closest('[data-scope]') : null;
+      if (card && !(ev.target.closest('a') || ev.target.closest('button'))) {
+        panelForScope(scopeByName(card.getAttribute('data-scope')));
+      }
+    });
+    var closeBtn = document.querySelector('#side-panel .panel-close');
+    if (closeBtn) closeBtn.addEventListener('click', function () {
+      document.getElementById('side-panel').hidden = true;
+    });
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('.copy-btn') : null;
+      if (!b) return;
+      var t = b.getAttribute('data-copy') || '';
+      function done() {
+        b.textContent = 'copied';
+        setTimeout(function () { b.textContent = 'copy'; }, 1500);
+      }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = t;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(done, fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

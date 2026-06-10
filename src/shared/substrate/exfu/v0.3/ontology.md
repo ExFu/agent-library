@@ -18,7 +18,8 @@ substrate-root/
   exfu/              # convention base (plugin-owned; agents and users don't edit it)
     v0.3/            # this version's conventions, templates, shipped definitions
     latest.txt       # current version name, e.g. "v0.3"
-    derived/         # generated cache: index, registries, dashboard. Never hand-edited.
+    derived/         # generated cache: index, registries. Never hand-edited.
+    visualisations/  # ExFu-shipped visual outputs, e.g. the dashboard
   user/              # the personal scope (special: unversioned, parent: none)
   scopes/            # every other scope
 ```
@@ -85,7 +86,7 @@ Without the `scopes/` boundary, an agent couldn't tell folder-types (known conve
 - Every pinned scope reads its conventions from `exfu/<pin>/`.
 - The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because some sync layers, Box included, don't sync symlinks).
 - Convention versions install side by side (`exfu/v0.3/`, `exfu/v0.6/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
-- `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log, the dashboard. It is a cache: never hand-edited, safe to delete and regenerate.
+- `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log. It is a cache: never hand-edited, safe to delete and regenerate. (The dashboard itself lives in `exfu/visualisations/dashboard/`; only its data sources live here.)
 
 ---
 
@@ -197,7 +198,7 @@ Structured data with repeating records and consistent fields. Analogy: a spreads
 Visual outputs produced by agents for this scope: HTML pages, dashboards, charts, diagrams. Analogy: a gallery.
 
 - Each visualisation in its own subfolder with all of its assets, named for what it shows.
-- The ExFu-shipped example is the substrate dashboard generated nightly at `exfu/derived/dashboard/index.html` (it lives in derived/ because it's regenerated cache; scope-level visualisations live here because they're kept work).
+- The ExFu-shipped example is the substrate dashboard, generated nightly at `exfu/visualisations/dashboard/index.html` -- the root's own gallery. It reads its data from `exfu/derived/`; the rendered page lives in the gallery because visual outputs are what this folder-type is for.
 - Boundaries: source data goes in databases/; the thing that *generates* a recurring visualisation is a librarian or agent.
 
 ---
