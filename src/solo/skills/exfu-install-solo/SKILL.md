@@ -23,17 +23,18 @@ First contact is the highest-risk moment of the install. The user just installed
 
 **Golden circle, outcome first.** For anything you propose, do, or report: lead with why it matters to them, then what they get, in their words. The how gets one plain sentence at most. Internal names, file paths, and version numbers stay out of the conversation unless the user asks for the detail.
 
-**Vocabulary is earned.** Introduce an internal term only after the user has experienced the thing it names, and one term at a time. "Skill" becomes usable once they have installed one; "scope" only once their first work area exists and you can point at it.
+**Two brand terms are free; gloss them.** "Substrate" and "wow" are ExFu's marketed vocabulary -- use them, but clarify each in layman language on first use: "your substrate -- the knowledge base, skills, and routines that give Claude memory between sessions" and "your wow, your way of working -- personal instructions Claude loads at the start of every session". After the gloss, use them plainly.
+
+**All other vocabulary is earned.** Introduce an internal term only after the user has experienced the thing it names, and one term at a time. "Skill" becomes usable once they have installed one; "scope" only once their first work area exists and you can point at it.
 
 **Translation table.** The right column is for your reading only; speak the left column:
 
 | Say | Never lead with |
 |---|---|
-| your knowledge base, your setup | substrate, substrate root |
+| your substrate folder | substrate root |
 | the folder structure and ground rules | convention base, exfu/v0.3/, ontology, latest.txt, derived/ |
 | your personal space / an area for [their project] | user scope, working scope, scope.md |
 | automatic overnight tidy-up | librarian, nightly-index, scheduled agent, registry |
-| your personal instructions, loaded every session | wow |
 | a map of your setup, refreshed nightly | the global index, index.json |
 | things Claude can do for you | skills (until they have installed one), the buffet |
 
