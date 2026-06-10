@@ -23,7 +23,7 @@ Keeps inbox folders from becoming bottomless pits. Inbox is for quick capture; i
 
 3. Write a fresh `triage-summary.md` into that inbox folder (overwrite the old one) containing:
    - How many items, and how old the oldest is.
-   - One line per item: what it appears to be, and a suggested destination if one is obvious (a scope's context/, docs/, todo/ -- use the index and the item's content to judge).
+   - One line per item: what it appears to be, and a suggested destination if one is obvious (a scope's context/, todo/, databases/ -- use the index and the item's content to judge).
    - Flag anything older than 14 days as stale.
 
    Keep it scannable: short lines, no essays. Top the file with the protective note convention if the folder's agent.md asks for one.

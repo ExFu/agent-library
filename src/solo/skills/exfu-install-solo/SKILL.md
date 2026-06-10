@@ -67,6 +67,7 @@ Things you **must never** do:
 - **Don't store credentials, API keys, tokens, passwords, or credential files in the knowledge base.** Everything else -- names, contacts, notes, CRM records -- is fine.
 - **Don't install everything by default.** Pick what serves the user's actual conversation.
 - **Don't create README.md files in folders.** The convention base uses `agent.md` + `readme.md` pairs inside each folder-type. The old "README.md in every folder" pattern is retired.
+- **Don't create a `docs/` folder anywhere.** Retired pattern: kept documents (PDFs, spreadsheets, transcripts) are context and live in `context/`. This applies especially when migrating content from an older vault.
 - **Don't use em-dashes.** Use " -- " instead.
 
 ---

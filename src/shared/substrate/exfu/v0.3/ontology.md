@@ -112,7 +112,7 @@ Three rules govern all of them:
 
 **Store or point.** A folder-type may hold actual data, or its agent.md may say the data lives elsewhere ("tasks are in ClickUp"). The convention guarantees the location is *discoverable*; whether data is stored locally is per-scope, per-user. Pointer folders record the external tool and any connection details as `Local deviations:` in agent.md.
 
-**The catalogue is open.** A scope may add a folder-type not listed here if it genuinely needs one. Define it in the scope's ontology so future agents know what it means.
+**The catalogue is open -- but retired types stay retired.** A scope may add a folder-type not listed here if it genuinely needs one; define it in the scope's ontology so future agents know what it means. One name is explicitly off the table: **never create a `docs/` folder**. It existed in earlier drafts and was deliberately retired -- a kept document (PDF, spreadsheet, transcript, export) is context with a file extension and lives in `context/`. Recreating `docs/` splits documents from the background they belong to and resurrects a vocabulary the rest of the substrate no longer speaks.
 
 ### ontology/ {#ontology}
 

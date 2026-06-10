@@ -71,6 +71,7 @@ Things you **must never** do:
 - **Don't expose internal vocabulary to the user.** Apply "How to talk to the user" above in every message, not just the opening.
 - **Don't store credentials, API keys, tokens, passwords, government IDs, financial account numbers, or raw medical records in the knowledge base or the team's shared substrate.**
 - **Don't create README.md files in folders.** The convention base uses `agent.md` + `readme.md` pairs inside each folder-type, created by scope-setup. The old "README.md in every folder" pattern is retired.
+- **Don't create a `docs/` folder anywhere.** Retired pattern: kept documents (PDFs, spreadsheets, transcripts) are context and live in `context/`. This applies especially when migrating content from an older vault.
 - **Don't use em-dashes.** Use " -- " instead.
 
 ---
