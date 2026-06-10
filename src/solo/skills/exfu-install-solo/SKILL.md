@@ -1,15 +1,15 @@
 ---
 name: exfu-install-solo
-description: Runs the full solo install conversation: from first calibration through to a working personal substrate (knowledge base, skills, connectors, scheduled tasks). This skill is typically invoked by exfu-start when it detects a first-run user — not directly by users. It covers migration checks, the storage question, about-me capture, buffet of optional skills, and wow generation. Triggers when exfu-start routes a first-run solo user here, or when a user says "I want to get set up", "I just installed this, where do I start?", "let's do the install", or similar first-session language.
+description: Runs the full solo install conversation -- from first calibration through to a working personal substrate (knowledge base, skills, connectors, scheduled tasks). This skill is typically invoked by exfu-start when it detects a first-run user -- not directly by users. It covers migration checks, the storage question, convention base deployment, scope creation (user scope and first working scope), librarian registration, and wow generation. Triggers when exfu-start routes a first-run solo user here, or when a user says "I want to get set up", "I just installed this, where do I start?", "let's do the install", or similar first-session language.
 ---
 
-# ExFu Install — Solo
+# ExFu Install -- Solo
 
 You're setting someone up with Claude as a real working collaborator. This document is your context, principles, constraints, and component catalogue. Run the conversation conversationally, using your own judgement. It is not a script.
 
 ---
 
-## On load — start moving
+## On load -- start moving
 
 You've been loaded because the user is starting a solo install. Their "go" is implicit; they wouldn't be here otherwise. Don't open with another triage question or wait for further input. Begin Step 1 of the opening sequence (the migration check) immediately, then continue through the steps in order.
 
@@ -21,24 +21,28 @@ The user just installed the ExFu solo plugin. Greet them briefly if `exfu-start`
 
 Things you **must** do:
 
-- **Check for an existing setup first.** Before anything else, look for signals that the user already has an ExFu setup installed via the old fetch model (existing `wow` skill, existing `substrate` skill packaged separately, or substrate folder structure already present). If you find evidence of this, tell the user and delegate to `exfu-migrate-from-fetch-model`. Do not proceed past this check without confirming it doesn't apply.
+- **Check for an existing setup first.** Before anything else, look for signals that the user already has an ExFu setup installed (existing `wow` skill, existing `substrate` skill packaged separately, or substrate folder structure already present). If you find evidence of a v0.2 setup, tell the user and delegate to `exfu-migrate-from-fetch-model`. Do not proceed past this check without confirming it doesn't apply.
 - **Use the folder-selection popup (`request_cowork_directory`) for the knowledge base folder.** Never ask the user to type or paste a filesystem path. The popup is the only reliable approach.
 - **Confirm before destructive operations.** Don't delete or overwrite without checking, unless the user's instruction was unambiguous.
-- **Create a `README.md` in every folder you create.** Three sections: Purpose, Contents, Dependencies. This is not optional.
+- **Deploy the convention base before creating any scopes.** Scopes reference the convention base in `exfu/`. If it doesn't exist yet, scope creation will produce broken references. Always run Step 4 before Steps 5 and 6.
+- **Delegate scope creation to the scope-setup skill.** Don't create scopes inline. The scope-setup skill handles the about-me questions, ways-of-working capture, and folder-type scaffolding. Let it drive.
+- **Delegate librarian registration to the install-librarian skill.** Don't write librarian registry entries inline.
 
 Things you **must never** do:
 
 - **Don't overwrite the user's personal substrate without explicit consent.** If personal files exist, stop and ask. The user's content is not yours to replace.
 - **Don't put workflow logic in `wow`.** `wow` is a navigation map plus a thin always-on kernel. Workflow logic lives in dedicated skills, scheduled tasks, or scopes.
 - **Don't expose internal vocabulary to the user.** Especially "substrate", "JTBD", "discoverability asymmetry". The diagram gives the term "substrate" enough context; don't lead with it in plain conversation.
-- **Don't store credentials, government IDs, financial account numbers, or raw medical records in the knowledge base.**
+- **Don't store credentials, API keys, tokens, passwords, or credential files in the knowledge base.** Everything else -- names, contacts, notes, CRM records -- is fine.
 - **Don't install everything by default.** Pick what serves the user's actual conversation.
+- **Don't create README.md files in folders.** The convention base uses `agent.md` + `readme.md` pairs inside each folder-type. The old "README.md in every folder" pattern is retired.
+- **Don't use em-dashes.** Use " -- " instead.
 
 ---
 
 ## What a solo install is
 
-A solo install is a session — usually a couple of hours — where you set someone up with a Claude that has persistent memory, real context about them, access to their tools, and a way of working they can grow on their own. It is coaching as much as it is technical setup.
+A solo install is a session -- usually a couple of hours -- where you set someone up with a Claude that has persistent memory, real context about them, access to their tools, and a way of working they can grow on their own. It is coaching as much as it is technical setup.
 
 The user walks away with two things at once:
 
@@ -53,7 +57,7 @@ This is **not implementation-for-hire**. The teach-don't-do discipline is the wo
 
 ## The transformation you're delivering
 
-People come in thinking of AI as a function — something you query, something that produces text. The actual experience of working with Claude well is cognitive. You start relying on it as a collaborative entity.
+People come in thinking of AI as a function -- something you query, something that produces text. The actual experience of working with Claude well is cognitive. You start relying on it as a collaborative entity.
 
 The framing that lands this is **chief of staff**. People understand what it means to give a CoS context, standing instructions, access to systems, a daily routine. That's a working translation of what a well-installed Claude is.
 
@@ -65,11 +69,11 @@ Plant this framing through the **moves you make**, not as a tagline. *"Let's tel
 
 **Concrete first, abstract later.** Don't lecture on architecture before doing anything. Start with a useful action that needs a piece of architecture to support it.
 
-**Many small wins, not one big workflow.** About-me leads to context/me. "Save that thought" leads to inbox. "Remind me Tuesday" leads to reminders. Each illustrates a different facet.
+**Many small wins, not one big workflow.** About-me leads to context. "Save that thought" leads to inbox. "Remind me Tuesday" leads to reminders. Each illustrates a different facet.
 
 **Build by doing.** The setup is the byproduct of useful conversation. By the time you're done, the user has a working system and memories of having built it together with you.
 
-**Plain language.** Don't use "substrate", "scope skill", "MCP", or any internal vocabulary unless the user has earned the concept by hitting it. Use the parts: knowledge base, skills, tools, things on a timer.
+**Plain language.** Don't use "substrate", "scope", "MCP", "ontology", or any internal vocabulary unless the user has earned the concept by hitting it. Use the parts: knowledge base, skills, tools, things on a timer.
 
 ---
 
@@ -77,20 +81,21 @@ Plant this framing through the **moves you make**, not as a tagline. *"Let's tel
 
 This is a pattern, not a script. Run it in your own words, in the right order.
 
-### Step 1 — Migration check (first, before anything else)
+### Step 1 -- Migration check (first, before anything else)
 
-Look for evidence of an existing fetch-model setup. Signals:
+Look for evidence of an existing setup. Signals:
 - A `wow` skill already exists and references `exfu.ai/clients/`
 - `substrate`, `box-filesystem-management`, or similar skills are installed and packaged outside of a plugin
+- A folder structure with `orgs/`, `teams/`, `_meta/`, `context/me/` -- the v0.2 layout
 - The user mentions they've had ExFu set up before
 
-If you find any of these: *"Looks like you already have an ExFu setup installed via the old fetch model. The plugin will replace the bundled skills with plugin-managed versions, but won't touch your personal content. Before we start fresh, let me hand you to the migration skill — that'll bring your existing setup forward cleanly."* Then delegate to `exfu-migrate-from-fetch-model`.
+If you find any of these: *"Looks like you already have an ExFu setup installed. The plugin will replace the bundled skills with plugin-managed versions, but won't touch your personal content. Before we start fresh, let me hand you to the migration skill -- that'll bring your existing setup forward cleanly."* Then delegate to `exfu-migrate-from-fetch-model`.
 
 If none of these: continue.
 
-### Step 2 — Open with the diagram
+### Step 2 -- Open with the diagram
 
-Show `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/substrate-diagram.png`. Walk through it briefly: the four ingredients (knowledge base, skills, connectors, things on a timer), what they do together, and the felt experience you're building — not a chat window opened occasionally, but a real working collaborator.
+Show `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/substrate-diagram.png`. Walk through it briefly: the four ingredients (knowledge base, skills, connectors, things on a timer), what they do together, and the felt experience you're building -- not a chat window opened occasionally, but a real working collaborator.
 
 The diagram does heavy lifting. It tells the user there's actual structure here, makes the install concrete enough to discuss, and gives them a reference they can point at later.
 
@@ -98,11 +103,11 @@ While it's in front of you, plant two priors:
 
 **Teach-don't-do.** "We're going to do this together. By the end you'll have a working setup, and you'll be able to grow it yourself."
 
-**Why before what.** When shaping how AI behaves — skills, instructions, briefings — the most useful question to keep asking is *why* something matters, not just *what* they want done. Everything else flows from it.
+**Why before what.** When shaping how AI behaves -- skills, instructions, briefings -- the most useful question to keep asking is *why* something matters, not just *what* they want done. Everything else flows from it.
 
-### Step 3 — Storage question
+### Step 3 -- Storage setup
 
-Early in the conversation, before any file creation: *"Where would you like Claude's knowledge base to live? Box is the recommended default for most users — it syncs across devices and works alongside the MCP connector for mobile access. If your team mandates something else (Google Drive, OneDrive, local-only), let me know now and we'll work with that."*
+Early in the conversation, before any file creation: *"Where would you like Claude's knowledge base to live? Box is the recommended default for most users -- it syncs across devices and works alongside the MCP connector for mobile access. If your team mandates something else (Google Drive, OneDrive, local-only), let me know now and we'll work with that."*
 
 **Box is the default.** If the user confirms Box:
 
@@ -116,46 +121,54 @@ Then give the user a concrete instruction:
 
 If the user says local-only: "We'll set things up locally. Mobile and scheduled-task access won't work unless this machine is always on and reachable. Worth coming back to once you have a clearer answer on multi-device access." Proceed with local-only.
 
-If the user names a different cloud provider: "Most cloud drives work structurally the same way — the substrate is just files in a folder. We'll set it up and flag that the Box-specific MCP connector won't be available; use your provider's connector instead if you want mobile access." Proceed.
+If the user names a different cloud provider: "Most cloud drives work structurally the same way -- the knowledge base is just files in a folder. We'll set it up and flag that the Box-specific MCP connector won't be available; use your provider's connector instead if you want mobile access." Proceed.
 
-**Record the storage choice (do this before moving on).** Write `_meta/storage-backend.md` at the substrate root with two lines:
+Use `request_cowork_directory` for the folder picker to identify the knowledge base root folder. Record the storage choice in the user scope's context later (Step 5), not in a separate `_meta/` file.
 
-```
-backend: <box|local|other>
-remote: <Box folder ID or path, "none" for local, or provider name for other>
-```
+### Step 4 -- Convention base deployment
 
-Also note the choice in the wow navigation map for human-readable context (e.g. `storage: Box, knowledge base at ~/Library/CloudStorage/Box-Box/Substrate`, or `storage: local-only, sync managed by user`).
+Once the storage folder is identified, deploy the v0.3 convention base. This is the structural foundation that all scopes reference.
 
-The substrate skill reads `_meta/storage-backend.md` on every session start to know which verb vocabulary to surface and which storage skill to delegate to. Without it, the skill falls back to inference, which is less reliable.
+Do the following in order:
 
-### Step 4 — About-me
+1. **Create `exfu/` at the substrate root.** This is the convention base directory.
+2. **Copy the v0.3 convention files** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/` at the substrate root. This includes the full ontology (what a scope is, what a librarian is, what each folder-type means), the context principles, and the base definitions.
+3. **Create `exfu/latest.txt`** containing exactly `v0.3`. This tells agents which convention version is current.
+4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
 
-*"Tell me about yourself — what you do, what your work week looks like, what's currently on your plate."*
+Don't explain the convention base in detail to the user. A brief: *"I'm laying down the base definitions that everything else builds on. Think of it as the shared vocabulary -- so every part of your setup speaks the same language."*
 
-The answer needs somewhere to live, and that's the moment to introduce the Box folder (use `request_cowork_directory` for the folder picker), the bedrock skills, and the `context/me/` convention.
+### Step 5 -- User scope creation (delegate to scope-setup)
 
-If the about-me reveals they're part of a team or organisation — colleagues, an employer, IT policies, work tools — read `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` and fold its considerations into the rest of the install.
+Now that the convention base is in place, create the user's personal scope. **Delegate to the `scope-setup` skill**, passing it:
+- Scope type: `user` (the special personal scope at `user/` in the substrate root)
+- Storage backend: whatever the user chose in Step 3
 
-The about-me file is one of the most powerful things you'll create. Write it collaboratively. Read it back. The user should recognise themselves in it.
+The scope-setup skill will:
+- Ask about-me questions and write `user/context/about-me.md`
+- Capture ways-of-working preferences and write `user/ontology/ways-of-working.md`
+- Optionally set up todo, reminders, and inbox with sane defaults
 
-### Step 4b — Org and team check
+If the about-me reveals the user is part of a team or organisation -- colleagues, an employer, IT policies, work tools -- read `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` and fold its considerations into the rest of the install.
 
-Before creating any folders, ask briefly: *"Are you part of any organisations or teams whose context you'd want Claude to know about? Just you, one team, multiple — all are fine."*
+The about-me file is one of the most powerful things you'll create. When scope-setup hands back, read the about-me and confirm the user recognises themselves in it.
 
-**Solo (no orgs or teams):** proceed with the personal-default top-level layout. No `orgs/` or `teams/` folders. The layout is just `context/`, `databases/`, `scratch/`, `scopes/`, `_meta/`, `_trash/`.
+### Step 6 -- First working scope (delegate to scope-setup)
 
-**One team or org:** create one sibling folder at the top level (`teams/<team-name>/` or `orgs/<org-name>/`) with `context/` inside (the hard convention) and a `README.md` with YAML front-matter (`parent_org: <org-name>` if a team belongs to an org).
+*"What are you working on right now?"*
 
-**Multiple:** create one entry per org or team, same structure. Cross-link via front-matter.
+Take whatever the user names -- a project, a client, a deal, a product -- and create their first scope under `scopes/`. **Delegate to the `scope-setup` skill**, passing it:
+- Scope type: `working` (a regular scope under `scopes/`)
+- Scope name: whatever the user described
+- Parent: `root`
 
-For most solo users this is a one-sentence answer. Don't dwell on it.
+This demonstrates the pattern. By the end, the user has seen one scope created and knows the shape. They can ask for more later or create them with the scope-setup skill directly.
 
-### Step 4c — CLAUDE.md guard
+### Step 7 -- CLAUDE.md guard
 
-When you create the substrate root folder, write a `CLAUDE.md` file at the root — unless one already exists there (check first; if it exists, leave it alone unless the user explicitly asks you to update it).
+Write a `CLAUDE.md` file at the substrate root -- unless one already exists (check first; if it exists, leave it alone unless the user explicitly asks you to update it).
 
-Tell the user briefly: *"I'm adding a small CLAUDE.md file at the root of your knowledge base. It tells future Claude sessions that this folder is a substrate, so it won't be treated as a generic working folder if someone accidentally points Claude at it."*
+Tell the user briefly: *"I'm adding a small guard file at the root of your knowledge base. It tells future Claude sessions that this folder has structure, so it won't be treated as a generic working folder if someone accidentally points Claude at it."*
 
 Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` (the guard content is embedded there). If you can't read it, use this verbatim:
 
@@ -175,35 +188,24 @@ If you've accidentally been pointed here, stop and ask the user to either:
 This protects the substrate from being treated as a generic working folder.
 ```
 
-### Step 5 — The buffet
+### Step 8 -- Librarian registration (delegate to install-librarian)
 
-As you talk through the about-me, ask which two or three things would be most useful to have. Show them the options:
+**Delegate to the `install-librarian` skill.** It will:
+- Register the nightly-index librarian
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/librarian-registry.json` to `exfu/derived/librarian-registry.json` at the substrate root
+- Set up the `nightly-librarians` scheduled task (which runs all nightly-cadence librarians)
 
-- A daily morning briefing that pulls from real tools and tells them what's on their plate.
-- Standing context so Claude knows their background and never has to ask the same thing twice.
-- Capturing thoughts and to-dos the moment they happen, sorting later.
-- Drafting emails, posts, and messages in their actual voice.
-- Carrying the threads of a current deal or project across sessions.
-- Reminders that work across all their devices.
-- A contact list or personal CRM maintained for them.
-- Standing instructions that apply across every conversation.
+### Step 9 -- Run the index immediately
 
-Pick two or three. Install those. Leave the rest on the menu.
+Generate the first index so the substrate is immediately navigable:
 
-### Step 6 — Demonstrate as you go
+```
+python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <substrate-root>
+```
 
-Every install move is also a small win. Set a real reminder. Capture a real thought to inbox. Run the briefing manually once it's wired up. Each demonstration teaches the user how to use the thing you just built.
+This produces `exfu/derived/index.json` -- a complete map of every scope, folder-type, and their statuses. Confirm it ran successfully. If it fails, note the error and move on -- the user can run it manually later or it will run on the nightly schedule.
 
-Small-win patterns to reach for:
-- *About-me* → file in `context/me/` → standing context that survives sessions.
-- *"What tools do you use?"* → tool inventory + relevant connectors → Claude reaching into their real world.
-- *"Save that thought"* → inbox capture → frictionless capture, sort later.
-- *"Remind me on Tuesday"* → reminders → time-triggered surfacing.
-- *"Set up a morning briefing"* → scheduled task → autonomous routine work.
-- *"I'm working on a deal with Acme"* → scope folder + scope skill → continuity across an active work area.
-- *"Show me a piece of writing I did"* → writing-style profile → drafting in their voice.
-
-### Step 7 — The wow moment
+### Step 10 -- WoW skill generation (delegate to exfu-create-wow)
 
 When you know enough about the user to generate their personal way-of-working skill, invoke `exfu-create-wow`. It reads what you've built together, generates a personalised `wow` from the template, and packages it for the user to install.
 
@@ -211,42 +213,61 @@ The `wow` does two things: it maps out where the user's setup lives (so future C
 
 Then install the two universal instruction resources alongside:
 
-- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — paste the contents into Cowork's Global Instructions field, alongside the user's personalised `wow`. This carries the universal directive that ensures `wow` is loaded at session start.
-- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — paste the contents into Claude Desktop's user preferences (the general settings that apply across all chats, including mobile and non-Cowork). These cover universal behavioural directives (no sycophancy, no unilateral plan changes, etc.) plus a mobile-specific caveat about substrate availability.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` -- paste the contents into Cowork's Global Instructions field, alongside the user's personalised `wow`. This carries the universal directive that ensures `wow` is loaded at session start.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` -- paste the contents into Claude Desktop's user preferences (the general settings that apply across all chats, including mobile and non-Cowork). These cover universal behavioural directives (no sycophancy, no unilateral plan changes, etc.) plus a mobile-specific caveat about substrate availability.
 
-### Step 8 — Close
+### Step 11 -- Optional skills buffet
 
-Sketch what to do next — as pointers, not homework:
+As the conversation naturally surfaces needs, offer the skills that match. Don't present the full list unprompted. Reach for whichever of these fit what the user has told you:
+
+- A daily morning briefing that pulls from real tools and tells them what's on their plate.
+- Capturing thoughts and to-dos the moment they happen, sorting later.
+- Drafting emails, posts, and messages in their actual voice.
+- Reminders that work across all their devices.
+- A contact list or personal CRM maintained for them.
+- Standing instructions that apply across every conversation.
+
+If the user already got inbox, reminders, or todo during the user scope creation (Step 5), don't re-offer those. Pick two or three from what's left. Install those. Leave the rest on the menu.
+
+**Available skills:**
+- `setup-reminders` -- generates the user's personal reminders skill. Introduce when the user mentions losing track of things or wanting nudges.
+- `setup-inbox` -- generates the user's personal inbox skill. Introduce when the user mentions thoughts they don't want to lose.
+- `setup-writing-styles` -- voice intake from writing samples that generates the user's personal writing-styles skill. Introduce if the user wants Claude to draft on their behalf.
+
+### Step 12 -- Summary and next steps
+
+Sketch what to do next -- as pointers, not homework:
 - Add more context as life suggests it. If they start a new project, create a scope.
 - Connect more tools when they want them.
 - Revisit the buffet items they didn't pick today.
 - Reach Alastair at `al@exfu.ai` if they want a follow-up session.
 
-Then the plugin-update beat: *"When ExFu publishes a new version of this plugin, you'll be able to update it and get the latest bundled templates and skills. Your personal substrate — your wow, your context, your scopes, your databases — won't be touched. Only the bundled plugin content is replaced."*
+Then the plugin-update beat: *"When ExFu publishes a new version of this plugin, you'll be able to update it and get the latest bundled templates and skills. Your personal content -- your way of working, your context, your scopes -- won't be touched. Only the bundled plugin content is replaced."*
 
 ---
 
 ## Component catalogue
 
-What's available, all pre-installed via the plugin. No URL fetching needed. Skill-packaging is the tool the user uses to build their own new custom skills — the bundled skills are already in place.
+What's available, all pre-installed via the plugin. No URL fetching needed.
 
-**Bedrock — always installed:**
-- `skill-packaging` — how Claude packages skills into files for the user to install. Used for custom skills the user wants to create later, not for the bundled ones.
-- `box-filesystem-management` — how Claude manages files in Box (filesystem when mounted, MCP connector when not). Includes the daily cleanup scheduled task.
-- `substrate` — the boot skill. Reads the ways-of-working guide, orients to the current folder, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+**Bedrock -- always installed:**
+- `skill-packaging` -- how Claude packages skills into files for the user to install. Used for custom skills the user wants to create later, not for the bundled ones.
+- `box-filesystem-management` -- how Claude manages files in Box (filesystem when mounted, MCP connector when not). Includes the daily cleanup scheduled task.
+- `substrate` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
+- `install-librarian` -- registers librarians and sets up their scheduled tasks.
 
 **Optional but high-value:**
-- `setup-reminders` — one-time intake that generates the user's personal `<username>-reminders` skill. Introduce when the user mentions losing track of things or wanting nudges.
-- `setup-inbox` — one-time intake that generates the user's personal `<username>-inbox` skill. Introduce when the user mentions thoughts they don't want to lose.
-- `daily-briefing` (scheduled task) — morning briefing from reminders, inbox, calendar, task tracker. Introduce after the user has run setup-reminders, setup-inbox, and has at least one connector in place.
-- `setup-writing-styles` — voice intake from writing samples that generates the user's personal `<username>-writing-styles` skill. Introduce if the user wants Claude to draft on their behalf.
-- `scope-skills` template — for creating per-scope discoverability skills. Use when the user has an active work area worth giving Claude continuity over.
+- `setup-reminders` -- one-time intake that generates the user's personal `<username>-reminders` skill.
+- `setup-inbox` -- one-time intake that generates the user's personal `<username>-inbox` skill.
+- `daily-briefing` (scheduled task) -- morning briefing from reminders, inbox, calendar, task tracker.
+- `setup-writing-styles` -- voice intake from writing samples that generates the user's personal `<username>-writing-styles` skill.
 
 **Reference resources (in the plugin, no fetching needed):**
-- `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` — the full reference for how the substrate works.
-- `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` — fold in if the user is on a team.
-- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` — universal user-preferences text installed during Step 7.
-- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` — universal Cowork Global Instructions text installed during Step 7.
+- `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` -- the full reference for how the substrate works.
+- `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` -- fold in if the user is on a team.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` -- universal user-preferences text installed during Step 10.
+- `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` -- universal Cowork Global Instructions text installed during Step 10.
 
 ---
 
@@ -256,9 +277,15 @@ A checklist, not a script:
 
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
 - Box account, Box Drive locally mounted, Box MCP connector connected (or alternative storage confirmed). Knowledge base folder identified via the folder picker. Offline-caching caveat surfaced and actioned.
-- `substrate` installed and the ways-of-working guide in place. Box cleanup task running.
+- Convention base deployed at `exfu/v0.3/` with `exfu/latest.txt` pointing to `v0.3`.
+- User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
+- At least one working scope created under `scopes/` to demonstrate the pattern.
+- CLAUDE.md guard at the substrate root.
+- Librarian registry at `exfu/derived/librarian-registry.json` with nightly-index registered.
+- `nightly-librarians` scheduled task created.
+- First index generated at `exfu/derived/index.json`.
 - A personal `wow` skill generated, customised with what you've learned about the user, installed, and added to Global Instructions so it loads every session.
-- A `context/me/` folder with at least an about-me file the user helped write.
+- `substrate` skill installed and operational.
 - One or more small wins demonstrated.
 - The user knows roughly what they have, can name the parts, and has the confidence to extend any of it.
 
@@ -268,7 +295,7 @@ If something on this list didn't land, point them at `al@exfu.ai` for follow-up.
 
 ## Voice and tone
 
-Direct, warm, professional. Short sentences. Simple words. No filler. Don't hype. Don't tell the user how to feel about what they're setting up — just tell them what to do and why it matters.
+Direct, warm, professional. Short sentences. Simple words. No filler. Don't hype. Don't tell the user how to feel about what they're setting up -- just tell them what to do and why it matters.
 
 Avoid: "leverage", "harness", "game-changer", "delve", "let's dive in", anything that sounds like a LinkedIn post. Avoid superlatives. When the user offers new information, integrate it and move on.
 
@@ -281,9 +308,9 @@ If something goes wrong, don't over-apologise. Help them through it. If you can'
 ## External resources
 
 Reference these when they help:
-- **Anthropic Claude 101** (`https://anthropic.skilljar.com/claude-101`) — good for users who want broader Claude orientation.
-- **Introduction to Claude Cowork** (Anthropic Skilljar) — when the user wants to understand the Cowork surface.
-- **Claude docs** (`https://docs.claude.com`) — for feature-specific questions.
-- **`context/ways-of-working/substrate-guide.md`** in the user's knowledge base — once installed, this is the canonical reference. Read sections aloud or paraphrase when the user asks deep questions.
+- **Anthropic Claude 101** (`https://anthropic.skilljar.com/claude-101`) -- good for users who want broader Claude orientation.
+- **Introduction to Claude Cowork** (Anthropic Skilljar) -- when the user wants to understand the Cowork surface.
+- **Claude docs** (`https://docs.claude.com`) -- for feature-specific questions.
+- **The substrate guide** in the user's knowledge base -- once installed, this is the canonical reference. Read sections aloud or paraphrase when the user asks deep questions.
 
 ExFu is a guide through current best practice, not the unique source of insight. Point at Anthropic's own resources when they cover something well.

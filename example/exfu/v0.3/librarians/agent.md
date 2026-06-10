@@ -6,7 +6,7 @@ Substrates drift without maintenance. Inboxes fill up, indexes go stale, externa
 
 ## How
 
-Each file in this folder defines a maintenance task: what it does, what it touches, when it runs, what it produces. Definitions are read by the scheduled task infrastructure and executed on schedule.
+Each file in this folder defines a maintenance task: what it does, what it touches, when it runs, what it produces. Definitions are agent instructions -- on schedule, Claude in the cadence's scheduled session reads each one and does the work, calling scripts as tools where a definition says to.
 
 In the ExFu convention base, this folder defines the nightly index librarian. Scopes define their own librarians for scope-specific maintenance.
 

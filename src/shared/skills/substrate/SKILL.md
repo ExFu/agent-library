@@ -1,35 +1,37 @@
 ---
 name: substrate
-description: ExFu's substrate is the persistent system of files, skills, connectors, and scheduled tasks that gives Claude memory and working context across sessions — a knowledge base the user builds up over time, covering who they are, what they're working on, and how they operate. This skill bootstraps any Claude session with that context: it finds the knowledge base, reads the ways-of-working guide, orients to the directory structure, detects orgs and teams, surfaces the right verbs for git-backed substrates, and pulls in relevant scope context. Load it at the start of any substrate-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "do you know about X?", "what's in my notes on Y?", "what have we got on Z?", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
+description: ExFu's substrate is the persistent system of files, skills, connectors, and scheduled tasks that gives Claude memory and working context across sessions -- a knowledge base the user builds up over time, covering who they are, what they're working on, and how they operate. This skill bootstraps any Claude session with that context: it finds the knowledge base, reads the global index for the whole-substrate picture, resolves the current conventions version, loads the user's personal context and ways of working, discovers scopes and their parent chains, detects the storage backend, surfaces the right verbs for git-backed substrates, checks librarian health, and surfaces anything overnight maintenance left for the user. Load it at the start of any substrate-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "do you know about X?", "what's in my notes on Y?", "what have we got on Z?", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
 ---
 
-# Substrate skill — v0.2.0
+# Substrate skill -- v0.3.0
 
 ## Hard constraints
 
 Read these before doing anything else. They apply for the entire session.
 
-1. **Never write PII into the substrate proper.** Before writing any file to the substrate, check whether it contains identifiable personal information about someone other than the user (names, emails, contact details, health data, financial identifiers). If it does, route it to the PII layer connector instead (see the two-layer model section). If no PII layer is configured, refuse with a plain explanation and suggest the user set one up.
+1. **Never write secrets into the substrate.** Before writing any file, check whether it contains keys, tokens, passwords, API keys, or credential material (.env, *.key, *.pem, credentials.json, id_rsa, id_ed25519). If it does, refuse with a plain explanation. Secrets never enter the substrate. Everything else -- names, contacts, org charts, CRM records, personal notes -- is just data and lives where it naturally belongs.
 
-2. **Never fabricate org or team membership.** Only surface orgs and teams that are actually present in `orgs/` and `teams/` folders in the substrate. If neither folder exists, the user is in no orgs or teams. Do not invent structure.
+2. **Never fabricate scope membership.** Only surface scopes that actually exist in the substrate. If the index lists three scopes, there are three scopes. If scopes/ is empty, the user has no working scopes yet. Do not invent structure.
 
 3. **Never overwrite the CLAUDE.md guard without confirmation.** If a `CLAUDE.md` already exists at the substrate root, do not modify or replace it without the user explicitly asking. It is a safety guard, not content.
 
 4. **Never surface admin verbs without confirmed admin permissions.** Do not show `approve change`, `review`, or `reject` vocabulary unless the permission lookup (see below) returns `admin` or `maintainer`. When in doubt, default to member rights.
 
-5. **Respect the two-layer boundary at all times.** The substrate proper is for shareable, non-PII knowledge. The PII layer is for anything identifiable. This boundary is non-negotiable regardless of what the user asks.
+5. **Destructive operations require confirmation.** Deleting, overwriting, or moving scope-level structures requires explicit user confirmation. This includes removing scopes, deleting folder-type directories, or overwriting scope.md files.
 
 6. **Never proceed without substrate access.** If the substrate folder can't be reached in this session (not mounted as a working folder, no connector available, file reads return nothing), halt and ask the user to add it as a working folder before continuing. Do not fall back to inference, do not guess at folder structure, do not work from "memory" of past sessions, do not invent a degraded workflow. The substrate is the source of truth; without it you have nothing to operate on, and any attempt to keep going is hallucination.
+
+7. **Respect the convention base.** When creating new folders or content inside a scope, follow the conventions defined in the scope's pinned exfu version (found via the `exfu` field in scope.md or defaulting to latest). Read the relevant convention base files before acting -- do not assume you know the conventions from prior sessions.
 
 ---
 
 ## What to do when this skill loads
 
-### Step 1 — Find the substrate root and confirm access
+### Step 1 -- Find the substrate root and confirm access
 
-The substrate core lives in a knowledge base. It must be readable in this session for the rest of the boot sequence to work. Two access modes:
+The substrate core lives in a knowledge base folder. It must be readable in this session for the rest of the boot sequence to work. Two access modes:
 
-- **Filesystem (preferred when available).** The substrate folder is added as a working folder in Cowork. Direct reads/writes; supports delete, move, rename.
+- **Filesystem (preferred when available).** The substrate folder is added as a working folder. Direct reads/writes; supports delete, move, rename.
 - **Connector (when filesystem isn't available).** Mobile sessions, unmounted contexts. Reads and basic writes, slower than filesystem.
 
 Check, in order:
@@ -42,82 +44,103 @@ Check, in order:
 
 Wrap the invocation with a brief plain-language note:
 
-> "I can't reach your substrate from this session. Picking your substrate folder now."
+> "I can't reach your knowledge base from this session. Picking your folder now."
 
-Then call `request_cowork_directory`. When it returns, retry Step 1 from the top with the new path. If the picker is dismissed without a selection, tell the user the skill can't continue without substrate access and stop.
+Then call `request_cowork_directory`. When it returns, retry Step 1 from the top with the new path. If the picker is dismissed without a selection, tell the user the skill can't continue without access and stop.
 
 Do not continue past this step without confirmed access. Per Hard constraint #6: no inference, no guessing, no "I'll work from what I remember". The substrate has to be there for this skill to do its job.
 
-### Step 1.5 — Detect the storage backend
-
-Read `_meta/storage-backend.md` if it exists. The install conversation writes this file to record what the user picked: one of `git`, `box`, or `local`. The detected backend determines which verb vocabulary to surface, whether sync logic applies, and which storage skill to delegate to.
-
-If the file doesn't exist, infer:
-- A `.git/` directory at the substrate root means git-backed.
-- The substrate root path inside a Box mount or `~/Library/CloudStorage/Box-Box/...` style location means Box-backed.
-- Otherwise, default to `local` (no automated sync layer; the user manages propagation).
-
-Note the backend for the rest of the session. Subsequent steps adapt to it.
-
-### Step 2 — Check for the CLAUDE.md guard
+### Step 2 -- Check for the CLAUDE.md guard
 
 At the substrate root, check whether `CLAUDE.md` exists.
 
 - If it exists, continue. It confirms you're in a substrate root.
 - If it doesn't exist, you may be in an unguarded substrate (or this may be a first-time setup). See the CLAUDE.md guard section below for what to do.
 
-### Step 3 — Read the substrate guide
+### Step 3 -- Detect the storage backend
 
-Read `context/ways-of-working/substrate-guide.md` from the knowledge base. This is the durable reference for directory layout, conventions, access modes, naming rules, the scope/context distinction, and the two-layer model.
+Infer the storage backend from the substrate's environment:
 
-If the file doesn't exist yet, the substrate may not be fully set up. Tell the user. A copy of the guide is available in the plugin resources at `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` — read it from there to orient yourself on what to set up.
+- A `.git/` directory at the substrate root means **git-backed**.
+- The substrate root path inside a Box mount or `~/Library/CloudStorage/Box-Box/...` style location means **Box-backed**.
+- Otherwise, default to **local** (no automated sync layer; the user manages propagation).
 
-### Step 4 — Orient to the directory structure
+Note the backend for the rest of the session. It determines which verb vocabulary to surface and whether sync logic applies.
 
-Read `_meta/substrate-index.md` from the substrate root. This is the auto-generated folder map, updated nightly by the substrate-index scheduled task. It gives you a current, complete picture of every folder in the substrate with a one-line Purpose and Contents note for each.
+### Step 4 -- Read the user's wow skill for orientation
 
-If the file is not there, flag this to the user: either the substrate-index scheduled task has not been registered yet, or it has not run yet. Suggest registering it via the Cowork Scheduled tab (the task prompt is in `${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/TASK.md`), or running the script manually for an immediate first index:
+Check whether the user has a ways-of-working skill loaded in this session. The user's wow skill is typically named `<username>-wow` or `<username>` (e.g. `al-wow`, `al`). Look for any installed skill whose name matches this pattern. If one is loaded, it provides high-level orientation -- read it and let it shape how you interact for the rest of the session.
 
-```
-python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <substrate-root>
-```
+If no wow skill is loaded, continue. Not every user has set one up yet.
 
-The index is part of the substrate's expected baseline. In steady state, a substrate without `_meta/substrate-index.md` is missing a key orientation aid.
+### Step 5 -- Read the global index
 
-Read the top-level folder listing of the substrate root. You're looking for:
+Read `exfu/derived/index.json` from the substrate root. This is the single source of truth for the substrate's structure -- one read gives you the whole picture:
 
-- `context/` — personal/default context
-- `databases/` — personal/default structured data
-- `scopes/` — all scopes (top-level only)
-- `scratch/` — ephemeral working space (top-level only)
-- `_meta/` — system infrastructure
-- `_trash/` — soft-delete
-- `orgs/` — present only if the user is in one or more orgs
-- `teams/` — present only if the user is on one or more teams
+- Every scope (name, path, parent chain, nesting)
+- Folder-type status per scope (data-bearing, pointer-only, or empty)
+- ExFu version pins per scope
+- Which exfu versions are in use and which is latest
 
-Report honestly what's present. If `orgs/` and `teams/` are absent, the user is solo or hasn't set up team context yet.
+**If the index exists,** use it for all scope discovery and navigation. Do not walk the filesystem to find scopes when the index is available. The index is faster, more complete, and works even when the filesystem is slow (Box with caching issues, large substrates).
 
-### Step 5 — Orient to orgs and teams (if present)
+**If the index doesn't exist,** fall back to filesystem discovery:
 
-**If `orgs/` exists:** list the org entries. For each, read `orgs/<org-name>/context/` to understand what org-wide context is available. Read `orgs/<org-name>/README.md` for the summary.
+1. List the top-level structure: `exfu/`, `user/`, `scopes/`.
+2. Walk `scopes/` recursively, looking for directories that contain `scope.md`. Any directory with a `scope.md` is a scope; any without is a grouping folder.
+3. Read each `scope.md` for name, parent, and exfu version pin.
+4. Flag the missing index to the user -- suggest registering the nightly index librarian as a scheduled task so the index stays current.
 
-**If `teams/` exists:** list the team entries. For each, read `teams/<team-name>/context/` to understand team-specific context. Read `teams/<team-name>/README.md` for the summary, including any `parent_org:` front-matter that links the team to an org.
+### Step 6 -- Resolve the current exfu version
 
-Tell the user plainly what you found. Example: "You're in 2 orgs and 3 teams. Here's what each holds: [summary per entry]." If both folders are absent, say so and move on.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `v0.3`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
-### Step 6 — Check for a wrapping plugin
+The convention base lives at `exfu/<version>/` (e.g. `exfu/v0.3/`). It contains:
+- `ontology/` -- base vocabulary: what a scope is, what each folder-type means, what a librarian is
+- `ontology/folder-types/` -- per-folder-type conventions (todo.md, context.md, etc.)
+- `ontology/scope/` -- the scope model itself (nesting, version resolution, scope.md format)
+- `ontology/librarian/` -- librarian definitions and the nightly index spec
 
-Check whether a wrapping plugin is active. Look for a `_meta/wrapper.json` or `_meta/wrapper.md` file at the substrate root, or a designated marker in `${CLAUDE_PLUGIN_ROOT}` that identifies the wrapper. If a wrapper is present:
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `v0.3` follows the conventions in `exfu/v0.3/`. The `user/` scope is unversioned and always follows latest.
 
-- Defer to the wrapper for permission lookups.
-- Defer to the wrapper for PII connector configuration.
-- Defer to the wrapper for any org-specific verb vocabulary overrides.
+### Step 7 -- Load the user's personal context
 
-If no wrapper is present, fall back to install-time-resolved values stored in `_meta/` (e.g. `_meta/permissions.md` or `_meta/pii-connector.md`). If neither exists, use safe defaults (member permissions, no PII layer).
+Read the `user/` scope. This is the user's personal workspace -- context and preferences that apply across everything they do.
 
-### Step 7 — Permissions and verb surfacing
+Key files to read:
+- `user/scope.md` -- the user's name and personal workspace purpose
+- `user/context/about-me.md` -- who the user is, background, preferences
+- `user/ontology/ways-of-working.md` -- how the user prefers to work, communication style, conventions they care about
 
-What this step does depends on the storage backend detected in Step 1.5.
+Read these files if they exist. They shape how you interact for the rest of the session. If the files don't exist, the user scope may be minimal -- that's fine. Some users start lean.
+
+### Step 8 -- Orient to the scope landscape
+
+Using the index (or the filesystem fallback from Step 5), build a picture of what the user has:
+
+- How many scopes exist and what they're called
+- The nesting structure (which scopes are children of others)
+- Which scopes have populated folder-types vs empty stubs
+- Which exfu version each scope pins
+
+Tell the user plainly what you found. Example: "You've got 3 working areas: Acme (with a Q3 Renewal sub-area), Side Project, and your personal space." Use the scope names, not paths. If scopes/ is empty, say so and move on.
+
+**Don't overwhelm.** A brief summary is enough. The user knows what they have -- they're looking for confirmation that you do too.
+
+### Step 9 -- Navigate into a specific scope (when relevant)
+
+If the conversation context points to a specific scope (the user asked about it, or it's clear from context), navigate into it:
+
+1. **Read scope.md** for purpose, parent, and version pin.
+2. **Walk the parent chain.** If the scope has a parent, read that parent's scope.md too, and its parent, up to the root. This gives you the full context chain.
+3. **Load relevant ontologies.** Read ontologies from: the active scope, each ancestor scope, `user/ontology/`, and the exfu base (`exfu/<version>/ontology/`). Hold all definitions together. When definitions conflict, recognise both and ask the user if it matters in context.
+4. **Read relevant agent.md files.** For folder-types the user needs in this conversation, read the agent.md. It will have a `Follows:` reference to the convention base -- read that upstream file too. Then apply any local deviations listed in the agent.md.
+
+**Navigate via the index, not the filesystem.** The index gives you scope paths directly. Only touch the filesystem to read the actual content files.
+
+### Step 10 -- Permissions and verb surfacing
+
+What this step does depends on the storage backend detected in Step 3.
 
 **Git-backed substrates.** Determine the user's permission level via a provider-specific lookup. The lookup is resolved by the wrapping plugin or at install time. Contract:
 
@@ -125,7 +148,7 @@ What this step does depends on the storage backend detected in Step 1.5.
 lookup(remoteUrl: string) -> "admin" | "maintainer" | "member" | "read-only"
 ```
 
-Configured by the wrapper or written into `_meta/permissions.md` at install time. When no lookup is configured, default to `"member"` and surface a brief note that permission detection wasn't available.
+Configured by the wrapper or stored during install. When no lookup is configured, default to `"member"` and surface a brief note that permission detection wasn't available.
 
 Surface verbs based on the result:
 
@@ -139,36 +162,51 @@ Do not mention git commands at any point. Users interact through the verbs above
 
 **When checking for updates (git only):** prefer a non-LLM approach first. Compare the local HEAD commit hash against the remote HEAD hash. Only invoke a full sync process when there is a confirmed delta. Tokens are consumed only when needed.
 
-**Box-backed substrates.** Box's own access controls determine what files the user can read and write; no separate permission lookup is needed. Surface a backend-appropriate verb set: `save` (write to the relevant Box folder), `check for updates` (rare; Box auto-syncs in most cases), `share for review` (notify a colleague to look — no built-in PR concept), `fix clashes` (walk the user through Box's version history if a sync conflict arose). The git-specific verbs (`approve change`, `review`, `reject`) do not apply.
+**Box-backed substrates.** Box's own access controls determine what files the user can read and write; no separate permission lookup is needed. Surface a backend-appropriate verb set: `save` (write to the relevant Box folder), `check for updates` (rare; Box auto-syncs in most cases), `share for review` (notify a colleague to look -- no built-in PR concept), `fix clashes` (walk the user through Box's version history if a sync conflict arose). The git-specific verbs (`approve change`, `review`, `reject`) do not apply.
 
 **Local-only substrates.** The user has full rights to their local filesystem. No permission lookup, no fallback note. Verbs collapse to direct filesystem operations: `save` (write the file), `check for updates` (no remote to check; could mean "show me what changed since last session" if useful). Sharing-and-review verbs do not apply because there is no automated propagation layer; the user handles distribution manually.
 
-### Step 8 — Read the current folder's README
+### Step 11 -- Check librarian health
 
-If the conversation is happening inside a specific scope or context folder, read its `README.md`. Pay attention to the **Dependencies** section — it tells you what other parts of the substrate are relevant. Follow the chain: if a scope README points to team context, read that too.
+Read `exfu/derived/librarian-registry.json` if it exists. This file tracks:
+- Which librarians are defined and enabled
+- Last run time and status for each
+- Consecutive failure count
 
-### Step 9 — Check PII layer status
+Surface any problems worth mentioning:
+- **Consecutive failures > 0** -- a librarian has been failing. Tell the user which one and what the last error was (check `exfu/derived/librarian-log.json` for details if available).
+- **Stale runs** -- if the last run was more than 48 hours ago for a nightly librarian, something may be wrong with the scheduled task. Mention it.
+- **No registry** -- if the file doesn't exist, the nightly librarian may not be set up yet. Suggest it if the substrate seems established (has multiple scopes, has been in use).
 
-Check whether a PII layer connector is configured (wrapper or `_meta/pii-connector.md`). Note the status for the session:
+If everything is healthy, say nothing. Librarian health is background monitoring, not ceremony.
 
-- Connector configured: route PII writes to it automatically.
-- No connector: if PII write is requested, refuse with explanation and offer to help the user set up a connector if they want one.
+### Step 12 -- Surface librarian attention items
 
-For solo installs without team context, there is typically no PII layer. That's expected. No action needed.
+Librarians run agentically in their scheduled sessions, but some outcomes need the user: a decision the librarian wouldn't make alone (deleting an unreferenced version), a triage summary worth a look, a failure that needs a human.
 
-### Step 10 — Check reminders and inbox
+Check the most recent entries in `exfu/derived/librarian-log.json` (latest entry per librarian):
+- Any `status: failure` -- mention which librarian and its detail line.
+- Any detail line flagging something for the user (e.g. "v0.2 unreferenced; candidate for removal", "7 inbox items, 2 stale").
 
-Check whether a reminders skill is loaded in this session. The user's reminders skill is typically named `<username>-reminders` (e.g. `al-reminders`). Look for any installed skill whose name ends in `-reminders`. If one is loaded, delegate to it: read the reminders file, surface anything due or overdue. If nothing is due, say nothing.
+If there's something, surface it briefly: "Overnight maintenance left [n] things for you to look at." Don't force processing -- mention and move on.
 
-Check whether an inbox skill is loaded in this session. The user's inbox skill is typically named `<username>-inbox`. Look for any installed skill whose name ends in `-inbox`. If one is loaded, delegate to it: check the count. If there are items, mention briefly ("Inbox has [n] items"). Don't force processing.
+If there's nothing, say nothing.
 
-If neither type of skill is loaded, skip these checks silently. Not every user has set up reminders or inbox yet — that's fine.
+### Step 13 -- Check reminders and inbox
+
+Check whether a reminders skill is loaded in this session. The user's reminders skill is typically named `<username>-reminders` (e.g. `al-reminders`). Look for any installed skill whose name ends in `-reminders`. If one is loaded, delegate to it: read the reminders, surface anything due or overdue. If nothing is due, say nothing.
+
+Check whether an inbox skill is loaded. The user's inbox skill is typically named `<username>-inbox`. If one is loaded, delegate to it: check the count. If there are items, mention briefly ("Inbox has [n] items"). Don't force processing.
+
+If neither type of skill is loaded, check the user scope directly:
+- `user/reminders/` -- look for any reminder files with natural-language trigger rules that fire today
+- `user/inbox/` -- count items if any exist
 
 These checks are fast and quiet. Session start is not a ceremony.
 
-### Step 11 — Orient and proceed
+### Step 14 -- Orient and proceed
 
-You should now understand: how the substrate is structured, which orgs and teams the user is in, what the current context and scope are, what permission level to operate at, and what (if anything) needs the user's attention.
+You should now understand: the substrate's structure, which scopes exist and how they nest, what the user's personal context and preferences are, what permission level to operate at, whether any librarians need attention, and what (if anything) needs the user's attention.
 
 If the user hasn't asked for anything specific yet, briefly confirm what you've loaded and ask what they'd like to work on.
 
@@ -202,8 +240,6 @@ If you've accidentally been pointed here, stop and ask the user to either:
 This protects the substrate from being treated as a generic working folder.
 ```
 
-The canonical content is also available as a reference in the substrate guide at `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md`.
-
 ---
 
 ## Verb vocabulary (git-backed team substrates)
@@ -216,50 +252,135 @@ Users speak natural verbs to Claude in place of git terminology. Map each as fol
 | share for review | Push the branch and open a pull request via the git provider API |
 | check for updates | Check the remote HEAD hash; if there's a delta, pull from main |
 | fix clashes | Walk the user through merge conflict resolution (guided, not technical) |
-| approve change | Merge the pull request — only if permission level is `admin` or `maintainer` |
+| approve change | Merge the pull request -- only if permission level is `admin` or `maintainer` |
 | review | Surface the open pull request for the user to read and respond to |
-| reject | Close the pull request without merging — only if `admin` or `maintainer` |
+| reject | Close the pull request without merging -- only if `admin` or `maintainer` |
 
 Never expose git commands, branch names, or diff output directly to the user unless they ask. The above vocabulary is the interface.
 
-**Lightweight sync before "check for updates":** before firing any sync process, compare local HEAD commit hash to remote HEAD commit hash using a non-LLM call. If they match, tell the user they're up to date — no further work needed. If there's a delta, proceed with the pull.
+**Lightweight sync before "check for updates":** before firing any sync process, compare local HEAD commit hash to remote HEAD commit hash using a non-LLM call. If they match, tell the user they're up to date -- no further work needed. If there's a delta, proceed with the pull.
 
 ---
 
-## Two-layer model
+## Data rules
 
-The substrate has two conceptual layers. The boundary is about what gets *stored*, not what Claude *sees*.
+Simple:
 
-**Layer 1 — Substrate proper (this knowledge base).** Holds: skills, templates, context docs, structured non-PII data, configuration, sanitised test fixtures. Versioned, auditable, shareable, evolves slowly. Everything in the substrate's directory structure lives here.
-
-**Layer 2 — PII layer (access-controlled store).** Holds: anything containing identifiable PII about other people — customer profiles, per-customer working memory, drafting feedback. Accessed at runtime via a guarded connector. The connector enforces access control; every query parameterised by user and subject. No general SELECT, no admin verbs from the rep-side connector.
-
-**For solo installs:** there is typically no PII layer. That's expected and correct. If the user starts tracking third-party contact data and grows into a team context, this boundary becomes relevant.
-
-**For team installs:** the PII layer connector is configured by the wrapping plugin or during the install conversation. The substrate skill expects either a configured connector or a "no PII layer" status noted in `_meta/`.
-
-When asked to write data that may contain third-party PII:
-1. Check whether the content contains identifiable information about others.
-2. If yes, route to the PII layer connector (if configured) or refuse and explain why.
-3. If no, write to the substrate normally.
-
-When unsure whether something counts as PII, err on the side of caution. Ask the user, or put it in `scratch/` flagged for review.
+- **Only true secrets are banned.** Keys, tokens, passwords, API keys, credential files (.env, *.key, *.pem, credentials.json, id_rsa, id_ed25519) never enter the substrate. This is a hard constraint, enforced by agents and by git-sync ignore patterns.
+- **Everything else is data.** Names, contacts, org charts, CRM records, personal notes, meeting minutes, preference profiles -- all of it lives wherever it naturally belongs in the scope structure. There is no separate PII layer, no two-layer boundary, no special PII machinery.
+- **Destructive operations require confirmation.** Deleting, overwriting, or moving scope-level structures requires explicit user confirmation.
 
 ---
 
-## Multi-org / multi-team awareness
+## The scope model
 
-The substrate accommodates zero, one, or multiple orgs and teams. The folder structure is additive:
+Everything in the substrate is organised around one concept: the **scope**. A scope is a bounded context with its own knowledge, definitions, and conventions. An org is a scope. A team is a scope. A personal space is a scope. A project is a scope. They all have the same internal shape.
 
-- A user in no orgs/teams has only the personal-default layout (`context/`, `databases/`, `scopes/`, `scratch/`, `_meta/`, `_trash/`).
-- A user in one or more orgs has an `orgs/` folder with one entry per org.
-- A user on one or more teams has a `teams/` folder with one entry per team.
+### Top-level structure
 
-Multiple entries under `orgs/` and `teams/` are fully supported. A manager spanning two departments would have two entries under `teams/`. A consultant working across two organisations would have two entries under `orgs/`.
+```
+substrate-root/
+  exfu/                     # convention base (plugin-owned, not user-editable)
+    v0.3/                   # versioned conventions
+      ontology/             # base vocabulary (what a scope is, folder-types, librarians)
+      context/              # principles, recommendations
+      skills/               # exfu-shipped skill definitions
+      librarians/           # exfu-shipped librarian definitions
+      ...
+    derived/                # generated content (unversioned)
+      index.json            # the global index -- the primary navigation tool
+      librarian-registry.json
+      librarian-log.json
+    latest.txt              # points to current version (e.g. "v0.3")
+  user/                     # personal scope (unversioned, always follows latest)
+    scope.md
+    ontology/               # personal definitions, ways of working
+    context/                # personal background (about-me, preferences)
+    skills/
+    todo/
+    reminders/
+    inbox/
+    ...
+  scopes/                   # the tree of everything else
+    acme/                   # a scope (has scope.md)
+      scope.md
+      ontology/
+      context/
+      todo/
+      scopes/               # child scopes gathered here
+        sales/
+          scope.md
+          ...
+    side-project/            # another scope
+      scope.md
+      ...
+```
 
-When orienting, list each entry and give a one-line summary based on its README. Don't assume the user remembers the exact names of their orgs and teams — surface them.
+### How to tell a scope from a grouping folder
 
-**To find scopes belonging to a specific team or org:** search `scopes/` and filter by YAML front-matter. A scope's `README.md` carries `team: <team-name>` and/or `org: <org-name>`. Do not traverse into `teams/<team-name>/` looking for nested scopes — there are none. All scopes are top-level.
+- **Scope:** has a `scope.md` file. It's a real working context.
+- **Grouping folder:** no `scope.md`. Purely organisational (e.g. `scopes/clients/`). Ignore it structurally.
+
+### scope.md format
+
+```yaml
+---
+name: <human-readable name>
+parent: <parent scope name, or "root" for top-level>
+exfu: v0.3
+---
+```
+
+Followed by a protective header blockquote, then an optional purpose statement in markdown.
+
+The `user/` scope omits the `exfu` field (it's unversioned, always follows latest) and sets `parent: none`.
+
+### The 10 folder-types
+
+Inside any scope, these are the standard vocabulary for where things go:
+
+| Folder | What it answers |
+|---|---|
+| `ontology/` | What do the concepts and terms in this scope mean? |
+| `context/` | What background should an agent know about this scope? |
+| `docs/` | Where are captured documents that need keeping? |
+| `skills/` | What skill definitions or drafts relate to this scope? |
+| `librarians/` | What scheduled maintenance should happen here? |
+| `todo/` | How does this scope handle tasks? |
+| `reminders/` | How does this scope handle lightweight nudges? |
+| `inbox/` | Where do uncategorised thoughts go for this scope? |
+| `databases/` | Where is structured data with schemas for this scope? |
+| `visualisations/` | Where do agent-created visual outputs live for this scope? |
+
+Each folder-type has an `agent.md` that follows the reference+delta pattern (see below). The catalogue is open -- a scope may add folder-types not listed here.
+
+**Store-or-point.** A folder-type may contain actual data, or its agent.md may say "tasks are in ClickUp." The convention guarantees the location is discoverable; whether data lives there is per-scope, per-user.
+
+### The reference+delta pattern (agent.md)
+
+Every folder-type directory contains an `agent.md` with this structure:
+
+1. **Protective header** (blockquote, always first):
+   > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
+
+2. **`Follows:` line** naming the upstream convention by versioned path:
+   `Follows: exfu/v0.3/ontology/folder-types/todo.md`
+
+3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
+
+A folder with no deviations is two lines plus the header. The agent reads the upstream convention for full behaviour.
+
+### Scope nesting
+
+Scopes nest via a dedicated `scopes/` subdirectory. A scope's own folder-types sit at the scope's root level; child scopes are gathered in `scopes/`. The pattern is self-similar at every level.
+
+Each nested scope declares its parent in scope.md. This is a portability safeguard -- if a scope is shared or extracted on its own, the agent knows something is missing from its ontologies rather than silently operating with an incomplete picture.
+
+### Ontology resolution
+
+When operating inside a scope, read all relevant ontologies by walking the declared parent chain: active scope, each ancestor scope, `user/ontology/`, then `exfu/<version>/ontology/`. Hold them all together. When definitions conflict, recognise both and ask the user in context which applies. There is no automatic cascade, no deterministic precedence rule -- the agent supplies the judgment.
+
+When writing new ontology entries that touch existing terms, annotate the intent: "This extends the user-level definition of X" or "This scope uses Y differently from Z scope."
 
 ---
 
@@ -267,12 +388,11 @@ When orienting, list each entry and give a one-line summary based on its README.
 
 The substrate skill operates in two modes depending on whether a wrapping plugin is active.
 
-**With a wrapping plugin:** the wrapper provides the permission lookup function, the PII connector configuration, and any org-specific verb overrides. The substrate skill defers to the wrapper for these. The wrapper is detected via `_meta/wrapper.json` or a marker in `${CLAUDE_PLUGIN_ROOT}`.
+**With a wrapping plugin:** the wrapper provides the permission lookup function and any verb overrides. The substrate skill defers to the wrapper for these. The wrapper is detected via a marker in `${CLAUDE_PLUGIN_ROOT}`.
 
-**Without a wrapping plugin:** fall back to install-time-resolved values in `_meta/`. These were written during the install conversation when the user's setup was captured. If `_meta/` has no relevant files, use the safe defaults:
+**Without a wrapping plugin:** fall back to install-time-resolved values or use safe defaults:
 
 - Permission level: `member`
-- PII layer: not configured
 - Surface a note that permission detection wasn't available, and suggest the user run the install skill if they haven't yet
 
 The substrate skill does not require a wrapping plugin to function. Wrappers are additive. Solo installs have no wrapper and that's correct.
@@ -281,34 +401,40 @@ The substrate skill does not require a wrapping plugin to function. Wrappers are
 
 ## Core concepts
 
-These are internalised here so they're available even when the guide hasn't been loaded yet in a given conversation.
+These are internalised here so they're available even when the convention base hasn't been loaded yet in a given conversation.
 
-**Substrate.** The combination of files, skills, connectors, and scheduled tasks that together give Claude persistent memory and context across sessions and devices. No single component is the substrate — it's the interplay.
+**Substrate.** The combination of files, skills, connectors, and scheduled tasks that together give Claude persistent memory and context across sessions and devices. No single component is the substrate -- it's the interplay.
 
-**Skill.** A named bundle of instructions and conventions that Claude loads on demand. Every skill has a name, a description (which controls when it triggers), and a body of guidance. The description is what Claude matches against to decide whether to load the skill.
+**Scope.** A bounded context with its own knowledge, definitions, and conventions. Everything is a scope: personal space, org, team, project, client. Every scope has the same internal shape (the 10 folder-types). Scopes can nest via their own `scopes/` subdirectory. A scope is identified by the presence of `scope.md`.
 
-**Scope.** A user-defined area of active work or attention. Scopes are *where things happen* — plans, decisions-in-progress, drafts, working notes. Each scope has a dedicated folder under `scopes/` and usually a paired skill named `scope-<scope-name>`. All scopes are top-level in `scopes/` regardless of ownership.
+**Folder-type.** A standard kind of content that a scope may contain: ontology, context, docs, skills, librarians, todo, reminders, inbox, databases, visualisations. Each is a discovery convention first, a storage location second -- it tells an agent how the scope handles that kind of thing.
 
-**Context.** Persistent background information that describes the user, their people, their world, and their standing facts. Read-often, write-rarely. Identity-level material. `context/` holds this.
+**Convention base.** The exfu-shipped definitions at `exfu/<version>/`. Defines what each folder-type means and how it behaves by default. Every agent.md references the convention base and records only local deviations.
 
-**Scope vs context.** Context is *about* things. Scopes are *where things happen*. Fuzzy-zone test: if you'd read it to orient, it's context. If you'd read it to pick up work, it's a scope.
+**Librarian.** A scheduled maintenance agent that keeps part of the substrate tidy and current. Librarian definitions live in a scope's `librarians/` folder; the actual scheduling is done by the platform (Claude scheduled tasks, etc.). The nightly index librarian is the canonical example -- it walks the whole substrate and regenerates `exfu/derived/index.json`.
 
-**Data tiers.**
-- Tier 1: project files — source code, documents, designs. Live in their natural home. Referenced from the substrate, not stored in it.
-- Tier 2: third-party tools — SaaS platforms. Accessed via connectors.
-- Tier 3: substrate core — this knowledge base. Holds context, scopes, databases, ways of working.
+**Global index.** The file at `exfu/derived/index.json`. One read gives the whole-substrate map: every scope, where it sits, what it contains, which conventions it follows. Generated by the nightly index librarian. The primary navigation tool for agents.
+
+**Skill.** A named bundle of instructions and conventions that Claude loads on demand. Every skill has a name, a description (which controls when it triggers), and a body of guidance.
 
 **Access modes.** When the filesystem is mounted in this session, use it directly. When it's not (mobile, unmounted sessions), use the connector. Filesystem is faster and supports delete, move, and rename.
+
+**Data tiers.**
+- Tier 1: project files -- source code, documents, designs. Live in their natural home. Referenced from the substrate, not stored in it.
+- Tier 2: third-party tools -- SaaS platforms. Accessed via connectors.
+- Tier 3: substrate core -- this knowledge base. Holds context, scopes, databases, ways of working.
 
 ---
 
 ## Ongoing behaviour while loaded
 
-- **Follow substrate conventions.** Folder structure, naming (lowercase hyphen-separated, date-prefix for time-sensitive files), README maintenance, nothing casual at root.
+- **Follow substrate conventions.** Folder structure, naming (lowercase hyphen-separated, date-prefix for time-sensitive files), agent.md maintenance via the reference+delta pattern.
 - **Use the right access mode.** Filesystem when mounted, connector when not.
-- **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Box-backed substrates, defer file CRUD to `box-filesystem-management` and folder/sharing changes to `team-box-folders` (or `team-box-folder-provisioning` if it's a champion's initial setup). For local-only substrates, direct filesystem operations are sufficient.
-- **Maintain discoverability.** When you create new folders or content, create or update READMEs with dependency links. When you create a new scope, set up or point to its scope skill.
-- **Respect the scope/context distinction.** When deciding where to save new material, apply the fuzzy-zone test. When in doubt, put it in `scratch/` and flag it for later placement.
+- **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Box-backed substrates, defer file CRUD to `box-filesystem-management`. For local-only substrates, direct filesystem operations are sufficient.
+- **Navigate via the index.** When you need to find a scope or understand the substrate's shape, read the index first. Only walk the filesystem when the index is unavailable.
+- **Maintain discoverability.** When you create new folders or content, create or update agent.md files with `Follows:` references to the convention base. When you create a new scope, scaffold scope.md with the correct parent and version pin.
+- **Respect version pins.** When working inside a scope, use the conventions from the scope's pinned exfu version. Don't assume all scopes are on the latest version.
 - **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.
-- **Surface only what's actually there.** Don't invent orgs, teams, scopes, or permissions. Read the files and report what you find.
+- **Surface only what's actually there.** Don't invent scopes, folder-types, or permissions. Read the files and report what you find.
 - **Keep git invisible.** For team substrates, all user-facing communication uses the verb vocabulary above. Git operations happen underneath; the user never needs to see them.
+- **Plain language with users.** Don't use internal vocabulary ("substrate", "scope", "ontology", "folder-type", "librarian") unless the user has introduced these terms themselves. Speak in terms the user has earned: "your knowledge base", "the Acme area", "your definitions", "your background info", "the nightly tidy-up."

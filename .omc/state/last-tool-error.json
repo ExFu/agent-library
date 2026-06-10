@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"rm -rf /tmp/exfu-test-substrate && cp -r /Users/al/Studio/projects/exfu_website/.claude/worktrees/intelligent-jang-cdf19f/plugin/example /tmp/exfu-test-substrate && python3 /Users/al/Studi...",
+  "error": "Exit code 1\ntrash: /tmp/exfu-test-substrate: path does not exist",
+  "timestamp": "2026-06-09T22:00:58.345Z",
+  "retry_count": 1
+}

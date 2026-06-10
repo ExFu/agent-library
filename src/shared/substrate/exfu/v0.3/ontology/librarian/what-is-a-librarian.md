@@ -4,14 +4,14 @@ A librarian is a scheduled maintenance agent that keeps part of the substrate ti
 
 ## How librarians work
 
-A librarian definition is a file in a scope's `librarians/` folder. It describes:
+A librarian definition is a file in a scope's `librarians/` folder. It is *agent instructions*: a markdown file an agent reads cold and acts on. It describes:
 
-1. **What it does** -- the maintenance task in plain language
+1. **What it does** -- the maintenance task, as instructions in plain language
 2. **What it touches** -- which folders, files, or external systems
 3. **When it runs** -- the schedule (nightly, weekly, etc.) or trigger condition
 4. **What it produces** -- any output files, reports, or state changes
 
-The definition is read by the scheduled task infrastructure, which executes it on the appropriate schedule. Librarian definitions are *descriptions of work*, not running code -- though they may reference scripts or tools that do the actual work.
+A scheduled task (one per cadence) is the execution environment: Claude in that session reads each due definition and carries out the work itself, with judgment. Where a definition references a script, the script is a tool the agent calls -- deterministic legwork like walking the tree or rendering HTML -- never a replacement for the agentic work.
 
 ## ExFu-shipped librarians
 

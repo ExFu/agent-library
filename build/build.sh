@@ -302,6 +302,12 @@ build_variant() {
   cp "$manifest_src" "${output_dir}/.claude-plugin/plugin.json"
   ok "Manifest copied"
 
+  # 3k. Strip development artefacts that cp -r may have carried over.
+  #     __pycache__/.pyc appear whenever the Python scripts in src/ are
+  #     compile-checked; .DS_Store is Finder noise. None belong in a build.
+  find "${output_dir}" \( -name "__pycache__" -type d -o -name "*.pyc" -o -name ".DS_Store" \) -exec rm -rf {} + 2>/dev/null || true
+  ok "Development artefacts stripped"
+
   # ------------------------------------------------------------------
   # 4. Post-build validation
   # ------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 5
+version: 6
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -31,11 +31,11 @@ The honest answer is that Anthropic is moving in this direction, and over time s
 
 The main current gaps:
 
-**Desktop–mobile parity.** Claude on desktop and the Claude mobile app don't interoperate cleanly. For anyone whose day spans both surfaces, this is a deal-breaker on its own. The substrate's file-based approach bridges it: the same files are visible from either surface.
+**Desktop-mobile parity.** Claude on desktop and the Claude mobile app don't interoperate cleanly. For anyone whose day spans both surfaces, this is a deal-breaker on its own. The substrate's file-based approach bridges it: the same files are visible from either surface.
 
 **Memory the user can see and edit.** Claude Projects has a memory concept, but the memories it creates are hidden, not user-editable, and don't transfer between devices. With the substrate, the "memory" is a folder of plain-text files. The user can read it, correct it, extend it, and move it. If Claude gets something wrong, you can open the file in any text or markdown editor and fix it directly.
 
-**Portability across AI providers.** The substrate's core — the files — is platform-agnostic. If the user ever wants to try another assistant, or run multiple assistants against the same knowledge base, only the skills need porting. The substance is preserved.
+**Portability across AI providers.** The substrate's core -- the files -- is platform-agnostic. If the user ever wants to try another assistant, or run multiple assistants against the same knowledge base, only the skills need porting. The substance is preserved.
 
 **Team-shared substrates.** Multiple humans can work against the same substrate with appropriate access scoping. Claude Projects is a single-user container tied to one surface.
 
@@ -49,13 +49,13 @@ Don't volunteer this section unprompted. If the user asks "why not just use Clau
 
 ---
 
-## Folders, Claude Projects, and scopes — three things people confuse
+## Folders, Claude Projects, and scopes -- three things people confuse
 
-**A folder** is the classical thing — a directory on a filesystem or cloud drive that holds files.
+**A folder** is the classical thing -- a directory on a filesystem or cloud drive that holds files.
 
 **A Claude Project** is an Anthropic product feature in the Claude desktop/web app. It's a container to group related conversations and give them shared instructions and uploaded files. Useful, but limited to that surface.
 
-**A scope** is a substrate concept. It's a user-defined area of active work or attention that has its own folder under `scopes/` and usually a paired skill named `scope-<scope-name>`. A scope is more flexible than a Claude Project and lives at the substrate level — available wherever the substrate is available.
+**A scope** is a substrate concept. It's a bounded working context -- any area of active work or attention that has its own directory with a `scope.md` file. A scope is more flexible than a Claude Project and lives at the substrate level -- available wherever the substrate is available.
 
 The short version: a Claude Project is Anthropic's UI-level grouping. A scope is *your* substrate-level grouping. A folder is just a folder.
 
@@ -65,21 +65,19 @@ The short version: a Claude Project is Anthropic's UI-level grouping. A scope is
 
 The substrate is conceptually two layers. Understanding this boundary is important for deciding what gets stored versus what Claude reads.
 
-### Layer 1 — Substrate proper (file-based, versioned)
+### Layer 1 -- Substrate proper (file-based, versioned)
 
-Holds: skills, templates, context docs (brand voice, policies, conventions), structured non-PII data, configuration, sanitised test fixtures. Versioned, auditable, shareable, evolves slowly.
+Holds: skills, templates, context docs (brand voice, policies, conventions), structured data, configuration, working notes, contacts, CRM records. Versioned, auditable, shareable, evolves at its own pace.
 
 This is what the substrate guide describes. Everything in the directory structure below lives here.
 
-### Layer 2 — PII layer (access-controlled store)
+### Layer 2 -- Secrets and sensitive credentials
 
-Holds: anything containing identifiable PII — customer profiles, per-customer working memory, drafting feedback. Implementation is typically an access-controlled database accessed via a guarded connector. Skills in Layer 1 talk to Layer 2 through the connector.
+Holds: API keys, tokens, passwords, credential files (.env, *.key, *.pem, credentials.json, id_rsa, id_ed25519). These never enter the substrate. They belong in a password manager or a dedicated secrets store.
 
-**Why the split:** PII in versioned shared substrate is durable, replicable, escapable — wrong threat model. PII at runtime is unavoidable (Claude has to read emails to do its job; emails contain PII). The substrate's job is *persistence*; the boundary is what gets *stored*, not what Claude *sees*.
+**The boundary is simple: only true secrets are banned.** Names, contacts, org charts, CRM records, personal notes, meeting minutes, preference profiles -- all of it lives wherever it naturally belongs in the scope structure. There is no separate PII layer and no special PII machinery.
 
-For solo installs, there is typically no PII layer. The split is most relevant in team contexts where substrate files are shared and version-controlled.
-
-The PII layer connector, schema, and access-control model are resolved by the wrapping plugin or the installing Claude — not prescribed by the substrate guide itself. See `cross-cut-extension-and-wrapping.md` for the wrapping principle.
+For team substrates where regulatory requirements demand stricter data separation, the scope's storage backend and access controls can handle it -- the substrate doesn't prevent it, it just doesn't mandate it.
 
 ---
 
@@ -89,11 +87,11 @@ The substrate organises data into three tiers.
 
 ### Tier 1: Project files
 
-The actual work product — source code, presentations, documents, assets. These live wherever makes sense for the project. Claude Desktop accesses them via the filesystem. They must be locally mounted.
+The actual work product -- source code, presentations, documents, assets. These live wherever makes sense for the project. Claude Desktop accesses them via the filesystem. They must be locally mounted.
 
 ### Tier 2: Third-party tools
 
-SaaS platforms the user works in — task managers, CRMs, email, wikis. Connected via MCP connectors. No local mounting.
+SaaS platforms the user works in -- task managers, CRMs, email, wikis. Connected via MCP connectors. No local mounting.
 
 ### Tier 3: The substrate core (this knowledge base)
 
@@ -103,70 +101,91 @@ The persistent brain. This knowledge base is tier 3. It holds instructions, memo
 
 ## Directory structure
 
-### Personal-default (solo, or the personal layer in a team setup)
+The substrate root is a single folder. Inside it, exactly three things plus a guard file:
 
 ```
 [root]/
-  CLAUDE.md             # guard file — read this first
-  _meta/                # system infrastructure
-  _trash/               # soft-delete (60-day recovery)
-  context/              # personal/default context (read to orient)
-  databases/            # personal/default structured data
-  scratch/              # ephemeral — TOP-LEVEL ONLY
-  scopes/               # ALL scopes — TOP-LEVEL ONLY
+  CLAUDE.md               # guard file -- read this first
+  exfu/                   # convention base and generated artefacts (not a scope)
+  user/                   # special scope: personal context and global defaults
+  scopes/                 # the tree of everything else
 ```
 
-This top-level layout is unchanged from v4. Solo users work entirely within this shape.
+This layout is the same for solo users and team setups. There are no separate `orgs/` or `teams/` directories. Organisational structure is expressed through scopes -- an org is a scope, a team is a scope, a project is a scope.
 
-### Extended layout (when the user is in one or more orgs or teams)
+### The exfu/ directory
 
-The `orgs/` and `teams/` folders appear as siblings alongside the personal-default folders. They are only created when the user is actually in one or more orgs or teams.
+Not a scope itself (no `scope.md`). This is the convention base and generated-output home, owned by the ExFu plugin. Contains:
 
 ```
-[root]/
-  CLAUDE.md
-  _meta/
-  _trash/
-  context/
-  databases/
-  scratch/
-  scopes/
-    <scope-name>/
-      context/          # HARD convention
-      planning/         # soft
-      generated/        # soft
-      databases/        # soft
-      README.md         # YAML front-matter linking to org/team
-  orgs/                 # one entry per org (omit if user is in no orgs)
-    <org-name>/
-      context/          # HARD convention
-      databases/        # soft
-      README.md
-  teams/                # one entry per team (omit if user is on no teams)
-    <team-name>/
-      context/          # HARD convention
-      databases/        # soft
-      README.md         # YAML front-matter: parent_org
+exfu/
+  latest.txt              # single line: the current convention version (e.g. "v0.3")
+  v0.3/                   # convention base for v0.3
+    ontology/             # base vocabulary (what is a scope, folder-type, librarian, etc.)
+      folder-types/       # one definition file per folder-type
+      scope/              # scope format, nesting rules, version resolution
+      librarian/          # what librarians are, built-in librarian specs
+    context/              # ExFu principles, recommendations
+    ...                   # other folder-types as needed
+  derived/                # generated output (never hand-edited)
+    index.json            # the global index -- whole-substrate map
+    librarian-log.json    # librarian run history
+    librarian-registry.json
+    dashboard/            # substrate visualisation (HTML)
+      index.html
 ```
 
-Multiple orgs and multiple teams are both supported. Add entries under `orgs/` and `teams/` as needed — the structure accommodates any combination without further adaptation.
+**Versioning is side-by-side.** When a new convention version ships (e.g. v0.6), it appears as `exfu/v0.6/` alongside `exfu/v0.3/`. Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
-### Convention rules
+### The user/ scope
 
-**HARD conventions** (always create when the parent folder exists):
-- `context/` inside `orgs/<org>/`
-- `context/` inside `teams/<team>/`
-- `context/` inside `scopes/<scope>/`
+A real scope (has `scope.md`) for personal context, definitions, and defaults that apply across everything the user does.
 
-**Soft conventions** (create when needed):
-- `planning/`, `generated/`, `databases/` inside scope folders
-- `databases/` inside org and team folders
+```
+user/
+  scope.md                # no exfu version pin -- always current
+  ontology/               # personal definitions, ways of working
+  context/                # personal background, preferences, about-me
+  skills/                 # personal skill definitions or drafts
+  todo/                   # personal tasks (or a pointer to a task tool)
+  reminders/              # personal reminders
+  inbox/                  # quick capture, unsorted thoughts
+  ...                     # any other folder-types as needed
+```
 
-**Top-level only** (do not create these nested):
-- `scratch/` — stops Claude dumping ephemeral content into sub-folders
-- `scopes/` — all scopes live here regardless of ownership
+The user scope's `scope.md` has `parent: none` and no `exfu:` version field. It doesn't pin a version -- it's always current. Migration is by user decision.
 
-**Scope ownership via front-matter, not folder hierarchy.** A scope's `README.md` carries YAML front-matter such as `team: <team-name>` and `org: <org-name>`. A team's `README.md` carries `parent_org: <org-name>`. To find "scopes for team X", Claude searches `scopes/` filtered by `team: X` in front-matter. No hierarchy traversal. Org/team membership can change without moving files.
+### The scopes/ tree
+
+An arbitrary-depth tree of working contexts. A directory inside it is one of two kinds:
+
+- **Scope** -- has `scope.md`. A real working context with the standard internal shape.
+- **Grouping folder** -- no `scope.md`. Purely organisational (e.g. `scopes/clients/`). Agents ignore it structurally.
+
+```
+scopes/
+  acme/                   # a scope
+    scope.md
+    ontology/
+    context/
+    todo/
+    databases/
+    scopes/               # acme's child scopes, gathered here
+      sales/              # a sub-scope
+        scope.md
+        ontology/
+        todo/
+      eng/                # another sub-scope
+        scope.md
+  clients/                # a grouping folder (no scope.md)
+    ...
+  side-project/           # another scope
+    scope.md
+    context/
+    inbox/
+```
+
+**Scopes nest via their own `scopes/` directory.** A scope never holds child scopes loose among its own working folders. It gathers them in a dedicated `scopes/` subdirectory, keeping the scope's own folder-types clean and predictable. The pattern is self-similar: the root has `scopes/`, a scope can have `scopes/`, and so on.
 
 ---
 
@@ -196,37 +215,159 @@ Do not modify or remove this file. It is a safety guard, not content.
 
 ---
 
-## Folder purposes
+## scope.md -- the scope boundary marker
 
-**`_meta/`** — Infrastructure that supports the substrate. Cleanup scripts, schema files for databases, configuration. Not content — plumbing.
+A directory is a scope if and only if it contains a `scope.md` file. This file declares the scope's identity and its place in the structure.
 
-**`_trash/`** — Where deleted files go. Mirrors the source directory hierarchy so recovery is obvious. Files are permanently deleted after 60 days by the cleanup task.
+Format:
 
-**`context/`** — Persistent background information. Things Claude should know across sessions. Standing facts, identity, relationships, preferences. The convention is that context is *about* the person or group, read to orient, and changes slowly.
+```markdown
+---
+name: Acme
+purpose: Client relationship and commercial engagement with Acme Corp
+parent: root
+exfu: v0.3
+---
 
-**`scopes/`** — All active work areas, regardless of ownership. Each scope gets a subfolder with a `context/` folder (hard convention) plus whatever structure the work needs. The actual deliverables (code, designs) live in Tier 1 locations and are referenced from here.
+> This folder follows ExFu conventions. If you haven't loaded them yet,
+> ask your user to set you up with their WoW or ExFu skills.
 
-**`scratch/`** — Working space. Anything ephemeral, casual, or in-progress that doesn't yet have a home. The key rule: nothing casual goes in the root folder. If it's not structural, it goes in `scratch/`.
+Optional 2-3 sentence elaboration of purpose. Not required.
+```
 
-**`databases/`** — When the user asks Claude to manage structured data without a dedicated SaaS tool, the data lives here. Each database gets its own subfolder. Schema files should live in `_meta/`.
+**Fields:**
+- `name` -- the scope's human-readable name. Does not need to match the directory name (but usually will).
+- `purpose` -- one sentence. What this scope is for. Enough for an agent to decide whether to read deeper.
+- `parent` -- the name of the parent scope, or "root" for top-level scopes under `scopes/`. This is what makes extraction/sharing safe -- an agent knows something is above it.
+- `exfu` -- the ExFu convention version this scope references. New scopes default to whatever `latest.txt` points to. Existing scopes keep their pin until explicitly migrated.
 
-**`orgs/<org-name>/`** — Org-wide context and data. The `context/` subfolder (hard convention) holds brand voice, org-wide policies, conventions that apply across all teams in the org.
+**What scope.md does NOT contain:**
+- Entities, conventions, current state, dependencies (these live in folder-types)
+- Status, dates, progress tracking (those belong in `todo/` or the global index)
+- Arrays of related skills or dependencies (scope.md is a boundary marker, not a knowledge store)
 
-**`teams/<team-name>/`** — Team-wide context and data. The `context/` subfolder (hard convention) holds the team's CRM taxonomy, working conventions, shared reference material. The `README.md` carries `parent_org:` front-matter linking to `orgs/`.
+**The protective header** (the blockquote) appears in both `scope.md` and every `agent.md`. Its job is to catch agents that wander into the substrate without having loaded ExFu skills. The exact wording is consistent across every file.
 
-### The root folder rule
+---
 
-The root level of the knowledge base is structural only. Every entry at root level is one of the defined folders above (or `CLAUDE.md`). Do not create files or folders at root level casually. If the user asks you to save something and it doesn't clearly belong in an existing folder, put it in `scratch/` and discuss proper placement later.
+## Folder-types -- the standard vocabulary
+
+Inside any scope, the folder-types are the standard vocabulary of "where things go." Each is a discovery convention first, a storage location second. Its job is to tell an agent *how the user handles this kind of thing for this scope* -- whether the data lives here, or somewhere else entirely.
+
+The base catalogue (defined canonically in `exfu/v0.3/ontology/folder-types/`):
+
+| Folder | What it answers | Analogy |
+|---|---|---|
+| `ontology/` | What do the concepts and terms in this scope mean? | A glossary |
+| `context/` | What background should an agent know about this scope? | A wiki |
+| `docs/` | Where are captured documents that need keeping? | A drawer |
+| `skills/` | What skill definitions or drafts relate to this scope? | Functions |
+| `librarians/` | What scheduled maintenance should happen here? | Cron jobs |
+| `todo/` | How does this scope handle tasks? | A task type |
+| `reminders/` | How does this scope handle lightweight nudges? | A data type |
+| `inbox/` | Where do uncategorised thoughts go for this scope? | A catch-all |
+| `databases/` | Where is structured data with schemas for this scope? | Structured records |
+| `visualisations/` | Where do agent-created visual outputs live for this scope? | A gallery |
+
+**The catalogue is open.** Any scope may add a folder-type not listed here. If it does, it should define the new type in that scope's `ontology/` so an agent can make sense of it.
+
+### Store-or-point
+
+Store-or-point is a first-class choice for every folder-type. A `todo/` folder may contain actual task files, or its `agent.md` may simply say "tasks are in ClickUp." A `reminders/` folder may hold a markdown file with trigger rules, or it may say "reminders live in Apple Reminders."
+
+The convention guarantees the *location is discoverable*; whether data lives there is per-scope, per-user. The global index tracks the status of each folder-type as `data` (contains files), `pointer` (points elsewhere), or `empty`.
+
+### Scopes only need the folder-types they use
+
+Not every scope uses every folder-type. Most scopes start with just `context/` and maybe `todo/` or `inbox/`. Additional folder-types are created as the work demands them. Don't scaffold more than you need.
+
+---
+
+## The agent.md / readme.md convention -- reference+delta
+
+Every folder-type directory inside a scope contains two files:
+
+### agent.md (for agents)
+
+Follows the reference+delta pattern: reference the upstream convention, then list only local deviations. Structure:
+
+1. **Protective header** (blockquote, always first)
+2. **`Follows:` line** naming the upstream convention by versioned path
+3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, omit this section entirely.
+
+A folder with no deviations:
+
+```markdown
+> This folder follows ExFu conventions. If you haven't loaded them yet,
+> ask your user to set you up with their WoW or ExFu skills.
+
+Follows: exfu/v0.3/ontology/folder-types/context.md
+```
+
+That's it. Two lines plus the header. The agent reads the upstream convention file for full behaviour.
+
+A folder with deviations:
+
+```markdown
+> This folder follows ExFu conventions. If you haven't loaded them yet,
+> ask your user to set you up with their WoW or ExFu skills.
+
+Follows: exfu/v0.3/ontology/folder-types/todo.md
+
+Local deviations:
+- Tasks are tracked in ClickUp, not stored locally
+- Use the ClickUp MCP connector for read/write
+- Tag all tasks with scope name "acme-sales"
+```
+
+The canonical behaviour of each folder-type lives once, in `exfu/v0.3/ontology/folder-types/`. This keeps the substrate lean and prevents convention drift across scopes.
+
+### readme.md (for humans)
+
+The same information, for human eyes. Can be even shorter:
+
+```markdown
+Context for the Acme account. See ExFu conventions for details.
+```
+
+### When to read agent.md files
+
+- At the start of a session, read the `agent.md` of whatever folder the user is working in
+- Before creating content, read the target folder's `agent.md` to understand conventions
+- When an `agent.md` has a `Follows:` line, read the upstream convention file too
+- When the user references something that might exist elsewhere, check `agent.md` files for cross-references
+
+### Maintaining agent.md and readme.md
+
+When you create a new folder-type directory in a scope, create both files immediately. The `agent.md` needs at minimum the protective header and a `Follows:` line. When you add a local deviation, add it to the `Local deviations:` section.
+
+---
+
+## Ontology and concept resolution
+
+### What an ontology folder is
+
+A collection of definitions -- "here is what this concept means in this scope." Each definition is a file (or a section in a file, depending on density).
+
+- `exfu/v0.3/ontology/` defines the structural vocabulary the entire substrate runs on: what a scope is, what a librarian is, the difference between a todo and a reminder, what each folder-type means.
+- `user/ontology/` adds the user's personal definitions and ways of working that apply across all their scopes.
+- Any scope's `ontology/` adds definitions local to that scope ("we call them specialists, not reps"; "a lead in this context means...").
+
+### How resolution works
+
+When an agent operates inside a scope, it reads all the relevant ontologies by walking the declared parent chain: active scope -> each ancestor scope -> `user/` -> `exfu/` base. It holds them all together. If two levels define a term differently, the agent does not mechanically pick a winner -- it recognises both meanings and, where it matters, asks the user in the moment which applies.
+
+The explicit parent declarations in `scope.md` and the explicit `Follows:` references in `agent.md` are what make this work. They tell the agent *which ontologies are relevant* without filesystem guesswork. The structure makes the reference set discoverable; the agent supplies the judgement.
 
 ---
 
 ## Scopes: what they are and how they work
 
-A scope is a user-defined area of active work or attention. It's the substrate's flexible equivalent to a Claude Project, living at the substrate level and available wherever the substrate is available.
+A scope is a bounded working context. It's the single structural concept in the substrate -- everything is a scope. A project is a scope. A team is a scope. An org is a scope. A client engagement is a scope. Your personal workspace is a scope.
 
 ### What makes something a scope
 
-Scopes are for areas where *work is being done* — decisions being made, notes being kept, drafts in progress, ongoing thinking that benefits from continuity. Not every topic needs a scope. Identity-level information lives in `context/` instead.
+Scopes are for areas where *work is being done* -- decisions being made, notes being kept, drafts in progress, ongoing thinking that benefits from continuity. Not every topic needs a scope. Identity-level information lives in `user/context/` instead.
 
 Common things that become scopes:
 - Client engagements or deals
@@ -235,41 +376,49 @@ Common things that become scopes:
 - Research threads or domains of interest
 - Recurring events (conferences, programmes)
 - Major life projects (house build, career transition)
+- Organisations (expressed through scopes rather than a separate structural concept)
 
-### Scope folders
+### Scope nesting
 
-Each scope has a dedicated folder under `scopes/`. The `context/` subfolder is required (hard convention). Internal structure beyond that is up to the user and the work.
+Scopes can contain child scopes, gathered in a dedicated `scopes/` subdirectory. The pattern repeats at every level. An agent entering any scope at any depth sees a predictable shape.
 
-Every scope folder must have a `README.md` with Purpose, Contents, and Dependencies sections.
-
-For scopes tied to an org or team, the `README.md` carries YAML front-matter:
-
-```yaml
----
-team: <team-name>
-org: <org-name>
----
+```
+acme/
+  scope.md                # name: Acme, parent: root
+  ontology/
+  context/
+  todo/
+  scopes/
+    sales/
+      scope.md            # name: Sales, parent: Acme
+      ontology/
+      todo/
+      scopes/
+        q3-renewal/
+          scope.md        # name: Q3 Renewal, parent: Sales
+          context/
+          todo/
 ```
 
-Include only the fields that apply. A personal scope carries no team or org front-matter.
+Nesting depth is unlimited but practical use rarely exceeds three levels. Flat is always possible -- users who don't want nesting just don't nest.
 
-### Scope skills
+### Scope discovery via the global index
 
-Each scope is paired with a skill named `scope-<scope-name>`. The skill's job is discoverability: when the user mentions the scope, the skill triggers and Claude learns there's a folder with relevant context and how to find it.
+Scopes are discovered through the global index at `exfu/derived/index.json`, not through individual skills or filesystem traversal. The index is a JSON document that maps every scope in the substrate: its name, path, parent, ExFu version, which folder-types are populated, and whether each is data-bearing, pointer-only, or empty.
 
-One scope, one folder, one skill. A scope without a skill risks being invisible to Claude. A scope skill without a folder doesn't make sense.
+An agent reads the index to orient, then navigates to the specific scope the user wants to work in. This is fast and reliable even when the substrate is large or hosted on a cloud drive with caching issues.
 
 ---
 
-## Scope vs context — the distinction
+## Scope vs context -- the distinction
 
 **Context is *about* things. Scopes are *where things happen*.**
 
 Context answers "who/what is this?" Scopes answer "what am I doing here?"
 
-Context is identity-level, standing information — read-often-write-rarely. You read context to *orient*.
+Context is identity-level, standing information -- read-often-write-rarely. You read context to *orient*.
 
-Scopes are active working material — plans, decisions-in-progress, drafts, call notes. You read a scope to *pick up work*.
+Scopes are active working material -- plans, decisions-in-progress, drafts, call notes. You read a scope to *pick up work*.
 
 ### Fuzzy-zone test
 
@@ -279,38 +428,48 @@ If you'd read it to *orient yourself*, it's context. If you'd read it to *pick u
 
 An imaginary company, Acme:
 
-- `context/work/acme.md` — who Acme is, the relationship, their business, standing facts. Rarely changes.
-- `scopes/acme-deal/` — the active sales cycle: call notes, proposal drafts, decisions, follow-ups.
+- `scopes/acme/context/account-overview.md` -- who Acme is, the relationship, their business, standing facts. Rarely changes.
+- `scopes/acme/todo/` -- the active tasks: follow-ups, proposal drafts, decisions.
+- `scopes/acme/scopes/q3-renewal/` -- a child scope for a specific deal cycle, with its own context and tasks.
 
-Both can coexist. They serve different purposes.
+Context and active work coexist within the same scope. They serve different purposes.
 
 ---
 
-## Discoverability
+## The global index
 
-There is no central index. The substrate is self-organising.
+The global index at `exfu/derived/index.json` is a generated JSON document that gives a whole-substrate picture. It is maintained by the nightly index librarian and should never be hand-edited.
 
-### README convention
+The index maps:
+- Every scope in the substrate (name, path, parent, ExFu version)
+- Which folder-types each scope has, and their status (`data`, `pointer`, or `empty`)
+- The scope tree (parent-child relationships)
+- Which ExFu convention versions are in use
 
-Every folder must have a `README.md` with three sections in this order:
+The index serves two consumers:
+1. **Agents.** Instead of traversing the filesystem, an agent reads the index and knows immediately what scopes exist, where they are, and what's in them. Fast orientation, even when the substrate is large.
+2. **The substrate dashboard.** The HTML visualisation at `exfu/derived/dashboard/index.html` renders the index into a visual map for non-technical users.
 
-1. **Purpose** — one or two sentences on what this folder is for
-2. **Contents** — an overview of what's inside
-3. **Dependencies** — a list of other folders or files in the substrate that are related or required
+---
 
-Keep it short. Plain language. No clever formatting.
+## Librarians
 
-This is how Claude discovers relevant context. When working in a scope folder, read its README. The Dependencies section tells you what else to load. Follow the chain.
+Librarians are autonomous maintenance agents that keep the substrate tidy so the user doesn't have to. A librarian is a *definition* of maintenance work that runs on a cadence (typically nightly). The definition lives in a scope's `librarians/` folder-type. The *actual scheduling* is done by the platform -- a Claude scheduled task, or whatever the user's AI platform provides. The librarian file is the spec; the platform is the cron.
 
-### When to read READMEs
+### What librarians do, by example
 
-- At the start of a session, read the README of whatever folder the user is working in
-- Before creating content, read the README of the target folder to understand conventions
-- When the user references something that might exist elsewhere, check READMEs for cross-links
+- **Nightly index** (exfu-owned) -- walks the entire substrate and regenerates `exfu/derived/index.json`. This is the foundation librarian; everything else depends on it.
+- **Inbox triage** -- sweeps the inbox and routes captured thoughts to where they belong (context, a todo, an ontology note, a doc), or leaves them if that's the user's preference.
+- **Reminder check** -- reads every in-scope `reminders/` folder and surfaces the ones whose trigger rules fire today.
+- **Archive and collapse** -- retires stale material, folds redundant repetitions together.
 
-### Maintaining READMEs
+What a librarian does is scope-dependent -- it reads that scope's ontology, the user's preferences, and the ExFu defaults to determine its behaviour.
 
-When you create a new folder, create a README immediately. When you add content that creates a new dependency, update the READMEs on both sides of the link.
+### Librarian definitions
+
+Librarian definitions are markdown files with natural-language instructions -- rich enough for a platform-scheduled agent to read cold and know what to do, but not so procedural that they become brittle scripts. The canonical librarian specs live in `exfu/v0.3/ontology/librarian/`.
+
+Run history is logged at `exfu/derived/librarian-log.json` and the registry of all active librarians lives at `exfu/derived/librarian-registry.json`.
 
 ---
 
@@ -334,7 +493,7 @@ The substrate skill is a single skill, not separate admin and non-admin variants
 
 The git repository's own permission model is the gatekeeper. No separate Claude-side permission scaffolding is needed.
 
-The specific permission lookup — which git provider, which API, which identity integration — is resolved by the wrapping plugin or the installing Claude. See `cross-cut-extension-and-wrapping.md`.
+The specific permission lookup -- which git provider, which API, which identity integration -- is resolved by the wrapping plugin or the installing Claude. See `cross-cut-extension-and-wrapping.md`.
 
 ### Lightweight sync
 
@@ -351,9 +510,9 @@ When the knowledge base is mounted in a session, use filesystem tools directly. 
 ### Connector (universal)
 
 When filesystem access isn't available (mobile, unmounted sessions), use the connector. Limitations:
-- No delete — use the `_DELETED_` prefix convention (see box-filesystem-management skill if installed)
-- No move — copy to destination, mark original as deleted
-- Folders are identified by numeric ID, not path — store frequently used IDs in `_meta/folder-ids.md`
+- No delete -- use the `_DELETED_` prefix convention (see box-filesystem-management skill if installed)
+- No move -- copy to destination, mark original as deleted
+- Folders are identified by numeric ID, not path -- store frequently used IDs in `user/context/`
 
 ---
 
@@ -362,23 +521,20 @@ When filesystem access isn't available (mobile, unmounted sessions), use the con
 - Lowercase, hyphen-separated: `meeting-notes-2026-04-15.md`
 - Date-prefix for time-sensitive files: `YYYY-MM-DD-filename`
 - No spaces in filenames
-- Underscore-prefixed folders for system use: `_meta/`, `_trash/`
 - Deleted files (pending cleanup): `_DELETED_YYYY-MM-DD_original-filename`
-- Scope skills: `scope-<scope-name>` (e.g. `scope-acme-deal`)
 
 ---
 
 ## Substrate hygiene: what not to put here
 
-The substrate is shareable and may be version-controlled. A few things don't belong:
+The substrate may be shared and may be version-controlled. A few things don't belong:
 
 - **Credentials, API keys, passwords, access tokens.** Use a password manager or a dedicated secrets store.
 - **Government identifiers and financial account details.** SSNs, passport numbers, full credit card numbers, bank account numbers.
-- **Raw health and medical records.** Diagnoses, test results, therapy notes. Summaries and context are fine — the raw files belong in a purpose-built system.
-- **Customer or contact PII.** Names, emails, and contact details for people other than yourself belong in the PII layer (Layer 2), not in the shareable substrate. See the two-layer model section above.
+- **Raw health and medical records.** Diagnoses, test results, therapy notes. Summaries and context are fine -- the raw files belong in a purpose-built system.
 - **Other people's private information without consent.**
 
-Context, summaries, preferences, decision history, anonymised references — all fine. The line is: would it matter if this appeared in a breach?
+Names, contacts, org charts, CRM records, personal notes, meeting minutes, preference profiles, decision history -- all fine. The line is: would it matter if this appeared in a breach? Secrets and regulated data stay out. Working data stays in.
 
 ---
 
@@ -392,15 +548,17 @@ This guide does not name specific git providers, specific cloud drives, or speci
 
 The substrate is designed to grow.
 
-**Custom databases** — Ask Claude to manage structured data (contacts, CRM, task lists, anything). It creates and maintains the data in `databases/`. The user interacts through conversation.
+**Custom databases** -- Ask Claude to manage structured data (contacts, CRM, task lists, anything). It creates and maintains the data in a scope's `databases/` folder-type. The user interacts through conversation.
 
-**Custom skills** — Draft skills in `scratch/`, test them, then install as proper skills. Skills can encode any repeated workflow, convention, or way of working.
+**Custom folder-types** -- A scope can define folder-types beyond the standard ten. Define the new type in that scope's `ontology/` so agents can make sense of it.
 
-**Skill versioning** — Teams can store shared skills in a context folder with version numbers. A scheduled task can compare installed versions against the latest and notify when updates are available.
+**Custom skills** -- Draft skills in the user's `skills/` folder-type or a scope's `skills/`, test them, then install as proper skills. Skills can encode any repeated workflow, convention, or way of working.
 
-**Daily briefings** — A scheduled task that gathers updates from across the substrate and presents a summary.
+**Custom librarians** -- Define maintenance agents in a scope's `librarians/` folder-type. Librarians can automate any recurring tidying, checking, or routing work.
 
-**Inter-agent communication** — Agents for different team members can exchange information via the available connectors. The pattern is defined by the team's way of working.
+**Substrate visualisation** -- The dashboard at `exfu/derived/dashboard/index.html` renders the global index into a visual map of the entire substrate. The user opens it in a browser and sees the full scope tree, folder-type status, and ontology chain. It's regenerated nightly.
+
+**Inter-agent communication** -- Agents for different team members can exchange information via the available connectors. The pattern is defined by the team's way of working.
 
 ---
 
@@ -410,7 +568,7 @@ This guide is a starting point. The user and their team should modify it as thei
 
 1. Update the version number at the top
 2. Append a changelog entry at the bottom with date, new version, and a one-line summary of what changed and why
-3. If the change affects other folders or skills, update their READMEs and dependencies too
+3. If the change affects other folders or skills, update their agent.md and readme.md files too
 
 ### Changelog rule (applies to any versioned file in the substrate)
 
@@ -426,8 +584,9 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
-- 2026-05-02 v5: Revised for v0.2.0. Added two-layer model (substrate proper vs PII layer). Added CLAUDE.md guard file at substrate root. Introduced top-level `orgs/` and `teams/` folders for multi-org and multi-team support (personal-default layout unchanged for solo users). Moved all scopes to top-level `scopes/` with YAML front-matter for ownership cross-linking. Documented HARD vs soft folder conventions. Added permission-aware substrate skill section with non-techie verb vocabulary. Added universal naming principle and wrapping reference. Updated hygiene rules to include customer PII in the two-layer boundary.
-- 2026-04-20 v4: Added "Why a substrate, rather than Claude's built-in features" section — covers desktop–mobile parity, editable memory, Obsidian, provider portability, team sharing, inspectability, and durability. Available for Claude to draw on when users ask why the substrate exists alongside Claude's native features.
-- 2026-04-20 v3: Renamed `projects/` to `scopes/` to avoid confusion with Anthropic's Claude Projects feature. Added scopes-vs-context section. Added scopes-and-scope-skills section (one-to-one folder/skill pairing). Added "folders, Claude Projects, and scopes" explainer. Added scope skill to naming conventions.
+- 2026-06-09 v6: Rewritten for v0.3.0. Replaced orgs/, teams/, and personal-default layout with uniform scope model -- everything is a scope. Replaced _meta/ with exfu/ (convention base at exfu/v0.3/, generated output at exfu/derived/). Removed _trash/ and scratch/. Introduced 10 standard folder-types with store-or-point principle. Added scope.md format (YAML frontmatter with name, parent, exfu version pin). Replaced README.md convention with agent.md reference+delta pattern (Follows: line + local deviations). Added protective headers for scope.md and agent.md. Added librarians (autonomous maintenance agents with cadence-based scheduling). Added global index (exfu/derived/index.json) for whole-substrate discovery. Added versioning model (side-by-side convention versions, per-scope pins). Added user/ as a special unversioned scope. Replaced PII two-layer model with secrets-only ban. Added ontology resolution (parent-chain walk). Added substrate dashboard (exfu/derived/dashboard/).
+- 2026-05-02 v5: Revised for v0.2.0. Added two-layer model (substrate proper vs PII layer). Added CLAUDE.md guard file at substrate root. Introduced top-level orgs/ and teams/ folders for multi-org and multi-team support (personal-default layout unchanged for solo users). Moved all scopes to top-level scopes/ with YAML front-matter for ownership cross-linking. Documented HARD vs soft folder conventions. Added permission-aware substrate skill section with non-techie verb vocabulary. Added universal naming principle and wrapping reference. Updated hygiene rules to include customer PII in the two-layer boundary.
+- 2026-04-20 v4: Added "Why a substrate, rather than Claude's built-in features" section -- covers desktop-mobile parity, editable memory, Obsidian, provider portability, team sharing, inspectability, and durability. Available for Claude to draw on when users ask why the substrate exists alongside Claude's native features.
+- 2026-04-20 v3: Renamed projects/ to scopes/ to avoid confusion with Anthropic's Claude Projects feature. Added scopes-vs-context section. Added scopes-and-scope-skills section (one-to-one folder/skill pairing). Added "folders, Claude Projects, and scopes" explainer. Added scope skill to naming conventions.
 - 2026-04-20 v2: Added substrate hygiene section (what not to put in the substrate). Added changelog rule and applied it here. Tightened README convention to a three-section stub (Purpose / Contents / Dependencies). Mentioned reminders and inbox as example databases.
 - 2026-04-15 v1: Initial version.

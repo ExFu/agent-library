@@ -14,11 +14,17 @@ A browsable reference implementation of the v0.3.0 substrate design. Shows what 
 8. **Protective headers.** Every scope.md and agent.md starts with the standard blockquote.
 9. **Principles and recommendations in context/.** exfu/v0.3/context/ contains principles.md and recommendations.md.
 10. **Example index output.** derived/index.json shows what the nightly index produces.
+11. **Librarian definitions as agent instructions.** nightly-index.md, inbox-triage.md, version-cleanup.md, and dashboard-generator.md show the format: YAML frontmatter (name, cadence, depends_on, reads/writes, optional scripts) over an instruction body that Claude follows in the scheduled session. Scripts are tools the instructions call, never the work itself.
+12. **Librarian registry.** derived/librarian-registry.json shows the runtime state: installed librarians, health tracking, cadence groups.
+13. **Run log.** derived/librarian-log.json shows the run history: one entry per librarian outcome, with timestamp, status, and a one-line detail of what happened.
 
 ## Structure
 
 ```
 exfu/           convention base, versioning infra, global index
+  v0.3/         convention base (folder-type definitions, scope model, librarian definitions)
+  derived/      generated files (index.json, librarian-registry.json, librarian-log.json)
+  latest.txt    points to v0.3
 user/           personal workspace (unversioned)
 scopes/
   acme/         client scope with nested q3-renewal project

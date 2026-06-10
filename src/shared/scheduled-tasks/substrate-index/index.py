@@ -246,15 +246,15 @@ def discover_versions(exfu_dir):
     return versions
 
 
-def set_relative_paths(scopes, root, base_path):
+def count_scopes(scopes):
     """
-    Recursively set relative paths on scope entries.
+    Count scopes recursively, including nested children.
     """
+    total = 0
     for scope in scopes:
-        scope_name_lower = scope["name"].lower().replace(" ", "-")
-        # Try to find the actual directory
-        if "children" in scope:
-            set_relative_paths(scope["children"], root, base_path)
+        total += 1
+        total += count_scopes(scope.get("children", []))
+    return total
 
 
 def build_index(root):
@@ -371,7 +371,7 @@ def main():
     )
 
     elapsed = time.monotonic() - start
-    scope_count = len(index["scopes"])
+    scope_count = count_scopes(index["scopes"])
     version_count = len(index["exfu_versions"])
     print(
         f"Indexed {scope_count} scopes across {version_count} version(s), "

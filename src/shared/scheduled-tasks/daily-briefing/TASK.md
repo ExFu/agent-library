@@ -9,11 +9,11 @@ description: Scheduled task that produces a morning briefing. Pulls due reminder
 
 Runs each morning and produces a briefing Cowork session covering:
 
-- **Reminders** — anything due or overdue
-- **Inbox** — count of items to process
-- **Calendar** — today's events (if a calendar MCP is connected)
-- **Tasks** — priority items (if a task manager MCP is connected)
-- **Anything else flagged** — items pinned in `context/me/` or in any active scope
+- **Reminders** -- anything due or overdue from reminders folders across scopes
+- **Inbox** -- count of unsorted items across inbox folders
+- **Calendar** -- today's events (if a calendar MCP is connected)
+- **Tasks** -- priority items (if a task manager MCP is connected)
+- **Anything else flagged** -- items pinned in user/context/ or in any active scope's context/
 
 ## One-time setup
 
@@ -35,12 +35,14 @@ Paste the following as the task prompt:
 
 Produce this morning's briefing.
 
-1. Load the `wow` skill (the user's personal WoW) so the briefing reflects their defaults. `wow` auto-loads `substrate`, which reads the ways-of-working guide and delegates to the user's personal reminders and inbox skills.
-2. Use the user's reminders skill (typically `<username>-reminders`) to surface anything due or overdue. Show them as a short list.
-3. Use the user's inbox skill (typically `<username>-inbox`) to check the count. If >5 items, flag it's getting full.
-4. If a calendar MCP is connected (Google Calendar, Outlook, etc.), list today's events with times. If not, skip this section.
-5. If a task manager MCP is connected (Linear, Asana, ClickUp, Notion, Todoist, etc.), pull the user's top priority items due today or overdue. If not, skip.
-6. Check `context/me/` and any active scope READMEs for anything pinned for today.
+1. Load the `wow` skill (the user's personal WoW) so the briefing reflects their defaults. `wow` auto-loads `substrate`, which reads the index and orients to the substrate.
+2. Read `exfu/derived/index.json` to find scopes with populated reminders, inbox, and todo folders.
+3. Check reminders folders across scopes for anything due or overdue. Show them as a short list.
+4. Check inbox folders across scopes. If total unsorted items > 5, flag it's getting full.
+5. If a calendar MCP is connected (Google Calendar, Outlook, etc.), list today's events with times. If not, skip this section.
+6. If a task manager MCP is connected (Linear, Asana, ClickUp, Notion, Todoist, etc.), pull the user's top priority items due today or overdue. If not, skip.
+7. Check `user/context/` and any active scope's context/ for anything pinned for today.
+8. Check `exfu/derived/librarian-registry.json` for any librarian health issues (consecutive failures >= 3). If any, add a brief note.
 
 Format as a short morning briefing. Skimmable. No preamble, no sign-off. Plain prose or short lists where useful.
 
@@ -49,10 +51,10 @@ Format as a short morning briefing. Skimmable. No preamble, no sign-off. Plain p
 ## Notes
 
 - The task only runs while Claude Desktop is open
-- Each run appears as a Cowork session in the Scheduled sidebar — past briefings are there to review
-- Output lives in that Cowork session; no persistent file is written. If the user wants a rolling log, they can ask Claude to also write the briefing to `scratch/briefings/YYYY-MM-DD.md` — but that's optional, not default.
+- Each run appears as a Cowork session in the Scheduled sidebar -- past briefings are there to review
+- Output lives in that Cowork session; no persistent file is written
 - Adjust the prompt as the user's tool stack grows. Start minimal; extend as more MCPs come online.
 
 ## Testing
 
-After saving the task, run it manually once from the Scheduled tab to confirm it produces a sensible briefing. If it's empty because nothing is connected yet, that's expected — it'll fill out as tools are wired up.
+After saving the task, run it manually once from the Scheduled tab to confirm it produces a sensible briefing. If it's empty because nothing is connected yet, that's expected -- it'll fill out as tools are wired up.

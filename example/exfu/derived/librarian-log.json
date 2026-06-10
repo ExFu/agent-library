@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "at": "2026-06-08T03:00:11Z",
+      "cadence": "nightly",
+      "name": "nightly-index",
+      "status": "success",
+      "detail": "Indexed 4 scopes; no anomalies"
+    },
+    {
+      "at": "2026-06-08T03:01:35Z",
+      "cadence": "nightly",
+      "name": "inbox-triage",
+      "status": "success",
+      "detail": "All inboxes empty; nothing to triage"
+    },
+    {
+      "at": "2026-06-08T03:02:02Z",
+      "cadence": "nightly",
+      "name": "dashboard-generator",
+      "status": "success",
+      "detail": "Dashboard regenerated (15.8 KB)"
+    },
+    {
+      "at": "2026-06-09T03:00:09Z",
+      "cadence": "nightly",
+      "name": "nightly-index",
+      "status": "success",
+      "detail": "Indexed 4 scopes; no anomalies"
+    },
+    {
+      "at": "2026-06-09T03:01:42Z",
+      "cadence": "nightly",
+      "name": "inbox-triage",
+      "status": "success",
+      "detail": "All inboxes empty; nothing to triage"
+    },
+    {
+      "at": "2026-06-09T03:02:15Z",
+      "cadence": "nightly",
+      "name": "dashboard-generator",
+      "status": "success",
+      "detail": "Dashboard regenerated (15.8 KB)"
+    }
+  ]
+}

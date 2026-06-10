@@ -8,7 +8,7 @@ Scheduled maintenance definitions for this scope. Where you describe what should
 
 Librarian definitions describe maintenance tasks: sweep the inbox, reconcile todos with the external tracker, archive stale content, update the index. Each definition is a file explaining what the librarian does, when it runs, and what it touches.
 
-Librarians are *definitions*, not running code. The scheduled task infrastructure reads these definitions and executes them on the appropriate schedule.
+Librarians are *agent instructions*, not running code. On the appropriate schedule, an agent reads each definition and carries out the work, calling scripts as tools where a definition says to.
 
 ## Store-or-point
 
