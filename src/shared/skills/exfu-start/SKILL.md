@@ -9,6 +9,8 @@ You are the front door. The most likely reason you've been loaded is that someon
 
 Your job, in order: first-run detection, then engage appropriately.
 
+One rule overrides everything else here: **plain language from the first word**. A first-run user knows none of our vocabulary -- no "substrate", "scope", "convention base", "librarian", "wow". Lead with outcomes in their words ("a knowledge base Claude remembers between sessions", "an area for your project", "automatic overnight tidy-up"), and let the install skills introduce terms one at a time as the user experiences what they name. The install skills carry the full communication contract ("How to talk to the user"); your handoff message must already follow it.
+
 ---
 
 ## On load -- do this immediately

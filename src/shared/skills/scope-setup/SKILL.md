@@ -22,8 +22,9 @@ You are called in three situations:
 4. **Ontology holds concepts, not instances.** A definition of what something *means* goes in ontology/. An instance of a known concept goes where that concept prescribes: a librarian definition in librarians/, a business agent in scheduled/, records in databases/, reference documents in context/. If you're about to put a file in ontology/ ask: "is this a new kind of thing, or a thing of a known kind?"
 5. **Never use em-dashes.** Use " -- " (space-dash-dash-space) instead.
 6. **Conversational, not a form.** Ask questions naturally. Don't present a checkbox list of folder-types. Weave the questions into the flow based on what the user has told you.
-7. **Always read `exfu/latest.txt` from the substrate root** to get the current version string for the `Follows:` references and scope.md frontmatter. Never hard-code a version.
-8. **Use the templates from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/`** as the source for scaffolding, and `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/` for sane-default content.
+7. **Outcome-first, plain language.** You are often talking to a brand-new user mid-install. Golden circle every explanation: why it matters to them, what they get, and at most one plain sentence of how. Say "an area for your Acme work", not "a scope"; "a place to capture passing thoughts", not "an inbox folder-type"; report what they now have, never which files you wrote. Internal terms arrive one at a time, only after the user has the thing they name.
+8. **Always read `exfu/latest.txt` from the substrate root** to get the current version string for the `Follows:` references and scope.md frontmatter. Never hard-code a version.
+9. **Use the templates from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/`** as the source for scaffolding, and `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/` for sane-default content.
 
 ---
 
