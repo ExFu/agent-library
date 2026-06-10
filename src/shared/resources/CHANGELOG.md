@@ -6,6 +6,13 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.3.3 -- 2026-06-10
+
+**Changed**
+- Install conversations get a pacing and consent model ("How to begin", replacing "start moving"). The previous instruction read "their go is implicit... begin immediately, then continue through the steps in order" -- which licensed silent multi-step execution and writing into the user's folders before any dialogue. Now: the first message answers what the user actually asked, sketches the shape of the install, and proposes the first move; reading is free, the first write needs an explicit yes, the user's own content is propose-then-do, and a direct question is always answered before tools fire. One step at a time, narrated. Matching must-never constraint ("Don't execute silently") in all three variants.
+
+---
+
 ## v0.3.2 -- 2026-06-10
 
 **Changed**
