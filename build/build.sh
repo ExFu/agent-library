@@ -123,6 +123,14 @@ try:
     meta = yaml.safe_load(fm)
     if not (isinstance(meta, dict) and meta.get("name") and meta.get("description")):
         sys.exit(1)
+    # Anthropic's marketplace upload validation (the path Claude Desktop's
+    # zip install uses) enforces these on the server side:
+    import re
+    desc = str(meta["description"])
+    if len(desc) > 1024:          # plugin_upload_skill_md_description_too_long
+        sys.exit(1)
+    if re.search(r"<[^ >][^>]*>", desc):  # plugin_upload_skill_md_description_contains_xml
+        sys.exit(1)
 except ImportError:
     # stdlib fallback: flag plain-scalar values containing ": " (breaks YAML)
     for line in fm.split("\n"):
