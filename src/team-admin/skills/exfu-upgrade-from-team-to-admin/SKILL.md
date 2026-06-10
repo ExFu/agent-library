@@ -1,6 +1,6 @@
 ---
 name: exfu-upgrade-from-team-to-admin
-description: Handles the in-place upgrade for a team member who is becoming their team's substrate champion. They already have the team plugin installed (with its personal substrate, wow skill, and git connection) and are now installing the team-admin plugin to gain the admin-only capabilities: repo provisioning, shared-skills authoring, compliance briefing, and onboarding-pack generation. This skill replaces the team plugin's bundled skills with the team-admin plugin's, preserving the personal substrate, wow, and team repo connection entirely. Agent-invoked only: exfu-install-team-admin calls this when it detects an existing team-plugin install. Do not invoke manually.
+description: Handles the in-place upgrade for a team member who is becoming their team's substrate champion. They already have the team plugin installed (with its personal substrate, wow skill, and git connection) and are now installing the team-admin plugin to gain the admin-only capabilities -- repo provisioning, shared-skills authoring, compliance briefing, and onboarding-pack generation. This skill replaces the team plugin's bundled skills with the team-admin plugin's, preserving the personal substrate, wow, and team repo connection entirely. Agent-invoked only -- exfu-install-team-admin calls this when it detects an existing team-plugin install. Do not invoke manually.
 ---
 
 # Upgrade from team to team-admin

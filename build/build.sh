@@ -88,7 +88,11 @@ read_json_field() {
 
 # ---------------------------------------------------------------------------
 # SKILL.md frontmatter validation
-# Checks that there are at least two `---` fence lines (YAML frontmatter).
+# Structural checks (fences, required keys), then a real YAML parse so we
+# fail the same way `claude plugin validate` does. Claude Code drops ALL
+# frontmatter silently when the YAML doesn't parse -- the classic trap is an
+# unquoted "description:" value containing ": " somewhere in the prose.
+# Uses PyYAML when importable; otherwise a stdlib lint for that trap.
 # ---------------------------------------------------------------------------
 validate_skill_frontmatter() {
   local skill_file="$1"
@@ -103,6 +107,36 @@ validate_skill_frontmatter() {
   fi
   if ! grep -q '^description:' "$skill_file"; then
     return 1
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$skill_file" <<'PYEOF' || return 1
+import sys
+text = open(sys.argv[1], encoding="utf-8").read()
+if not text.startswith("---\n"):
+    sys.exit(1)
+end = text.find("\n---", 4)
+if end == -1:
+    sys.exit(1)
+fm = text[4:end]
+try:
+    import yaml
+    meta = yaml.safe_load(fm)
+    if not (isinstance(meta, dict) and meta.get("name") and meta.get("description")):
+        sys.exit(1)
+except ImportError:
+    # stdlib fallback: flag plain-scalar values containing ": " (breaks YAML)
+    for line in fm.split("\n"):
+        if not line or line[0] in " \t#-":
+            continue
+        if ":" not in line:
+            continue
+        key, _, value = line.partition(":")
+        value = value.strip()
+        if value and value[0] not in "\"'|>[{" and ": " in value:
+            sys.exit(1)
+except Exception:
+    sys.exit(1)
+PYEOF
   fi
   return 0
 }
