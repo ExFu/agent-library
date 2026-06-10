@@ -1,0 +1,66 @@
+{
+  "agents": [
+    {
+      "name": "nightly-index",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": [],
+      "enabled": true,
+      "source": "exfu/v0.3/librarians/nightly-index.md",
+      "installed": "2026-06-10T12:25:41Z",
+      "last_run": "2026-06-10T12:25:53Z",
+      "last_status": "success",
+      "consecutive_failures": 0
+    },
+    {
+      "name": "inbox-triage",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": [
+        "nightly-index"
+      ],
+      "enabled": true,
+      "source": "exfu/v0.3/librarians/inbox-triage.md",
+      "installed": "2026-06-10T12:25:41Z",
+      "last_run": "2026-06-10T12:25:53Z",
+      "last_status": "success",
+      "consecutive_failures": 0
+    },
+    {
+      "name": "dashboard-generator",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": [
+        "nightly-index"
+      ],
+      "enabled": true,
+      "source": "exfu/v0.3/librarians/dashboard-generator.md",
+      "installed": "2026-06-10T12:25:41Z",
+      "last_run": "2026-06-10T12:25:53Z",
+      "last_status": "success",
+      "consecutive_failures": 0
+    },
+    {
+      "name": "weekly-trends-scan",
+      "kind": "agent",
+      "cadence": "weekly",
+      "depends_on": [],
+      "enabled": true,
+      "source": "scopes/side-project/scheduled/weekly-trends-scan.md",
+      "installed": "2026-06-10T12:25:41Z",
+      "last_run": "2026-06-10T12:25:53Z",
+      "last_status": "success",
+      "consecutive_failures": 0
+    }
+  ],
+  "cadences": {
+    "nightly": {
+      "scheduled_task": "nightly-agents",
+      "last_run": "2026-06-10T12:25:53Z"
+    },
+    "weekly": {
+      "scheduled_task": "weekly-agents",
+      "last_run": "2026-06-10T12:25:53Z"
+    }
+  }
+}

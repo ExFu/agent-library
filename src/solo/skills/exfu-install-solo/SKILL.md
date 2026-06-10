@@ -26,7 +26,7 @@ Things you **must** do:
 - **Confirm before destructive operations.** Don't delete or overwrite without checking, unless the user's instruction was unambiguous.
 - **Deploy the convention base before creating any scopes.** Scopes reference the convention base in `exfu/`. If it doesn't exist yet, scope creation will produce broken references. Always run Step 4 before Steps 5 and 6.
 - **Delegate scope creation to the scope-setup skill.** Don't create scopes inline. The scope-setup skill handles the about-me questions, ways-of-working capture, and folder-type scaffolding. Let it drive.
-- **Delegate librarian registration to the install-librarian skill.** Don't write librarian registry entries inline.
+- **Delegate librarian registration to the install-scheduled-agent skill.** Don't write librarian registry entries inline.
 
 Things you **must never** do:
 
@@ -132,7 +132,7 @@ Once the storage folder is identified, deploy the v0.3 convention base. This is 
 Do the following in order:
 
 1. **Create `exfu/` at the substrate root.** This is the convention base directory.
-2. **Copy the v0.3 convention files** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/` at the substrate root. This includes the full ontology (what a scope is, what a librarian is, what each folder-type means), the context principles, and the base definitions.
+2. **Copy the v0.3 convention files** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/` at the substrate root. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
 3. **Create `exfu/latest.txt`** containing exactly `v0.3`. This tells agents which convention version is current.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
 
@@ -188,12 +188,12 @@ If you've accidentally been pointed here, stop and ask the user to either:
 This protects the substrate from being treated as a generic working folder.
 ```
 
-### Step 8 -- Librarian registration (delegate to install-librarian)
+### Step 8 -- Librarian registration (delegate to install-scheduled-agent)
 
-**Delegate to the `install-librarian` skill.** It will:
+**Delegate to the `install-scheduled-agent` skill.** It will:
 - Register the nightly-index librarian
-- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/librarian-registry.json` to `exfu/derived/librarian-registry.json` at the substrate root
-- Set up the `nightly-librarians` scheduled task (which runs all nightly-cadence librarians)
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json` at the substrate root
+- Set up the `nightly-agents` scheduled task (which runs all nightly-cadence scheduled agents -- librarians first, then any business agents)
 
 ### Step 9 -- Run the index immediately
 
@@ -255,7 +255,7 @@ What's available, all pre-installed via the plugin. No URL fetching needed.
 - `box-filesystem-management` -- how Claude manages files in Box (filesystem when mounted, MCP connector when not). Includes the daily cleanup scheduled task.
 - `substrate` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
-- `install-librarian` -- registers librarians and sets up their scheduled tasks.
+- `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks.
 
 **Optional but high-value:**
 - `setup-reminders` -- one-time intake that generates the user's personal `<username>-reminders` skill.
@@ -281,8 +281,8 @@ A checklist, not a script:
 - User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the substrate root.
-- Librarian registry at `exfu/derived/librarian-registry.json` with nightly-index registered.
-- `nightly-librarians` scheduled task created.
+- Agent registry at `exfu/derived/agent-registry.json` with nightly-index registered.
+- `nightly-agents` scheduled task created.
 - First index generated at `exfu/derived/index.json`.
 - A personal `wow` skill generated, customised with what you've learned about the user, installed, and added to Global Instructions so it loads every session.
 - `substrate` skill installed and operational.

@@ -1,6 +1,6 @@
 ---
 name: substrate
-description: ExFu's substrate is the persistent system of files, skills, connectors, and scheduled tasks that gives Claude memory and working context across sessions -- a knowledge base the user builds up over time, covering who they are, what they're working on, and how they operate. This skill bootstraps any Claude session with that context: it finds the knowledge base, reads the global index for the whole-substrate picture, resolves the current conventions version, loads the user's personal context and ways of working, discovers scopes and their parent chains, detects the storage backend, surfaces the right verbs for git-backed substrates, checks librarian health, and surfaces anything overnight maintenance left for the user. Load it at the start of any substrate-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "do you know about X?", "what's in my notes on Y?", "what have we got on Z?", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
+description: ExFu's substrate is the persistent system of files, skills, connectors, and scheduled tasks that gives Claude memory and working context across sessions -- a knowledge base the user builds up over time, covering who they are, what they're working on, and how they operate. This skill bootstraps any Claude session with that context: it finds the knowledge base, reads the global index for the whole-substrate picture, resolves the current conventions version, loads the user's personal context and ways of working, discovers scopes and their parent chains, detects the storage backend, surfaces the right verbs for git-backed substrates, checks scheduled-agent health, and surfaces anything the overnight runs left for the user. Load it at the start of any substrate-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "do you know about X?", "what's in my notes on Y?", "what have we got on Z?", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
 ---
 
 # Substrate skill -- v0.3.0
@@ -95,11 +95,11 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `v0.3`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
-The convention base lives at `exfu/<version>/` (e.g. `exfu/v0.3/`). It contains:
-- `ontology/` -- base vocabulary: what a scope is, what each folder-type means, what a librarian is
-- `ontology/folder-types/` -- per-folder-type conventions (todo.md, context.md, etc.)
-- `ontology/scope/` -- the scope model itself (nesting, version resolution, scope.md format)
-- `ontology/librarian/` -- librarian definitions and the nightly index spec
+The convention base lives at `exfu/<version>/` (e.g. `exfu/v0.3/`). It is deliberately flat and small:
+- `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
+- `principles.md` -- the design principles behind the conventions, plus tool recommendations.
+- `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
+- `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
 Scopes pin their version in scope.md's `exfu` field. A scope pinned to `v0.3` follows the conventions in `exfu/v0.3/`. The `user/` scope is unversioned and always follows latest.
 
@@ -133,7 +133,7 @@ If the conversation context points to a specific scope (the user asked about it,
 
 1. **Read scope.md** for purpose, parent, and version pin.
 2. **Walk the parent chain.** If the scope has a parent, read that parent's scope.md too, and its parent, up to the root. This gives you the full context chain.
-3. **Load relevant ontologies.** Read ontologies from: the active scope, each ancestor scope, `user/ontology/`, and the exfu base (`exfu/<version>/ontology/`). Hold all definitions together. When definitions conflict, recognise both and ask the user if it matters in context.
+3. **Load relevant ontologies.** Read ontologies from: the active scope, each ancestor scope, `user/ontology/`, and the exfu base (`exfu/<version>/ontology.md`). Hold all definitions together. When definitions conflict, recognise both and ask the user if it matters in context.
 4. **Read relevant agent.md files.** For folder-types the user needs in this conversation, read the agent.md. It will have a `Follows:` reference to the convention base -- read that upstream file too. Then apply any local deviations listed in the agent.md.
 
 **Navigate via the index, not the filesystem.** The index gives you scope paths directly. Only touch the filesystem to read the actual content files.
@@ -166,29 +166,29 @@ Do not mention git commands at any point. Users interact through the verbs above
 
 **Local-only substrates.** The user has full rights to their local filesystem. No permission lookup, no fallback note. Verbs collapse to direct filesystem operations: `save` (write the file), `check for updates` (no remote to check; could mean "show me what changed since last session" if useful). Sharing-and-review verbs do not apply because there is no automated propagation layer; the user handles distribution manually.
 
-### Step 11 -- Check librarian health
+### Step 11 -- Check scheduled-agent health
 
-Read `exfu/derived/librarian-registry.json` if it exists. This file tracks:
-- Which librarians are defined and enabled
+Read `exfu/derived/agent-registry.json` if it exists. This file tracks every registered scheduled agent (librarians and business agents):
+- Which are registered and enabled, and of which kind
 - Last run time and status for each
 - Consecutive failure count
 
 Surface any problems worth mentioning:
-- **Consecutive failures > 0** -- a librarian has been failing. Tell the user which one and what the last error was (check `exfu/derived/librarian-log.json` for details if available).
-- **Stale runs** -- if the last run was more than 48 hours ago for a nightly librarian, something may be wrong with the scheduled task. Mention it.
-- **No registry** -- if the file doesn't exist, the nightly librarian may not be set up yet. Suggest it if the substrate seems established (has multiple scopes, has been in use).
+- **Consecutive failures > 0** -- something has been failing. Tell the user which one and what the last error was (check `exfu/derived/agent-log.json` for details if available).
+- **Stale runs** -- if the last run was more than 48 hours ago for a nightly entry, something may be wrong with the scheduled task. Mention it.
+- **No registry** -- if the file doesn't exist, the nightly cadence may not be set up yet. Suggest it if the substrate seems established (has multiple scopes, has been in use).
 
-If everything is healthy, say nothing. Librarian health is background monitoring, not ceremony.
+If everything is healthy, say nothing. Health is background monitoring, not ceremony.
 
-### Step 12 -- Surface librarian attention items
+### Step 12 -- Surface scheduled-agent attention items
 
-Librarians run agentically in their scheduled sessions, but some outcomes need the user: a decision the librarian wouldn't make alone (deleting an unreferenced version), a triage summary worth a look, a failure that needs a human.
+Scheduled agents run agentically in their scheduled sessions, but some outcomes need the user: a decision the agent wouldn't make alone (deleting an unreferenced version), a triage summary worth a look, a business agent's finding, a failure that needs a human.
 
-Check the most recent entries in `exfu/derived/librarian-log.json` (latest entry per librarian):
-- Any `status: failure` -- mention which librarian and its detail line.
-- Any detail line flagging something for the user (e.g. "v0.2 unreferenced; candidate for removal", "7 inbox items, 2 stale").
+Check the most recent entries in `exfu/derived/agent-log.json` (latest entry per agent):
+- Any `status: failure` -- mention which one and its detail line.
+- Any detail line flagging something for the user (e.g. "v0.2 unreferenced; candidate for removal", "7 inbox items, 2 stale", "2 new sightings match the brief").
 
-If there's something, surface it briefly: "Overnight maintenance left [n] things for you to look at." Don't force processing -- mention and move on.
+If there's something, surface it briefly: "Overnight runs left [n] things for you to look at." Don't force processing -- mention and move on.
 
 If there's nothing, say nothing.
 
@@ -206,7 +206,7 @@ These checks are fast and quiet. Session start is not a ceremony.
 
 ### Step 14 -- Orient and proceed
 
-You should now understand: the substrate's structure, which scopes exist and how they nest, what the user's personal context and preferences are, what permission level to operate at, whether any librarians need attention, and what (if anything) needs the user's attention.
+You should now understand: the substrate's structure, which scopes exist and how they nest, what the user's personal context and preferences are, what permission level to operate at, whether any scheduled agents need attention, and what (if anything) needs the user's attention.
 
 If the user hasn't asked for anything specific yet, briefly confirm what you've loaded and ask what they'd like to work on.
 
@@ -281,30 +281,26 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    v0.3/                   # versioned conventions
-      ontology/             # base vocabulary (what a scope is, folder-types, librarians)
-      context/              # principles, recommendations
-      skills/               # exfu-shipped skill definitions
+    v0.3/                   # versioned conventions -- deliberately flat and small
+      readme.md             # orientation map for this directory
+      ontology.md           # the complete core ontology, one file
+      principles.md         # design principles + recommendations
       librarians/           # exfu-shipped librarian definitions
-      ...
-    derived/                # generated content (unversioned)
+      skills/               # exfu-shipped skill sources (wow template)
+    derived/                # generated content (unversioned cache)
       index.json            # the global index -- the primary navigation tool
-      librarian-registry.json
-      librarian-log.json
+      agent-registry.json   # registered scheduled agents and their health
+      agent-log.json        # run history
+      dashboard/            # generated HTML dashboard
     latest.txt              # points to current version (e.g. "v0.3")
   user/                     # personal scope (unversioned, always follows latest)
     scope.md
-    ontology/               # personal definitions, ways of working
     context/                # personal background (about-me, preferences)
-    skills/
-    todo/
-    reminders/
-    inbox/
-    ...
+    ontology/               # personal definitions, ways of working
+    ...                     # other folder-types materialise as content appears
   scopes/                   # the tree of everything else
     acme/                   # a scope (has scope.md)
       scope.md
-      ontology/
       context/
       todo/
       scopes/               # child scopes gathered here
@@ -342,33 +338,37 @@ Inside any scope, these are the standard vocabulary for where things go:
 | Folder | What it answers |
 |---|---|
 | `ontology/` | What do the concepts and terms in this scope mean? |
-| `context/` | What background should an agent know about this scope? |
-| `docs/` | Where are captured documents that need keeping? |
-| `skills/` | What skill definitions or drafts relate to this scope? |
-| `librarians/` | What scheduled maintenance should happen here? |
+| `context/` | What background should an agent know here? (including kept reference documents -- there is no docs/ folder-type) |
+| `skills/` | What skill definitions belong to this scope? |
+| `librarians/` | What substrate maintenance runs here on a schedule? |
+| `scheduled/` | What business-logic work runs here on a schedule? |
 | `todo/` | How does this scope handle tasks? |
 | `reminders/` | How does this scope handle lightweight nudges? |
 | `inbox/` | Where do uncategorised thoughts go for this scope? |
-| `databases/` | Where is structured data with schemas for this scope? |
+| `databases/` | Where do structured, repeating records live? (CRM, logs, journals) |
 | `visualisations/` | Where do agent-created visual outputs live for this scope? |
 
-Each folder-type has an `agent.md` that follows the reference+delta pattern (see below). The catalogue is open -- a scope may add folder-types not listed here.
+Each materialised folder-type has an `agent.md` that follows the reference+delta pattern (see below). The catalogue is open -- a scope may add folder-types not listed here (define them in the scope's ontology).
+
+**Materialise on demand.** Folder-types exist only where there is content. A scope with just scope.md and context/ is healthy, not incomplete. Never scaffold empty folders; add a folder-type the moment its first content appears (the scope-setup skill handles this).
 
 **Store-or-point.** A folder-type may contain actual data, or its agent.md may say "tasks are in ClickUp." The convention guarantees the location is discoverable; whether data lives there is per-scope, per-user.
 
 ### The reference+delta pattern (agent.md)
 
-Every folder-type directory contains an `agent.md` with this structure:
+Every materialised folder-type directory contains an `agent.md` with this structure:
 
 1. **Protective header** (blockquote, always first):
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
-2. **`Follows:` line** naming the upstream convention by versioned path:
-   `Follows: exfu/v0.3/ontology/folder-types/todo.md`
+2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
+   `Follows: exfu/v0.3/ontology.md#todo`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 
-A folder with no deviations is two lines plus the header. The agent reads the upstream convention for full behaviour.
+A folder with no deviations is two lines plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
+
+**Descriptors carry no state.** agent.md, readme.md, and scope.md describe what a folder is *for* -- never its current contents, counts, or status. "Currently empty" goes stale silently; state lives in the derived index and the content itself.
 
 ### Scope nesting
 
@@ -378,7 +378,7 @@ Each nested scope declares its parent in scope.md. This is a portability safegua
 
 ### Ontology resolution
 
-When operating inside a scope, read all relevant ontologies by walking the declared parent chain: active scope, each ancestor scope, `user/ontology/`, then `exfu/<version>/ontology/`. Hold them all together. When definitions conflict, recognise both and ask the user in context which applies. There is no automatic cascade, no deterministic precedence rule -- the agent supplies the judgment.
+When operating inside a scope, read all relevant ontologies by walking the declared parent chain: active scope, each ancestor scope, `user/ontology/`, then `exfu/<version>/ontology.md`. Hold them all together. When definitions conflict, recognise both and ask the user in context which applies. There is no automatic cascade, no deterministic precedence rule -- the agent supplies the judgment.
 
 When writing new ontology entries that touch existing terms, annotate the intent: "This extends the user-level definition of X" or "This scope uses Y differently from Z scope."
 
@@ -407,11 +407,11 @@ These are internalised here so they're available even when the convention base h
 
 **Scope.** A bounded context with its own knowledge, definitions, and conventions. Everything is a scope: personal space, org, team, project, client. Every scope has the same internal shape (the 10 folder-types). Scopes can nest via their own `scopes/` subdirectory. A scope is identified by the presence of `scope.md`.
 
-**Folder-type.** A standard kind of content that a scope may contain: ontology, context, docs, skills, librarians, todo, reminders, inbox, databases, visualisations. Each is a discovery convention first, a storage location second -- it tells an agent how the scope handles that kind of thing.
+**Folder-type.** A standard kind of content that a scope may contain: ontology, context, skills, librarians, scheduled, todo, reminders, inbox, databases, visualisations. Each is a discovery convention first, a storage location second -- it tells an agent how the scope handles that kind of thing. Folder-types materialise only when content exists for them.
 
 **Convention base.** The exfu-shipped definitions at `exfu/<version>/`. Defines what each folder-type means and how it behaves by default. Every agent.md references the convention base and records only local deviations.
 
-**Librarian.** A scheduled maintenance agent that keeps part of the substrate tidy and current. Librarian definitions live in a scope's `librarians/` folder; the actual scheduling is done by the platform (Claude scheduled tasks, etc.). The nightly index librarian is the canonical example -- it walks the whole substrate and regenerates `exfu/derived/index.json`.
+**Scheduled agent.** Recurring work defined as agent instructions: a markdown definition an agent reads cold and carries out on a cadence, registered in `exfu/derived/agent-registry.json` and executed by one scheduled task per cadence. Two kinds with identical mechanics: **librarians** (remit: the substrate itself; definitions in `librarians/` folders; the nightly index is the canonical example) and **business agents** (remit: the user's recurring domain work; definitions in `scheduled/` folders). Librarians run before business agents within a cadence.
 
 **Global index.** The file at `exfu/derived/index.json`. One read gives the whole-substrate map: every scope, where it sits, what it contains, which conventions it follows. Generated by the nightly index librarian. The primary navigation tool for agents.
 
@@ -432,7 +432,8 @@ These are internalised here so they're available even when the convention base h
 - **Use the right access mode.** Filesystem when mounted, connector when not.
 - **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Box-backed substrates, defer file CRUD to `box-filesystem-management`. For local-only substrates, direct filesystem operations are sufficient.
 - **Navigate via the index.** When you need to find a scope or understand the substrate's shape, read the index first. Only walk the filesystem when the index is unavailable.
-- **Maintain discoverability.** When you create new folders or content, create or update agent.md files with `Follows:` references to the convention base. When you create a new scope, scaffold scope.md with the correct parent and version pin.
+- **Maintain discoverability.** When you create new folders or content, create or update agent.md files with `Follows:` anchor references into the convention base's `ontology.md`. When you create a new scope, scaffold scope.md with the correct parent and version pin.
+- **Materialise on demand, write no state into descriptors, prefer fewer complete files.** Don't create empty folder-types; add them when their first content appears. Never write "currently empty", counts, or status into agent.md/readme.md/scope.md. Extend existing files rather than scattering siblings; keep ontologies flat with one complete file per concept. (Full authoring rules: `exfu/<version>/ontology.md#authoring-rules`.)
 - **Respect version pins.** When working inside a scope, use the conventions from the scope's pinned exfu version. Don't assume all scopes are on the latest version.
 - **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.
 - **Surface only what's actually there.** Don't invent scopes, folder-types, or permissions. Read the files and report what you find.

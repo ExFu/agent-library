@@ -1,0 +1,32 @@
+{
+  "entries": [
+    {
+      "at": "2026-06-10T12:25:53Z",
+      "cadence": "nightly",
+      "name": "nightly-index",
+      "status": "success",
+      "detail": "Indexed 4 scopes; all pins resolve to v0.3; no anomalies"
+    },
+    {
+      "at": "2026-06-10T12:25:53Z",
+      "cadence": "nightly",
+      "name": "inbox-triage",
+      "status": "success",
+      "detail": "All inboxes empty; nothing to triage"
+    },
+    {
+      "at": "2026-06-10T12:25:53Z",
+      "cadence": "nightly",
+      "name": "dashboard-generator",
+      "status": "success",
+      "detail": "Dashboard rendered: 4 scopes, 4 scheduled agents"
+    },
+    {
+      "at": "2026-06-10T12:25:53Z",
+      "cadence": "weekly",
+      "name": "weekly-trends-scan",
+      "status": "success",
+      "detail": "3 items noted in trends-notes.md"
+    }
+  ]
+}

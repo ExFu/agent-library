@@ -20,7 +20,7 @@ Generates the user's personal `wow` skill from the template. Invoked by install 
 
 Gather these before you start:
 
-1. **`${CLAUDE_PLUGIN_ROOT}/templates/wow-template.md`** -- the canonical template. This is the structure you're filling in.
+1. **`exfu/<version>/skills/wow-template.md`** in the substrate (resolve `<version>` via `exfu/latest.txt`) -- the canonical template. This is the structure you're filling in. The way-of-working concept it implements is defined in `exfu/<version>/ontology.md#wow`. If the convention base hasn't been deployed yet, fall back to `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/skills/wow-template.md`.
 2. **The user's existing `wow`** -- if there is one, read it. You're merging, not replacing. Preserve anything specific the user has already built in: navigation map entries they've added, always-on kernel items, scope pointers.
 3. **`user/context/about-me.md`** -- the user's about-me content. Informs the always-on kernel and gives you the starting shape of the substrate.
 4. **Other `user/context/` files** if they exist: role, tools, writing-style. These feed the navigation map (high-traffic file pointers) and the always-on kernel (formatting preferences, communication style).
@@ -35,7 +35,7 @@ If files are missing -- no existing wow, no `user/context/` yet -- work with wha
 Customise these sections with what you've read:
 
 - **Navigation map -- Substrate shape**: note any structural deviations from the standard v0.3 layout (`exfu/`, `user/`, `scopes/`). If the user has grouping folders under `scopes/` (e.g. `scopes/clients/`), note that. If they've added non-standard folder-types to a scope, note that.
-- **Navigation map -- Active scopes**: list scope names, paths, and parent relationships from `exfu/derived/index.json`. Include folder-type status for each (which types are populated, which are pointer-only, which are empty).
+- **Navigation map -- Active scopes**: list scope names, paths, and parent relationships from `exfu/derived/index.json`. Include folder-type status for each (which types are present, which are pointer-only).
 - **Navigation map -- High-traffic files**: add pointers to files that actually exist. The baseline set: `user/context/about-me.md`, `user/ontology/ways-of-working.md`, `exfu/derived/index.json`. Add any other `user/context/` files that exist. Don't add stubs for files that haven't been created yet.
 - **Always-on kernel -- Communication style**: if the user expressed communication preferences during the install (short sentences, no preambles, direct responses), capture them. If not, leave the stubs.
 - **Bootstrap -- Load any other always-on skills**: add skills the user confirmed they want always-on during the install. Remove ones not relevant to their setup.
@@ -55,17 +55,18 @@ The template has a placeholder for storage-layer notes. Fill this in:
 2. Draft the customised `wow` by filling in the template with what you've gathered.
 3. In the navigation map, include the pointer to `exfu/derived/index.json`. This file is regenerated nightly by the nightly-index librarian and gives Claude a current whole-substrate overview. The pointer should read something like: "`exfu/derived/index.json` -- auto-generated nightly scope map; read at session start for a current overview of what's where."
 4. Before packaging: review the draft. Check that nothing in the always-on kernel is large enough to be a standalone file. Check that the navigation map is accurate for the current substrate state. Check that no workflow logic has crept in.
-5. Use `skill-packaging` to package the draft as a `.skill` file.
-6. Present the package to the user with a one-line summary of what was customised: e.g. "Your wow includes your about-me context, three active scopes (acme, side-project, hiring), and your communication preferences." Then present the install link.
-7. After the user installs it, confirm they've added it to Global Instructions so it loads every session.
+5. **Save the source of truth into the substrate** at `user/skills/wow/SKILL.md` (creating the user scope's skills/ folder-type if this is its first content). The installed skill is a packaged artefact; this file is what gets edited and repackaged when the wow evolves.
+6. Use `skill-packaging` to package the draft as a `.skill` file.
+7. Present the package to the user with a one-line summary of what was customised: e.g. "Your wow includes your about-me context, three active scopes (acme, side-project, hiring), and your communication preferences." Then present the install link.
+8. After the user installs it, confirm they've added it to Global Instructions so it loads every session.
 
 ## Index setup (part of every wow generation)
 
-The nightly-librarians scheduled task runs overnight and regenerates `exfu/derived/index.json` -- the scope-level map that the substrate skill reads at session start. This is a baseline part of every install, not an opt-in.
+The nightly-agents scheduled task runs overnight: librarians first (including the nightly index that regenerates `exfu/derived/index.json`, the scope-level map the substrate skill reads at session start), then any business agents the user has registered. This is a baseline part of every install, not an opt-in.
 
 After packaging the wow skill, do two things:
 
-**First run.** Generate the initial index immediately so the file exists from the start, before the nightly-librarians task has had a chance to run:
+**First run.** Generate the initial index immediately so the file exists from the start, before the nightly-agents task has had a chance to run:
 
 ```
 python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <substrate-root>
@@ -75,12 +76,12 @@ Run this with the actual substrate root path. It takes a few seconds and writes 
 
 **Create the scheduled task and hand it to the user to install.** This works the same way as installing the wow skill itself: you create it, the user installs it.
 
-1. Read the task prompt from `${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/TASK.md`.
+1. Read the task prompt from `${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/scheduled-agents/TASK.md`.
 2. Fill in the user's substrate root path where the prompt expects it. Recommend a nightly cadence (e.g. 03:00 local).
-3. Present the customised task to the user the same way you'd hand them any scheduled task to install: "Here's the nightly-librarians task -- install this in Cowork's scheduled tasks; it'll keep your index and librarian registry current overnight."
+3. Present the customised task to the user the same way you'd hand them any scheduled task to install: "Here's the nightly-agents task -- install this in Cowork's scheduled tasks; it runs your overnight maintenance and any standing jobs you register later."
 4. Confirm the user has installed the task before considering the wow step complete.
 
-This step is part of every wow generation -- not optional, not a buffet item. A substrate without a running nightly-librarians task is missing part of its baseline.
+This step is part of every wow generation -- not optional, not a buffet item. A substrate without a running nightly-agents task is missing part of its baseline.
 
 ## After install
 

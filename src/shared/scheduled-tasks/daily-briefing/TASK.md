@@ -42,7 +42,7 @@ Produce this morning's briefing.
 5. If a calendar MCP is connected (Google Calendar, Outlook, etc.), list today's events with times. If not, skip this section.
 6. If a task manager MCP is connected (Linear, Asana, ClickUp, Notion, Todoist, etc.), pull the user's top priority items due today or overdue. If not, skip.
 7. Check `user/context/` and any active scope's context/ for anything pinned for today.
-8. Check `exfu/derived/librarian-registry.json` for any librarian health issues (consecutive failures >= 3). If any, add a brief note.
+8. Check `exfu/derived/agent-registry.json` for any scheduled-agent health issues (consecutive failures >= 3). If any, add a brief note.
 
 Format as a short morning briefing. Skimmable. No preamble, no sign-off. Plain prose or short lists where useful.
 

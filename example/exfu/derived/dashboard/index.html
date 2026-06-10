@@ -424,12 +424,12 @@
   <div class="container">
     <header>
       <h1>ExFu Dashboard</h1>
-      <div class="subtitle">Substrate snapshot -- generated 2026-06-09 21:55 UTC</div>
+      <div class="subtitle">Substrate snapshot -- generated 2026-06-10 12:38 UTC</div>
     </header>
 
     <div class="tabs">
       <button class="tab active" data-tab="tab-map">Substrate Map</button>
-      <button class="tab" data-tab="tab-librarians">Librarians</button>
+      <button class="tab" data-tab="tab-librarians">Scheduled agents</button>
       <button class="tab" data-tab="tab-workspace">Workspace</button>
     </div>
 
@@ -445,8 +445,7 @@
 <span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
 <span class="folder-dot"><span class="dot" style="background:#b8a898"></span>inbox</span>
 <span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>ontology</span>
-<span class="folder-dot"><span class="dot" style="background:#b8a898"></span>reminders</span>
-<span class="folder-dot"><span class="dot" style="background:#b8a898"></span>skills</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>reminders</span>
 <span class="folder-dot"><span class="dot" style="background:#4a7fa5"></span>todo</span>
 </div>
 </div>
@@ -471,6 +470,7 @@
 <div class="card-purpose">Track and close the Acme Q3 2026 contract renewal and expansion</div>
 <div class="folder-dots">
 <span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>todo</span>
 </div>
 </div>
 </div>
@@ -481,8 +481,8 @@
 </div>
 <div class="card-purpose">Weekend experiment with a recipe recommendation engine</div>
 <div class="folder-dots">
-<span class="folder-dot"><span class="dot" style="background:#b8a898"></span>context</span>
-<span class="folder-dot"><span class="dot" style="background:#b8a898"></span>inbox</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>context</span>
+<span class="folder-dot"><span class="dot" style="background:#5a8a3c"></span>scheduled</span>
 </div>
 </div>
     </div>
@@ -490,7 +490,7 @@
     <div id="tab-librarians" class="tab-panel">
       <div class="cadence-section">
 <div class="cadence-header">nightly
-<span class="cadence-meta">Last run: 18h ago</span>
+<span class="cadence-meta">Last run: 12m ago</span>
 </div>
 <div class="card">
 <div class="lib-card">
@@ -499,11 +499,12 @@
 <div class="lib-name">nightly-index</div>
 <div class="lib-meta">
 <span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+<span class="lib-meta-item"><strong>Kind:</strong> librarian</span>
 </div>
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">18h ago</div>
+<div class="lib-last-run">12m ago</div>
 </div>
 </div>
 </div>
@@ -514,11 +515,12 @@
 <div class="lib-name">inbox-triage</div>
 <div class="lib-meta">
 <span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+<span class="lib-meta-item"><strong>Kind:</strong> librarian</span>
 </div>
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">18h ago</div>
+<div class="lib-last-run">12m ago</div>
 </div>
 </div>
 </div>
@@ -529,23 +531,43 @@
 <div class="lib-name">dashboard-generator</div>
 <div class="lib-meta">
 <span class="lib-meta-item"><strong>Cadence:</strong> nightly</span>
+<span class="lib-meta-item"><strong>Kind:</strong> librarian</span>
 </div>
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">18h ago</div>
+<div class="lib-last-run">12m ago</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cadence-section">
+<div class="cadence-header">weekly
+<span class="cadence-meta">Last run: 12m ago</span>
+</div>
+<div class="card">
+<div class="lib-card">
+<div class="lib-health-dot" style="background:#5a8a3c"></div>
+<div class="lib-info">
+<div class="lib-name">weekly-trends-scan</div>
+<div class="lib-meta">
+<span class="lib-meta-item"><strong>Cadence:</strong> weekly</span>
+<span class="lib-meta-item"><strong>Kind:</strong> agent</span>
+</div>
+</div>
+<div class="lib-status">
+<span class="lib-status-label status-healthy">Healthy</span>
+<div class="lib-last-run">12m ago</div>
 </div>
 </div>
 </div>
 </div>
 <div class="run-history">
 <h3>Recent runs</h3>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-09 03:02 UTC</span><span class="run-results">dashboard-generator: success -- Dashboard regenerated (15.8 KB)</span></div>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-09 03:01 UTC</span><span class="run-results">inbox-triage: success -- All inboxes empty; nothing to triage</span></div>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-09 03:00 UTC</span><span class="run-results">nightly-index: success -- Indexed 4 scopes; no anomalies</span></div>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-08 03:02 UTC</span><span class="run-results">dashboard-generator: success -- Dashboard regenerated (15.8 KB)</span></div>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-08 03:01 UTC</span><span class="run-results">inbox-triage: success -- All inboxes empty; nothing to triage</span></div>
-<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-08 03:00 UTC</span><span class="run-results">nightly-index: success -- Indexed 4 scopes; no anomalies</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">weekly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">weekly-trends-scan: success -- 3 items noted in trends-notes.md</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">dashboard-generator: success -- Dashboard rendered: 4 scopes, 4 scheduled agents</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">inbox-triage: success -- All inboxes empty; nothing to triage</span></div>
+<div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">nightly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">nightly-index: success -- Indexed 4 scopes; all pins resolve to v0.3; no anomalies</span></div>
 </div>
     </div>
 
@@ -560,13 +582,31 @@
 <div class="workspace-scope-name">Acme</div>
 <div class="workspace-pointer">Tasks are tracked in ClickUp, not stored locally</div>
 </div>
+<div class="workspace-scope">
+<div class="workspace-scope-name">Q3 Renewal</div>
+<div class="workspace-content"># Completed tasks
+
+Tasks moved here from the active list after completion.
+
+&lt;!-- Oldest at the bottom, newest at the top. --&gt;</div>
 </div>
-<div class="workspace-section"><h3>Reminders</h3><div class="workspace-empty">No reminders found across scopes.</div></div>
+</div>
+<div class="workspace-section">
+<h3>Reminders</h3>
+<div class="workspace-scope">
+<div class="workspace-scope-name">Alastair</div>
+<div class="workspace-content"># Reminder archive
+
+Past reminders moved here after they fire or are dismissed.
+
+&lt;!-- Oldest at the bottom, newest at the top. --&gt;</div>
+</div>
+</div>
 <div class="workspace-section"><h3>Inbox</h3><div class="workspace-empty">No inbox found across scopes.</div></div>
     </div>
 
     <footer>
-      Generated by the ExFu dashboard librarian -- index from 2026-06-09 03:00 UTC
+      Generated by the ExFu dashboard librarian -- index from 2026-06-10 12:38 UTC
     </footer>
   </div>
 

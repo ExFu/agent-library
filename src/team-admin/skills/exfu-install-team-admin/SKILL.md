@@ -30,7 +30,7 @@ Things you **must** do:
 - **Confirm before destructive operations.** Don't delete or overwrite without checking.
 - **Deploy a convention base before creating any scopes -- in both substrates.** The shared substrate and the champion's personal substrate each get their own `exfu/` convention base. Scopes reference it; if it doesn't exist yet, scope creation produces broken references.
 - **Delegate scope creation to the scope-setup skill.** Don't create scopes inline -- shared or personal. The scope-setup skill handles the questions and the folder-type scaffolding.
-- **Delegate librarian registration to the install-librarian skill.** Don't write librarian registry entries inline.
+- **Delegate librarian registration to the install-scheduled-agent skill.** Don't write librarian registry entries inline.
 
 Things you **must never** do:
 
@@ -277,14 +277,14 @@ If you've accidentally been pointed here, stop and ask the user to either:
 This protects the substrate from being treated as a generic working folder.
 ```
 
-### Step 11 -- Librarian registration (delegate to install-librarian)
+### Step 11 -- Librarian registration (delegate to install-scheduled-agent)
 
-**Delegate to the `install-librarian` skill.** For the personal substrate it will:
+**Delegate to the `install-scheduled-agent` skill.** For the personal substrate it will:
 - Register the nightly-index librarian
-- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/librarian-registry.json` to `exfu/derived/librarian-registry.json`
-- Set up the `nightly-librarians` scheduled task
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json`
+- Set up the `nightly-agents` scheduled task
 
-**The shared substrate needs librarians too, and someone's machine has to run them.** By default that's the champion's. Offer it: *"The shared setup benefits from the same nightly maintenance -- an up-to-date index, mainly. It runs on your machine on the same schedule. Want me to register it?"* If yes, delegate to `install-librarian` against the shared root as well (its registry lives in the shared root's `exfu/derived/`). On the git path, note the nightly run writes to `exfu/derived/` in the repo; commit-and-push of derived output is part of that librarian's rhythm.
+**The shared substrate needs librarians too, and someone's machine has to run them.** By default that's the champion's. Offer it: *"The shared setup benefits from the same nightly maintenance -- an up-to-date index, mainly. It runs on your machine on the same schedule. Want me to register it?"* If yes, delegate to `install-scheduled-agent` against the shared root as well (its registry lives in the shared root's `exfu/derived/`). On the git path, note the nightly run writes to `exfu/derived/` in the repo; commit-and-push of derived output is part of that librarian's rhythm.
 
 Then run the first index against the personal root immediately:
 
@@ -345,7 +345,7 @@ All pre-installed via the plugin. No URL fetching needed.
 - `skill-packaging` -- for custom skills the champion or team wants to create.
 - `substrate` -- boot skill. Orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes, shared scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
-- `install-librarian` -- registers librarians and sets up their scheduled tasks, against either substrate root.
+- `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks, against either substrate root.
 
 **Storage -- activated based on the team's chosen backend (Step 5):**
 - `git-substrate-sync` -- git path only. Handles pull, commit, push, and conflict surfacing for the shared substrate.
@@ -383,7 +383,7 @@ All pre-installed via the plugin. No URL fetching needed.
 - For Box: folders created and shared, access set for the team, `box-filesystem-management` operational, champion understands the no-conflict-detection caveat and the offline-caching fix.
 - Shared substrate seeded to v0.3: convention base at its `exfu/v0.3/` with `latest.txt`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
 - Champion's personal substrate established in a separate folder: convention base deployed, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
-- Librarian registry at the personal root with nightly-index registered; `nightly-librarians` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
+- Agent registry at the personal root with nightly-index registered; `nightly-agents` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - Compliance briefing surfaced and reviewed (or at least located for later review).
 - Personal `wow` generated with a navigation map pointing at both substrates, noted as team-admin variant, installed in Global Instructions.

@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-09T03:00:08Z",
-  "substrate_root": "/Users/alastair/substrate",
+  "generated": "2026-06-10T12:38:46Z",
+  "substrate_root": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/serene-gagarin-324db3/plugin/example",
   "exfu_versions": {
     "v0.3": {
       "is_latest": true,
@@ -21,9 +21,8 @@
       "folder_types": {
         "ontology": "data",
         "context": "data",
-        "skills": "empty",
         "todo": "pointer",
-        "reminders": "empty",
+        "reminders": "data",
         "inbox": "empty"
       }
     },
@@ -46,7 +45,8 @@
           "parent": "Acme",
           "exfu_version": "v0.3",
           "folder_types": {
-            "context": "data"
+            "context": "data",
+            "todo": "data"
           }
         }
       ]
@@ -58,8 +58,8 @@
       "parent": "root",
       "exfu_version": "v0.3",
       "folder_types": {
-        "context": "empty",
-        "inbox": "empty"
+        "context": "data",
+        "scheduled": "data"
       }
     }
   ]

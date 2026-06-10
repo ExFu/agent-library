@@ -1,5 +1,7 @@
 # Overnight handover: claude-exfu substrate build
 
+> **Superseded 2026-06-10 afternoon.** Your feedback drove a conventions revision (single-file ontology, no docs/, agents/ + ScheduledAgents, agent-registry.json, nightly-agents task, materialise-on-demand, no-state descriptors) and the plugins were rebuilt for a fresh install test. The claude-exfu substrate below was built to the older conventions and the recipes reference renamed paths (librarians.py is now agents.py, nightly-librarians is now nightly-agents, librarian-registry.json is now agent-registry.json). Treat this document as a record of the first migration pass, not live instructions.
+
 2026-06-10, overnight session. Status: substrate built and tested; recipes below need you to execute them. Nothing committed, nothing installed, old vault untouched.
 
 ## What exists now

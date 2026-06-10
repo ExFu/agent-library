@@ -23,7 +23,7 @@ from pathlib import Path
 
 # Standard folder-types in the catalogue
 FOLDER_TYPES = [
-    "ontology", "context", "docs", "skills", "librarians",
+    "ontology", "context", "skills", "librarians", "scheduled",
     "todo", "reminders", "inbox", "databases", "visualisations",
 ]
 

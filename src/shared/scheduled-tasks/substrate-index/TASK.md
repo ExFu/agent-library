@@ -1,6 +1,6 @@
 ---
 name: substrate-index
-description: Scheduled task that generates a scope-level JSON index of the substrate. Walks the folder tree, discovers scopes via scope.md files, and writes a fresh map to exfu/derived/index.json. Runs locally; no external dependencies. This standalone task is available for first-run and debugging; in steady state, use the nightly-librarians task instead (which runs this as part of the nightly cadence).
+description: Scheduled task that generates a scope-level JSON index of the substrate. Walks the folder tree, discovers scopes via scope.md files, and writes a fresh map to exfu/derived/index.json. Runs locally; no external dependencies. This standalone task is available for first-run and debugging; in steady state, use the nightly-agents task instead (which runs this as part of the nightly cadence).
 ---
 
 # Substrate Index Scheduled Task
@@ -11,14 +11,14 @@ Runs a Python script that walks your substrate folder tree and writes a fresh JS
 
 The index gives any agent a whole-substrate picture in one read. No directory walking needed.
 
-## Standalone vs nightly-librarians
+## Standalone vs nightly-agents
 
 This task exists in two forms:
 
 1. **Standalone** (this task) -- runs the index script directly. Use for first-run setup and debugging.
-2. **Nightly-librarians** -- the recommended steady-state approach. The nightly-librarians scheduled task runs all registered nightly librarians in dependency order, including the nightly-index. See `nightly-librarians/TASK.md`.
+2. **Nightly-agents** -- the recommended steady-state approach. The nightly-agents scheduled task runs all registered nightly scheduled agents in run order, including the nightly-index librarian. See `scheduled-agents/TASK.md`.
 
-If you have the nightly-librarians task set up, you don't need this standalone task. Both produce the same index.
+If you have the nightly-agents task set up, you don't need this standalone task. Both produce the same index.
 
 ## How to enable (standalone)
 
