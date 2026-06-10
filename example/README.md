@@ -12,7 +12,7 @@ A browsable reference implementation of the v0.3.0 substrate design. Shows what 
 6. **Reference+delta agent.md.** Every agent.md has a protective header, Follows: anchor, and optional Local deviations. Descriptors carry no state -- nothing says "currently empty" or counts items.
 7. **Materialise on demand.** Folder-types exist only where content does. side-project/ has just scope.md, context/, and scheduled/ -- a healthy minimal scope, not an incomplete one.
 8. **Store-or-point.** user/todo/ and acme/todo/ demonstrate pointers (ClickUp). q3-renewal/todo/ stores tasks locally with done.md.
-9. **Reference documents live in context/.** There is no docs/ folder-type.
+9. **Reference documents live in context/.** A kept document (PDF, transcript, export) sits beside the prose that gives it meaning.
 10. **Unversioned user/.** user/scope.md has no exfu: field and parent: none.
 11. **Scheduled-agent definitions as agent instructions.** Two kinds, one format (YAML frontmatter over an instruction body; scripts are tools the instructions call, never the work itself):
     - **Librarians** (substrate remit) ship in exfu/v0.3/librarians/: nightly-index, inbox-triage, dashboard-generator, version-cleanup.

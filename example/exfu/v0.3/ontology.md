@@ -129,7 +129,7 @@ The scope's shared vocabulary: definitions of what concepts and terms mean here.
 Background an agent should know about this scope -- the briefing material that makes an agent useful rather than generic. Analogy: a wiki plus a filing drawer.
 
 - Personal background, project history, stakeholders, situational awareness, decisions and their reasoning.
-- **Reference documents live here too**: PDFs, spreadsheets, email transcripts, exported reports, meeting notes worth keeping. There is no separate docs/ folder-type in v0.3 -- a captured document is just context with a file extension. Use subfolders if volume warrants; a flat set of well-named files is fine.
+- **Reference documents live here too**: PDFs, spreadsheets, email transcripts, exported reports, meeting notes worth keeping. A captured document is context with a file extension, sitting beside the prose that gives it meaning. Use subfolders if volume warrants; a flat set of well-named files is fine.
 - Context doesn't need to be comprehensive. A few paragraphs that improve an agent's decisions beat an exhaustive wiki nobody maintains.
 - Boundaries: definitions of terms go in ontology/; structured repeating records go in databases/; tasks go in todo/.
 

@@ -53,7 +53,7 @@ The 10 standard folder-types are the vocabulary of "where things go" inside a sc
 | Folder | What it answers |
 |---|---|
 | `ontology/` | What do the concepts and terms in this scope mean? |
-| `context/` | What background should an agent know? (including kept reference documents -- there is no docs/ type) |
+| `context/` | What background should an agent know? (including kept reference documents) |
 | `skills/` | What skill definitions belong to this scope? |
 | `librarians/` | What substrate maintenance runs here on a schedule? |
 | `scheduled/` | What business-logic work runs here on a schedule? |

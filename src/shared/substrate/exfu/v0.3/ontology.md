@@ -112,7 +112,7 @@ Three rules govern all of them:
 
 **Store or point.** A folder-type may hold actual data, or its agent.md may say the data lives elsewhere ("tasks are in ClickUp"). The convention guarantees the location is *discoverable*; whether data is stored locally is per-scope, per-user. Pointer folders record the external tool and any connection details as `Local deviations:` in agent.md.
 
-**The catalogue is open -- but retired types stay retired.** A scope may add a folder-type not listed here if it genuinely needs one; define it in the scope's ontology so future agents know what it means. One name is explicitly off the table: **never create a `docs/` folder**. It existed in earlier drafts and was deliberately retired -- a kept document (PDF, spreadsheet, transcript, export) is context with a file extension and lives in `context/`. Recreating `docs/` splits documents from the background they belong to and resurrects a vocabulary the rest of the substrate no longer speaks.
+**The catalogue is open.** A scope may add a folder-type not listed here if it genuinely needs one. Define it in the scope's ontology so future agents know what it means.
 
 ### ontology/ {#ontology}
 
@@ -129,7 +129,7 @@ The scope's shared vocabulary: definitions of what concepts and terms mean here.
 Background an agent should know about this scope -- the briefing material that makes an agent useful rather than generic. Analogy: a wiki plus a filing drawer.
 
 - Personal background, project history, stakeholders, situational awareness, decisions and their reasoning.
-- **Reference documents live here too**: PDFs, spreadsheets, email transcripts, exported reports, meeting notes worth keeping. There is no separate docs/ folder-type in v0.3 -- a captured document is just context with a file extension. Use subfolders if volume warrants; a flat set of well-named files is fine.
+- **Reference documents live here too**: PDFs, spreadsheets, email transcripts, exported reports, meeting notes worth keeping. A captured document is context with a file extension, sitting beside the prose that gives it meaning. Use subfolders if volume warrants; a flat set of well-named files is fine.
 - Context doesn't need to be comprehensive. A few paragraphs that improve an agent's decisions beat an exhaustive wiki nobody maintains.
 - Boundaries: definitions of terms go in ontology/; structured repeating records go in databases/; tasks go in todo/.
 

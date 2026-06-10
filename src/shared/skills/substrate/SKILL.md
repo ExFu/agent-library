@@ -338,7 +338,7 @@ Inside any scope, these are the standard vocabulary for where things go:
 | Folder | What it answers |
 |---|---|
 | `ontology/` | What do the concepts and terms in this scope mean? |
-| `context/` | What background should an agent know here? (including kept reference documents -- there is no docs/ folder-type) |
+| `context/` | What background should an agent know here? (including kept reference documents) |
 | `skills/` | What skill definitions belong to this scope? |
 | `librarians/` | What substrate maintenance runs here on a schedule? |
 | `scheduled/` | What business-logic work runs here on a schedule? |
