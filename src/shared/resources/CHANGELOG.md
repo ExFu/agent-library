@@ -6,6 +6,23 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.3.4 -- 2026-06-12
+
+The dashboard's big interface release: the Grounded Editorial design system, a split-pane reading layout, item-level workspace views, and second-brain style graphs.
+
+**Added**
+- **View registry with pluggable scope views.** Tabs generate from a registry: Your scopes, Agents, and Todos / Reminders / Inbox as their own top-level views. Any scope's `visualisations/<name>/` bundle with a `viz.md` manifest declaring `view: true` mounts automatically as a tab (relative iframe). The example substrate demonstrates it ("Trend snapshot" from the side-project scope).
+- **Everything is a card with a story.** Tasks, reminders (split per entry from their files: headings first, then bullets, then whole-file), and inbox captures render as individual cards; clicking any card, agent, or graph node opens its detail in the reading panel.
+- **Split-pane layout.** The detail panel is always open on the right (default half the window), resizable by dragging its edge (width remembered). It greets with the personal scope.
+- **Second-brain graphs.** The scope and agent maps follow the conventions of tools like Obsidian: small dots sized by connections, thin straight edges, hover highlights the node's neighbourhood and dims the rest, wheel zoom, background pan, a gently continuous force layout, and draggable nodes that spring back when released. Honours `prefers-reduced-motion`.
+- Filesystem links open in a new tab; nothing truncates for good (overflow folds into expanders).
+
+**Changed**
+- Full design pass applying the website's Grounded Editorial language: Source Serif 4 display (embedded; the woff2 ships with the plugin -- no network fetches) over a humanist text stack, the site's paper/ink/rust palette, an editorial left-aligned header ("<name>'s substrate"), scope cards in a responsive grid with the personal scope as hero, grouping folders as labelled container boxes, paper grain, staggered entrances.
+- Dashboard copy says "your AI" (Claude only in explicitly-Claude examples) -- carried through all new views.
+
+---
+
 ## v0.3.3 -- 2026-06-10
 
 **Changed**
