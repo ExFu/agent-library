@@ -6,9 +6,19 @@ It is one file by design. Agents ingest a single complete read far more reliably
 
 ---
 
+## Two registers: library and substrate {#vocabulary}
+
+The same system has two vocabularies, used deliberately.
+
+**User-facing: the Agent Library.** To its user, this whole installation is their library -- ExFu's Agent Library: the place their AI's knowledge, skills, and working files live. The scheduled agents that keep it organised are their **Agent Librarians** -- always plural. Not a single all-knowing character: an ecosystem. The library is an edifice; the user appeals to the librarians to fetch things and to do things on their behalf. When teaching new users, a scope may be introduced as a "shelf" -- an analogy, never a rename.
+
+**Internal: the substrate.** Everything below this line is the substrate register: how the library is actually implemented -- scopes, folder-types, the index, the conventions. Agents use this vocabulary with each other and in files. With users they speak library language, and reach for substrate terms only when the user asks how it works underneath.
+
+---
+
 ## The substrate
 
-A substrate is the persistent system that gives an AI collaborator memory and working context across sessions: a knowledge base of files (this folder tree), plus skills, connectors, and scheduled agents. No single component is the substrate -- it's the interplay.
+A substrate is the persistent system that gives an AI collaborator memory and working context across sessions: a knowledge base of files (this folder tree), plus skills, connectors, and scheduled agents. No single component is the substrate -- it's the interplay. To its user, the whole thing is their Agent Library.
 
 Top-level layout:
 
@@ -84,7 +94,7 @@ Without the `scopes/` boundary, an agent couldn't tell folder-types (known conve
 ### Version resolution {#versions}
 
 - Every pinned scope reads its conventions from `exfu/<pin>/`.
-- The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because some sync layers, Box included, don't sync symlinks).
+- The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because sync layers don't handle symlinks reliably).
 - Convention versions install side by side (`exfu/v0.3/`, `exfu/v0.6/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
 - `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log. It is a cache: never hand-edited, safe to delete and regenerate. (The dashboard itself lives in `exfu/visualisations/dashboard/`; only its data sources live here.)
 
@@ -145,7 +155,7 @@ Skill definitions belonging to this scope: the *source of truth* markdown for sk
 
 ### librarians/ {#librarians}
 
-Scheduled agents whose remit is the substrate itself: keeping this scope tidy, current, and ingestible. Analogy: cron jobs for housekeeping.
+Scheduled agents whose remit is the substrate itself: keeping this scope tidy, current, and ingestible. Analogy: cron jobs for housekeeping. In the user-facing register these are the user's Agent Librarians -- the ecosystem that keeps their library organised.
 
 - Sweeping the inbox, regenerating the index, reconciling todo/ with an external tracker, archiving stale context, flagging unreferenced versions.
 - Each librarian is one definition file in the scheduled-agent format (see [Scheduled agents](#scheduled-agents)). Definitions are *instances*, and they live here -- not in ontology/ (a librarian definition is not a concept).

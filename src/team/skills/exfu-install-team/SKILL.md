@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team
-description: Runs the full team-joiner install -- connecting to the team's shared substrate (git repo, Box shared folder, or local-only depending on what the champion set up), building a personal v0.3 substrate alongside it, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run -- not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
+description: Runs the full team-joiner install -- connecting to the team's shared substrate (git repo, Dropbox shared folder, or local-only depending on what the champion set up), building a personal v0.3 substrate alongside it, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run -- not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
 ---
 
 # ExFu Install -- Team (Joiner)
@@ -154,14 +154,14 @@ Plant the two priors while the diagrams are in view:
 *"Do you have an onboarding pack from your team's substrate champion? If yes, paste it in or point me at it -- I'll use it to personalise this install."*
 
 **If the joiner has a pack:**
-Read it. The pack should contain how the team shares its substrate (git URL, Box folder, or other), an intro to the team's conventions, and a preview of what the install covers. Use it to:
+Read it. The pack should contain how the team shares its substrate (git URL, Dropbox folder, or other), an intro to the team's conventions, and a preview of what the install covers. Use it to:
 - Pre-populate the connection details for the storage step.
 - Surface the team's conventions during the relevant calibration moments.
 - Shape the buffet step around what the team uses.
 - Mention the champion by name when relevant.
 
 **If the joiner has no pack:**
-Proceed with the default flow. Flag that the joiner should confirm details with their champion when uncertainty arises (naming conventions, where personal vs shared content lives). Ask directly: *"How does your team share its knowledge base -- a git repo, a Box folder? Your champion should have told you."*
+Proceed with the default flow. Flag that the joiner should confirm details with their champion when uncertainty arises (naming conventions, where personal vs shared content lives). Ask directly: *"How does your team share its knowledge base -- a git repo, a Dropbox folder? Your champion should have told you."*
 
 If the joiner genuinely doesn't have a champion or any shared setup to connect to, they may have the wrong plugin. The team-admin plugin is what's used to set the team's shared layer up in the first place. Confirm with them before continuing.
 
@@ -169,7 +169,7 @@ If the joiner genuinely doesn't have a champion or any shared setup to connect t
 
 Connect before building the personal layer, so the team's conventions can inform the rest of the install.
 
-*"How does your team share their setup? Your champion will have set this up already. Three options: git repo, Box shared folder, or local-only."*
+*"How does your team share their setup? Your champion will have set this up already. Three options: git repo, Dropbox shared folder, or local-only."*
 
 Most joiners will know the answer from the onboarding pack. If the pack was silent on this, tell the joiner to check with their champion before continuing.
 
@@ -192,18 +192,18 @@ Key points to establish:
 
 ---
 
-**Path B -- Box shared folder**
+**Path B -- Dropbox shared folder**
 
-The team's shared substrate lives in a Box folder the champion set up. The joiner connects to it using `box-filesystem-management`.
+The team's shared substrate lives in a Dropbox folder the champion set up and shared. The joiner connects to it using `exfu-dropbox-storage`.
 
-1. Get the shared folder path or folder ID from the onboarding pack, or ask the joiner to request it from their champion.
-2. Use `request_cowork_directory` to locate the shared folder inside the joiner's locally mounted Box Drive.
-3. Walk through `box-filesystem-management` so the joiner understands the basics: Claude reads from and writes to the shared folder on their behalf; they should not manually rename, move, or delete files in Box.
-4. Surface the offline-caching caveat: if Box Drive is in space-saver mode, files may come back empty. Recommend setting the shared folder to always available offline (right-click in Finder or File Explorer, look for "Make Available Offline").
+1. The joiner accepts the shared-folder invitation(s) from their champion; the folder appears in their Dropbox.
+2. Use `request_cowork_directory` to locate the shared folder inside the joiner's locally synced Dropbox.
+3. Walk through `exfu-dropbox-storage` so the joiner understands the basics: Claude reads from and writes to the shared folder on their behalf; they should avoid manually renaming or moving library structure.
+4. Surface the hydration caveat: an online-only file can read as empty. Recommend setting the shared folder to always available offline (right-click, "Make Available Offline").
 
-Key point: Box does not auto-resolve conflicts. If two team members write to the same file at the same time, one will overwrite the other. Keep shared files focused and avoid simultaneous editing where possible.
+Key point: Dropbox does not merge concurrent edits. If two team members write to the same file at the same time, Dropbox keeps both by writing a "conflicted copy" file. Keep shared files focused, avoid simultaneous editing where possible, and reconcile conflicted copies promptly rather than ignoring them.
 
-When the joiner needs new shared folders or access changes going forward, that goes through their champion (`team-box-folders` is the champion-side tooling).
+When the joiner needs new shared folders or access changes going forward, that goes through their champion (folder sharing is managed in Dropbox by the champion, mapped in the team's access-map file).
 
 ---
 
@@ -217,7 +217,7 @@ The team is managing sharing manually (emailing updates, a shared drive without 
 
 ---
 
-**Orient inside the shared substrate (all paths).** Once connected, read the shared substrate's `exfu/latest.txt` (or `exfu/latest` symlink) to learn its pinned convention version, then read its index at `exfu/derived/index.json` if present. Find the team scope (usually `scopes/<team-name>/`) and read its `ontology/ways-of-working.md` and `context/` files. Show the joiner one or two concrete things their Claude now knows about the team. This is the first small win.
+**Orient inside the shared substrate (all paths).** Once connected, read the shared substrate's `exfu/latest.txt` to learn its pinned convention version, then read its index at `exfu/derived/index.json` if present. Find the team scope (usually `scopes/<team-name>/`) and read its `ontology/ways-of-working.md` and `context/` files. Show the joiner one or two concrete things their Claude now knows about the team. This is the first small win.
 
 Record the storage choice for later: it goes in the user scope's context during Step 6 and in the wow navigation map. There is no `_meta/storage-backend.md` in v0.3.
 
@@ -225,9 +225,9 @@ Record the storage choice for later: it goes in the user scope's context during 
 
 Now set up the joiner's personal substrate as a separate folder, never inside the team's clone or shared folder.
 
-*"Where would you like your personal knowledge base to live? Box is the recommended default -- it syncs across devices and works alongside the MCP connector for mobile access. Local-only works too, with the trade-off that mobile and scheduled access need this machine on."*
+*"Where would you like your personal library to live? Dropbox is the recommended default -- it syncs across devices and works alongside the MCP connector for mobile access. Local-only works too, with the trade-off that mobile and scheduled access need this machine on."*
 
-Use `request_cowork_directory` for the folder picker. If the joiner picks Box, surface the offline-caching caveat (same as Path B above) for this folder too.
+Use `request_cowork_directory` for the folder picker. If the joiner picks Dropbox, surface the hydration caveat (same as Path B above) for this folder too.
 
 Then deploy the v0.3 convention base into the personal root, in order:
 
@@ -279,17 +279,17 @@ Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.
 ```
 # Don't use this folder
 
-This is a substrate root.
+This is the root of an ExFu Agent Library (internally: a substrate).
 
 Do not read, write, or otherwise interact with the contents of this folder
-unless your session has loaded the substrate skill (or a derivative
-that knows the substrate conventions).
+unless your session has loaded the exfu-library skill (or a derivative
+that knows the library's conventions).
 
 If you've accidentally been pointed here, stop and ask the user to either:
-- Load the appropriate substrate skill, or
+- Load the exfu-library skill, or
 - Work in a different location.
 
-This protects the substrate from being treated as a generic working folder.
+This protects the library from being treated as a generic working folder.
 ```
 
 The team's shared substrate should already have its own guard from the champion's install; don't touch it.
@@ -341,7 +341,7 @@ If the joiner already got inbox, reminders, or todo during user scope creation (
 **Available skills:** `setup-reminders`, `setup-inbox`, `setup-writing-styles` -- same as the solo install.
 
 **Demonstrate the team layer working** before closing:
-- Do a live pull (git) or fresh read (Box) from the shared substrate and show the joiner something current from it.
+- Do a live pull (git) or fresh read (Dropbox) from the shared substrate and show the joiner something current from it.
 - Open a shared scope and show how their Claude reads it alongside their personal context.
 - Set a personal reminder -- confirms the personal substrate works independently of the team layer.
 
@@ -361,13 +361,13 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock -- always installed:**
 - `skill-packaging` -- how Claude packages skills into files for the user to install. Used for custom skills the joiner wants to create later, not for the bundled ones.
-- `substrate` -- the boot skill. Reads the way-of-working guide, orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks.
 
 **Storage -- activated based on the team's backend (Step 4):**
 - `git-substrate-sync` -- git path only. Handles pull, commit, push, and conflict surfacing for the shared substrate.
-- `box-filesystem-management` -- Box path (and recommended for a Box-hosted personal substrate). Manages reads, writes, and file operations.
+- `exfu-dropbox-storage` -- Dropbox path (and recommended for a Dropbox-hosted personal substrate). Manages reads, writes, and file operations; native delete and move, conflicted-copy handling.
 - Local-only path: neither skill is registered as the storage layer; everything works against local folders directly.
 
 **Optional but high-value:**
@@ -390,9 +390,9 @@ All pre-installed via the plugin. No URL fetching needed.
 A checklist, not a script:
 
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
-- Shared substrate connected (git clone, Box folder, or local copy located). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
+- Shared substrate connected (git clone, Dropbox folder, or local copy located). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
 - For git: remote URL confirmed, repo cloned, `git-substrate-sync` operational. Joiner understands pull-before-write and commit hygiene.
-- For Box: shared folder located, `box-filesystem-management` operational. Joiner understands the no-conflict-detection caveat and the offline-caching fix.
+- For Dropbox: shared folder located, `exfu-dropbox-storage` operational. Joiner understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
 - Personal substrate established in a separate folder, identified via the folder picker.
 - Convention base deployed at the personal root: `exfu/v0.3/` with `exfu/latest.txt` pointing to `v0.3`.
 - User scope created at `user/` with `scope.md`, `context/about-me.md` (including role capture and the team-connection record), and `ontology/ways-of-working.md`.
@@ -401,7 +401,7 @@ A checklist, not a script:
 - Agent registry at the personal root's `exfu/derived/agent-registry.json` with nightly-index registered; `nightly-agents` scheduled task created.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - A personal `wow` skill generated with a navigation map pointing at both substrates, installed, and added to Global Instructions.
-- `substrate` skill installed and operational.
+- `exfu-library` skill installed and operational.
 - One or more small wins demonstrated, including at least one that shows the team layer working.
 - Joiner knows what's theirs vs what's the team's. Knows to go to their champion for team-substrate questions.
 
@@ -425,7 +425,7 @@ If something goes wrong, don't over-apologise. Help them through it. If you can'
 
 State this clearly if the joiner asks:
 
-- It does not provision the team's shared storage (git repo or Box folders). The champion did that.
+- It does not provision the team's shared storage (git repo or Dropbox folders). The champion did that.
 - It does not give the joiner tooling for authoring the team's shared skills or conventions. Contributions go through their champion. (The joiner can make changes via raw git where they have access; the plugin deliberately doesn't tool this.)
 - It does not ship the compliance briefing. The champion has that.
 - It does not include admin diagrams.

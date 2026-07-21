@@ -59,7 +59,7 @@ Once you have the intake answers:
 
 ### 1. Determine the username
 
-Read `context/me/about.md` from the user's substrate. Look for their name. Default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`, or use whatever handle is clear from the file). If the name is ambiguous or the file doesn't exist, ask: "What should we call your reminders skill? Something like `al-reminders` or `sarah-reminders` — first name or nickname is fine."
+Read `user/context/about-me.md` from the user's substrate. Look for their name. Default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`, or use whatever handle is clear from the file). If the name is ambiguous or the file doesn't exist, ask: "What should we call your reminders skill? Something like `al-reminders` or `sarah-reminders` — first name or nickname is fine."
 
 The per-user skill will be named `<username>-reminders`.
 
@@ -92,5 +92,5 @@ If the user ever wants a fresh setup — different file location, different surf
 ## Dependencies
 
 - `skill-packaging` — used to package and present the generated skill.
-- `substrate` skill calls the user's reminders skill (by name) at session start if it is installed.
+- `exfu-library` skill calls the user's reminders skill (by name) at session start if it is installed.
 - The template at `${CLAUDE_PLUGIN_ROOT}/templates/reminders-template.md` contains the operational logic.

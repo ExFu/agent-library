@@ -20,6 +20,10 @@ Fewer, more complete files. Agents ingest one complete read far more reliably th
 
 When asking users for information, frame questions around outcomes they care about, not structural details. "What are you trying to accomplish with this project?" beats "What folder-types do you need?"
 
+### Two registers
+
+Speak outcomes to users, implementation to agents. The user-facing register is the Agent Library and its Agent Librarians -- the edifice, and the ecosystem that keeps it organised. The internal register is the substrate -- scopes, folder-types, the index. Use library language with users; reach for substrate terms only when they ask how it works underneath. (The vocabulary is defined in `ontology.md`.)
+
 ### Build by doing
 
 The substrate grows through use, not through upfront planning. A new scope starts minimal (scope.md, maybe context/ and todo/) and gains structure as work demands it. Don't scaffold more than you need -- folder-types materialise when there's content for them, never "for completeness".

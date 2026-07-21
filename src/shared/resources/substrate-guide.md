@@ -1,14 +1,16 @@
 # Substrate Guide
 
-version: 6
+version: 8
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
+
+A note on registers: to the user, this whole installation is their **Agent Library**, kept in order by their **Agent Librarians**. "Substrate" is the internal register: the implementation vocabulary this guide is written in. Speak library language with users; use substrate terms only when they ask how it works underneath. (The vocabulary is defined in `exfu/v0.3/ontology.md#vocabulary`.)
 
 ---
 
 ## What is a substrate?
 
-A Claude substrate is the combination of files, skills, connectors, and scheduled tasks that together create a persistent way of working with Claude across sessions and devices.
+A Claude substrate is the combination of files, skills, connectors, and scheduled tasks that together create a persistent way of working with Claude across sessions and devices. It is what the user experiences as their Agent Library.
 
 No single component is the substrate. It's the interplay between them:
 - **Skills** tell Claude how to behave and what conventions to follow
@@ -131,7 +133,8 @@ exfu/
     index.json            # the global index -- whole-substrate map
     agent-registry.json   # registered scheduled agents and their health
     agent-log.json        # scheduled-agent run history
-    dashboard/            # substrate visualisation (HTML)
+  visualisations/         # ExFu-shipped visual outputs
+    dashboard/            # the substrate dashboard (HTML)
       index.html
 ```
 
@@ -150,7 +153,7 @@ user/
   ontology/               # personal definitions, ways of working
   skills/                 # sources of the user's generated personal skills (wow etc.)
   ...                     # other folder-types materialise as content appears
-                          #   (todo, reminders, inbox, databases, agents, ...)
+                          #   (todo, reminders, inbox, databases, scheduled, ...)
 ```
 
 The user scope's `scope.md` has `parent: none` and no `exfu:` version field. It doesn't pin a version -- it's always current. Migration is by user decision.
@@ -191,24 +194,24 @@ scopes/
 
 ## The CLAUDE.md guard file
 
-The substrate root contains a file named `CLAUDE.md`. Its purpose is to prevent Claude from treating the substrate as a generic working folder when the substrate skill is not loaded.
+The substrate root contains a file named `CLAUDE.md`. Its purpose is to prevent Claude from treating the substrate as a generic working folder when the exfu-library skill is not loaded.
 
 Canonical content:
 
 ```
 # Don't use this folder
 
-This is a substrate root.
+This is the root of an ExFu Agent Library (internally: a substrate).
 
 Do not read, write, or otherwise interact with the contents of this folder
-unless your session has loaded the substrate skill (or a derivative
-that knows the substrate conventions).
+unless your session has loaded the exfu-library skill (or a derivative
+that knows the library's conventions).
 
 If you've accidentally been pointed here, stop and ask the user to either:
-- Load the appropriate substrate skill, or
+- Load the exfu-library skill, or
 - Work in a different location.
 
-This protects the substrate from being treated as a generic working folder.
+This protects the library from being treated as a generic working folder.
 ```
 
 Do not modify or remove this file. It is a safety guard, not content.
@@ -454,7 +457,7 @@ The index maps:
 
 The index serves two consumers:
 1. **Agents.** Instead of traversing the filesystem, an agent reads the index and knows immediately what scopes exist, where they are, and what's in them. Fast orientation, even when the substrate is large.
-2. **The substrate dashboard.** The HTML visualisation at `exfu/derived/dashboard/index.html` renders the index into a visual map for non-technical users.
+2. **The substrate dashboard.** The HTML visualisation at `exfu/visualisations/dashboard/index.html` renders the index into a visual map for non-technical users.
 
 ---
 
@@ -490,9 +493,9 @@ A definition does nothing until *registered* (the install-scheduled-agent skill 
 
 ---
 
-## The substrate skill and user vocabulary
+## The exfu-library skill and user vocabulary
 
-For git-backed team substrates, users interact with Claude using natural verbs. The substrate skill maps these to the underlying git operations. No git terminology surfaces to the user.
+For git-backed team substrates, users interact with Claude using natural verbs. The exfu-library skill (the boot skill; in pre-0.4 releases it was named `substrate`) maps these to the underlying git operations. No git terminology surfaces to the user.
 
 | User says | What happens |
 |---|---|
@@ -506,7 +509,7 @@ Terms not used with users: branch, draft space, sandbox, fetch, diff, show my ch
 
 ### Permission-aware behaviour
 
-The substrate skill is a single skill, not separate admin and non-admin variants. When it loads, it checks what permissions the current user has on the substrate repository. Users with admin or maintainer rights see the review and approval vocabulary. Users without those rights see only the personal vocabulary (save, share for review, check for updates).
+The exfu-library skill is a single skill, not separate admin and non-admin variants. When it loads, it checks what permissions the current user has on the substrate repository. Users with admin or maintainer rights see the review and approval vocabulary. Users without those rights see only the personal vocabulary (save, share for review, check for updates).
 
 The git repository's own permission model is the gatekeeper. No separate Claude-side permission scaffolding is needed.
 
@@ -526,10 +529,7 @@ When the knowledge base is mounted in a session, use filesystem tools directly. 
 
 ### Connector (universal)
 
-When filesystem access isn't available (mobile, unmounted sessions), use the connector. Limitations:
-- No delete -- use the `_DELETED_` prefix convention (see box-filesystem-management skill if installed)
-- No move -- copy to destination, mark original as deleted
-- Folders are identified by numeric ID, not path -- store frequently used IDs in `user/context/`
+When filesystem access isn't available (mobile, unmounted sessions), use the storage connector. The Dropbox connector supports delete, move, and copy natively, addresses files by path, and keeps revision history for recovery (see the exfu-dropbox-storage skill if installed). Git-backed substrates use their own sync flow (see git-substrate-sync).
 
 ---
 
@@ -538,7 +538,6 @@ When filesystem access isn't available (mobile, unmounted sessions), use the con
 - Lowercase, hyphen-separated: `meeting-notes-2026-04-15.md`
 - Date-prefix for time-sensitive files: `YYYY-MM-DD-filename`
 - No spaces in filenames
-- Deleted files (pending cleanup): `_DELETED_YYYY-MM-DD_original-filename`
 
 ---
 
@@ -573,7 +572,7 @@ The substrate is designed to grow.
 
 **Custom scheduled agents** -- Define librarians (recurring tidying, checking, routing of the substrate itself) in a scope's `librarians/` folder, and business agents (recurring domain work: scanning, digesting, watching) in a scope's `scheduled/` folder. Register them with the install-scheduled-agent skill to make them live.
 
-**Substrate visualisation** -- The dashboard at `exfu/derived/dashboard/index.html` renders the global index into a visual map of the entire substrate. The user opens it in a browser and sees the full scope tree, folder-type status, and ontology chain. It's regenerated nightly.
+**Substrate visualisation** -- The dashboard at `exfu/visualisations/dashboard/index.html` renders the global index into a visual map of the entire substrate. The user opens it in a browser and sees the full scope tree, folder-type status, and ontology chain. It's regenerated nightly.
 
 **Inter-agent communication** -- Agents for different team members can exchange information via the available connectors. The pattern is defined by the team's way of working.
 
@@ -601,6 +600,7 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
+- 2026-07-20 v8: Agent Library re-pitch (plugin 0.4.0). Added the two-register note: user-facing Agent Library / Agent Librarians vs internal substrate vocabulary, defined in ontology.md#vocabulary. Guard file and boot-skill references renamed substrate -> exfu-library. Connector access section rewritten for Dropbox (native delete/move, path addressing, revision history), replacing the Box workarounds; retired the _DELETED_ naming convention. Corrected the dashboard path to exfu/visualisations/dashboard/ and fixed the stale version header (previous edit logged v7 in the changelog but left the header at 6).
 - 2026-06-10 v7: Convention base flattened to file-economy form: the core ontology is now ONE file (exfu/v0.3/ontology.md, anchor-addressed by Follows: lines) instead of fragmented ontology/ subfolders; shipped librarian definitions moved to exfu/v0.3/librarians/ (instances, not ontology); wow template ships at exfu/v0.3/skills/wow-template.md. Added scheduled/ folder-type and the ScheduledAgents concept: librarians and business agents share mechanics (definition format, registry, cadence sessions) and differ in remit; registry renamed to exfu/derived/agent-registry.json with kind field, log to agent-log.json, task to nightly-agents. Added materialise-on-demand rule (no empty folder scaffolding), the no-state rule for descriptors (agent.md/readme.md/scope.md), and the file-economy authoring principle (fewer, complete files; flat ontologies).
 - 2026-06-09 v6: Rewritten for v0.3.0. Replaced orgs/, teams/, and personal-default layout with uniform scope model -- everything is a scope. Replaced _meta/ with exfu/ (convention base at exfu/v0.3/, generated output at exfu/derived/). Removed _trash/ and scratch/. Introduced 10 standard folder-types with store-or-point principle. Added scope.md format (YAML frontmatter with name, parent, exfu version pin). Replaced README.md convention with agent.md reference+delta pattern (Follows: line + local deviations). Added protective headers for scope.md and agent.md. Added librarians (autonomous maintenance agents with cadence-based scheduling). Added global index (exfu/derived/index.json) for whole-substrate discovery. Added versioning model (side-by-side convention versions, per-scope pins). Added user/ as a special unversioned scope. Replaced PII two-layer model with secrets-only ban. Added ontology resolution (parent-chain walk). Added substrate dashboard (exfu/derived/dashboard/).
 - 2026-05-02 v5: Revised for v0.2.0. Added two-layer model (substrate proper vs PII layer). Added CLAUDE.md guard file at substrate root. Introduced top-level orgs/ and teams/ folders for multi-org and multi-team support (personal-default layout unchanged for solo users). Moved all scopes to top-level scopes/ with YAML front-matter for ownership cross-linking. Documented HARD vs soft folder conventions. Added permission-aware substrate skill section with non-techie verb vocabulary. Added universal naming principle and wrapping reference. Updated hygiene rules to include customer PII in the two-layer boundary.

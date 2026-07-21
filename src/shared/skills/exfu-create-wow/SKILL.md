@@ -46,7 +46,7 @@ Leave as stubs everything you don't have real content for. An honest stub beats 
 
 The template has a placeholder for storage-layer notes. Fill this in:
 
-- Solo plugin installs: note that Box is the storage layer and that the knowledge base folder should be kept fully downloaded locally in Box Drive (not space-saver mode).
+- Solo plugin installs: note that Dropbox is the storage layer and that the library folder should be kept fully downloaded locally ("Make Available Offline", not online-only).
 - Team and team-admin installs: note that git is the storage layer, include the team repo remote URL if you have it.
 
 ## Generation process
@@ -62,7 +62,7 @@ The template has a placeholder for storage-layer notes. Fill this in:
 
 ## Index setup (part of every wow generation)
 
-The nightly-agents scheduled task runs overnight: librarians first (including the nightly index that regenerates `exfu/derived/index.json`, the scope-level map the substrate skill reads at session start), then any business agents the user has registered. This is a baseline part of every install, not an opt-in.
+The nightly-agents scheduled task runs overnight: librarians first (including the nightly index that regenerates `exfu/derived/index.json`, the scope-level map the exfu-library skill reads at session start), then any business agents the user has registered. This is a baseline part of every install, not an opt-in.
 
 After packaging the wow skill, do two things:
 

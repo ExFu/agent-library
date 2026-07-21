@@ -83,7 +83,7 @@ Install the team-admin plugin's full skill set from `${CLAUDE_PLUGIN_ROOT}/skill
 - `team-onboard-member` — generates personalised onboarding packs for new joiners to paste into their install conversation
 - `exfu-guides` — answers architecture and reference questions about the substrate
 - `exfu-create-wow` — generates the user's personal way-of-working skill from the template
-- `substrate` — the session-bootstrap skill; orients Claude to the knowledge base at the start of every conversation
+- `exfu-library` — the session-bootstrap skill; orients Claude to the knowledge base at the start of every conversation
 - All other shared and team-admin skills in the plugin
 
 Install each skill using the standard plugin skill installation method.

@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team-admin
-description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate -- the substrate champion. That person decides where the shared knowledge base lives (git repo, Box shared folder, or local-only), provisions the team's shared storage, seeds the shared substrate to v0.3 conventions, authors the team's conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
+description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate -- the substrate champion. That person decides where the shared knowledge base lives (git repo, Dropbox shared folder, or local-only), provisions the team's shared storage, seeds the shared substrate to v0.3 conventions, authors the team's conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
 ---
 
 # ExFu Install -- Team Admin (Champion)
@@ -73,7 +73,7 @@ Things you **must** do:
 Things you **must never** do:
 
 - **Don't overwrite the user's personal substrate without explicit consent.**
-- **Don't provision the team's shared storage without the user's active participation.** Whether that's a git repo or a Box shared folder, walk them through it. Don't do it silently.
+- **Don't provision the team's shared storage without the user's active participation.** Whether that's a git repo or a Dropbox shared folder, walk them through it. Don't do it silently.
 - **Don't put workflow logic in `wow`.** Navigation map plus thin always-on kernel only.
 - **Don't expose internal vocabulary to the user.** Apply "How to talk to the user" above in every message, not just the opening.
 - **Don't store credentials, API keys, tokens, passwords, government IDs, financial account numbers, or raw medical records in the knowledge base or the team's shared substrate.**
@@ -181,7 +181,7 @@ Ask:
 
 *1. Git repo -- recommended if your team is technical or already uses git. You get version history, audit trail, conflict handling, and provider-level access controls. Higher technical bar for joiners.*
 
-*2. Box shared folder -- recommended if your team prefers familiar cloud-drive UX or has members who aren't comfortable with git. Easier for joiners to connect. No automatic conflict resolution or file-level version history.*
+*2. Dropbox shared folder -- recommended if your team prefers familiar cloud-drive UX or has members who aren't comfortable with git. Easier for joiners to connect. Concurrent edits produce conflicted-copy files rather than merges; per-file version history is available for recovery.*
 
 *3. Local only -- each team member keeps their setup on their own machine. Sharing happens manually: you send files directly, use your org's existing file system, or don't share at all. No automatic sync. Everything still works fully; you just manage propagation yourself."*
 
@@ -208,15 +208,15 @@ Ask: *"Does your team's repo require PRs for changes, or will team members have 
 
 ---
 
-**Path B -- Box shared folder**
+**Path B -- Dropbox shared folder**
 
-Delegate to `team-box-folder-provisioning`. That skill walks the champion through the full folder setup: which folders to create, how to structure them around the shared substrate's scope tree, and how to share each one with the right people. A key point to surface before delegating:
+Delegate to `team-dropbox-folder-provisioning`. That skill walks the champion through the full folder setup: which folders to create, how to structure them around the shared substrate's scope tree, and how to share each one with the right people. A key point to surface before delegating:
 
-*"Box doesn't work like git -- there's no single repo everyone clones. Your team's shared setup will be a folder structure shared with the right people, with access following the scope boundaries. The provisioning skill will walk you through that."*
+*"Dropbox doesn't work like git -- there's no single repo everyone clones. Your team's shared setup will be a folder structure shared with the right people, with access following the scope boundaries. The provisioning skill will walk you through that."*
 
-Once the champion returns from `team-box-folder-provisioning`, walk through `box-filesystem-management` so they understand how Claude reads and writes the folders, and surface the offline-caching caveat (space-saver mode returns empty files; set the shared folders to always available offline).
+Once the champion returns from `team-dropbox-folder-provisioning`, walk through `exfu-dropbox-storage` so they understand how Claude reads and writes the folders, and surface the hydration caveat (online-only files can read as empty; set the shared folders to always available offline).
 
-For ongoing folder work after the initial setup -- creating scope folders as new projects start, sharing folders with joiners, revoking access when people leave -- the `team-box-folders` skill handles that.
+For ongoing folder work after the initial setup -- creating scope folders as new projects start, sharing folders with joiners, revoking access when people leave -- the champion manages sharing in Dropbox directly and keeps the team's access-map file current.
 
 ---
 
@@ -241,7 +241,7 @@ With the storage in place, seed the shared substrate. Walk the champion through 
 **1. Convention base.** Deploy into the shared root, in order:
 - Create `exfu/` at the shared substrate root.
 - Copy the v0.3 convention files from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/`.
-- Create `exfu/latest.txt` containing exactly `v0.3`. (Always use the txt fallback; Box doesn't sync symlinks, and git handles the txt fine.)
+- Create `exfu/latest.txt` containing exactly `v0.3`. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
 - Create `exfu/derived/` directory.
 
 Brief framing for the champion: *"This is the shared vocabulary -- the definitions every team member's Claude will read so they all work the same way. It's versioned, so the team can upgrade deliberately later."*
@@ -272,7 +272,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <shared-s
 
 Set up the champion's personal substrate, separate from the shared one -- never inside the clone or the shared folder.
 
-*"Now your own setup. Where would you like your personal knowledge base to live? Box is the recommended default -- it syncs across devices and works with the connector for mobile access."* Use `request_cowork_directory` for the folder picker. If Box, surface the offline-caching caveat for this folder too.
+*"Now your own setup. Where would you like your personal library to live? Dropbox is the recommended default -- it syncs across devices and works with the connector for mobile access."* Use `request_cowork_directory` for the folder picker. If Dropbox, surface the hydration caveat ("Make Available Offline") for this folder too.
 
 Deploy the convention base into the personal root, same recipe as Step 6.1: `exfu/v0.3/` copied from the plugin, `exfu/latest.txt`, `exfu/derived/`.
 
@@ -304,17 +304,17 @@ Write the guard file at the personal substrate root -- unless one already exists
 ```
 # Don't use this folder
 
-This is a substrate root.
+This is the root of an ExFu Agent Library (internally: a substrate).
 
 Do not read, write, or otherwise interact with the contents of this folder
-unless your session has loaded the substrate skill (or a derivative
-that knows the substrate conventions).
+unless your session has loaded the exfu-library skill (or a derivative
+that knows the library's conventions).
 
 If you've accidentally been pointed here, stop and ask the user to either:
-- Load the appropriate substrate skill, or
+- Load the exfu-library skill, or
 - Work in a different location.
 
-This protects the substrate from being treated as a generic working folder.
+This protects the library from being treated as a generic working folder.
 ```
 
 ### Step 11 -- Librarian registration (delegate to install-scheduled-agent)
@@ -351,7 +351,7 @@ Install `wow` into Cowork's Global Instructions. Then install the two universal 
 - `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-cowork-global-instructions.md` -- paste the contents into Cowork's Global Instructions field, alongside the personalised `wow`. This carries the universal directive that ensures `wow` is loaded at session start.
 - `${CLAUDE_PLUGIN_ROOT}/resources/claude-desktop-general-instructions.md` -- paste the contents into Claude Desktop's user preferences (the general settings that apply across all chats, including mobile and non-Cowork). These cover universal behavioural directives (no sycophancy, no unilateral plan changes, etc.) plus a mobile-specific caveat about substrate availability.
 
-**Then onboarding prep.** Generate a first onboarding pack using `team-onboard-member`. The skill collects the details for a hypothetical or actual first joiner and produces a markdown doc the champion can send immediately. The pack should carry the storage connection details (repo URL or Box folder), a pointer to the team's conventions inside the shared substrate, and what the joiner install will cover.
+**Then onboarding prep.** Generate a first onboarding pack using `team-onboard-member`. The skill collects the details for a hypothetical or actual first joiner and produces a markdown doc the champion can send immediately. The pack should carry the storage connection details (repo URL or Dropbox folder), a pointer to the team's conventions inside the shared substrate, and what the joiner install will cover.
 
 The champion now has something concrete to hand to their first colleague. Even if no one is joining today, having the pack ready makes the next step obvious.
 
@@ -383,13 +383,13 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock -- always installed:**
 - `skill-packaging` -- for custom skills the champion or team wants to create.
-- `substrate` -- boot skill. Orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-library` -- boot skill. Orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes, shared scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks, against either substrate root.
 
 **Storage -- activated based on the team's chosen backend (Step 5):**
 - `git-substrate-sync` -- git path only. Handles pull, commit, push, and conflict surfacing for the shared substrate.
-- `box-filesystem-management` -- Box path (and recommended for a Box-hosted personal substrate). Manages reads, writes, and file operations.
+- `exfu-dropbox-storage` -- Dropbox path (and recommended for a Dropbox-hosted personal substrate). Manages reads, writes, and file operations; native delete and move, conflicted-copy handling.
 - Local-only path: neither skill is registered as the storage layer; everything works against local folders directly.
 
 **Optional but high-value (same as other plugins):**
@@ -400,7 +400,7 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Admin-only skills:**
 - `team-repo-provisioning` -- walks the champion through creating the team's git repo on their chosen provider (git path only).
-- `team-box-folder-provisioning` -- walks the champion through creating and sharing the Box folders that form the team's shared substrate (Box path only).
+- `team-dropbox-folder-provisioning` -- walks the champion through creating and sharing the Dropbox folders that form the team's shared substrate (Dropbox path only).
 - `team-shared-skills-authoring` -- teaches the champion the conventions for shared skills and helps them author or refactor skills against those conventions.
 - `team-onboard-member` -- generates onboarding packs for new team members.
 - `exfu-upgrade-from-team-to-admin` -- handles the case where the champion already has the team plugin installed and wants to move to team-admin.
@@ -418,16 +418,16 @@ All pre-installed via the plugin. No URL fetching needed.
 ## What must be true by the end
 
 - Settings configured for full Cowork capability.
-- Storage backend chosen (git, Box, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
+- Storage backend chosen (git, Dropbox, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
 - For git: repo provisioned or connected, remote URL confirmed, seeded structure committed and pushed, champion understands the git rhythm.
-- For Box: folders created and shared, access set for the team, `box-filesystem-management` operational, champion understands the no-conflict-detection caveat and the offline-caching fix.
+- For Dropbox: folders created and shared, access set for the team, `exfu-dropbox-storage` operational, champion understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
 - Shared substrate seeded to v0.3: convention base at its `exfu/v0.3/` with `latest.txt`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
 - Champion's personal substrate established in a separate folder: convention base deployed, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
 - Agent registry at the personal root with nightly-index registered; `nightly-agents` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - Compliance briefing surfaced and reviewed (or at least located for later review).
 - Personal `wow` generated with a navigation map pointing at both substrates, noted as team-admin variant, installed in Global Instructions.
-- `substrate` skill installed and operational.
+- `exfu-library` skill installed and operational.
 - First onboarding pack generated.
 - Champion knows what's theirs, what's the team's, and what only they can do as champion.
 

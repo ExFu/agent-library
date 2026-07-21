@@ -1,6 +1,6 @@
 ---
 name: {{username}}-reminders
-description: Manage {{username}}'s lightweight reminder system. Use when {{username}} wants to be nudged about something at a future point, asks to see their reminder list, or wants to complete or snooze a reminder. Also called by the substrate skill at session start to surface anything due or overdue. Triggers on "remind me to X", "don't let me forget", "don't let that slip", "I'll forget this", "flag this for [date]", "ping me about this next week", "what did I say I'd follow up on?", "what have I got coming up?", or any time the user wants to ensure something surfaces later.
+description: Manage {{username}}'s lightweight reminder system. Use when {{username}} wants to be nudged about something at a future point, asks to see their reminder list, or wants to complete or snooze a reminder. Also called by the exfu-library skill at session start to surface anything due or overdue. Triggers on "remind me to X", "don't let me forget", "don't let that slip", "I'll forget this", "flag this for [date]", "ping me about this next week", "what did I say I'd follow up on?", "what have I got coming up?", or any time the user wants to ensure something surfaces later.
 ---
 
 **About this template:** This file is a template used by `setup-reminders` to generate each user's personal reminders skill. The frontmatter above is what the generated skill's frontmatter will look like. When `setup-reminders` runs, it fills in this template with the user's actual preferences and packages the result as their personal reminders skill.
@@ -40,7 +40,7 @@ Triggers: "remind me to X on Y", "don't let me forget Z", "flag this for [date]"
 2. Prepend a new line to the reminders file.
 3. Confirm: "Reminder saved for [date]: [what]."
 
-### Check (called on session load by `substrate`)
+### Check (called on session load by `exfu-library`)
 
 1. Read the file.
 2. Find anything unchecked where date ≤ today.
@@ -84,5 +84,5 @@ Quarterly, offer to remove completed entries older than 90 days. Move them via t
 
 ## Dependencies
 
-- `substrate` skill delegates to this skill on session load.
+- `exfu-library` skill delegates to this skill on session load.
 - If `daily-briefing` is installed, it also delegates reminder surfacing to this skill.

@@ -6,6 +6,24 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.4.0 -- 2026-07-20
+
+The Agent Library release: the pitch is renamed, the plumbing is not; and storage moves from Box to Dropbox.
+
+**Changed**
+- **Two-register vocabulary.** User-facing, the product is now **ExFu's Agent Library**, kept organised by **Agent Librarians** (always plural -- an ecosystem the user appeals to, never a single all-knowing character; a scope may be taught as a "shelf", an analogy, not a rename). "Substrate" is retained as the internal register: the implementation vocabulary agents use in files and with each other. Defined once in `ontology.md#vocabulary`; carried through the primers, the guide, the install conversations, plugin manifests, and the dashboard ("<name>'s library"). No structural renames: folders, anchors, resource filenames, and scope.md machinery are unchanged.
+- **Boot skill renamed `substrate` -> `exfu-library`.** The front-door skill name was the worst cross-plugin collision risk; the `exfu-` prefix is the naming convention for new and replaced skills from 0.4 onward. The CLAUDE.md guard's canonical text now names `exfu-library` and describes the folder as an Agent Library root. All references updated (wow template, install skills, templates, guides).
+- **Dropbox replaces Box as the solo storage default and the team cloud-folder path.** The Dropbox connector supports delete, move, and copy natively by path, with per-file revision history -- so the entire Box workaround layer is deleted rather than ported. New shared skill `exfu-dropbox-storage` (access modes, conflicted-copy handling, hydration and symlink caveats); `team-box-folder-provisioning` becomes `team-dropbox-folder-provisioning`; the compliance briefing's storage sections now describe Dropbox; the exfu-library skill detects Dropbox-backed roots and treats Box-backed roots as legacy pending migration.
+- Substrate guide bumped to v8: two-register note, Dropbox access modes, corrected dashboard path (`exfu/visualisations/dashboard/`), fixed a stale version header. The human primer (`the-substrate-primer.md`, now titled "The Agent Library Primer") sheds its outdated v0.2 PII-layer and orgs/teams passages.
+
+**Added**
+- **`exfu-migrate-to-dropbox`** -- the 0.4 upgrade path: verifies the user's Dropbox copy against the Box original (which becomes a read-only fallback, never modified), refreshes the deployed convention base, rewrites the guard, retires `_trash/`/`_DELETED_`/box-cleanup artefacts, updates the wow's paths and glosses, records the storage change, and emits the account-side checklist (Global Instructions path, connectors, scheduled-task prompts, personal skills).
+
+**Removed**
+- `box-filesystem-management`, `team-box-folders`, and the solo `box-cleanup` scheduled task (with its `_trash/` + `_DELETED_` + 60-day purge machinery). Deletes are real deletes now, with Dropbox's own trash and revision history as the safety net.
+
+---
+
 ## v0.3.4 -- 2026-06-12
 
 The dashboard's big interface release: the Grounded Editorial design system, a split-pane reading layout, item-level workspace views, and second-brain style graphs.

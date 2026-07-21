@@ -1,7 +1,7 @@
 {
   "name": "exfu-team-admin",
-  "version": "0.3.4",
-  "description": "ExFu: substrate-champion edition. Provision team substrate, author shared skills, brief IT, onboard members.",
+  "version": "0.4.0",
+  "description": "ExFu: library-champion edition. Provision your team's shared Agent Library, author shared skills, brief IT, onboard members.",
   "author": {
     "name": "Alastair Brayne",
     "email": "al@exfu.ai",
@@ -11,6 +11,8 @@
   "license": "Proprietary",
   "keywords": [
     "exfu",
+    "agent-library",
+    "librarians",
     "substrate",
     "knowledge-base",
     "cowork",

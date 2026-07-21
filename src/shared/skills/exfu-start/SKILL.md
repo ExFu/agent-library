@@ -1,6 +1,6 @@
 ---
 name: exfu-start
-description: ExFu is a guided install that gives Claude persistent memory and working context for a knowledge worker -- the substrate (a knowledge base, skills, connectors, and scheduled tasks that survive across sessions). This skill is the front door. Load it when a user is beginning a new ExFu session or starting their setup for the first time. On load, detects first-run vs returning user and routes accordingly without putting the user through a triage menu. Triggers on "I want to get set up", "I just installed something", "where do I begin", "where does all my stuff live", "I want to update my Claude setup", "what do I have installed", or any other signal that the user is at the start of an ExFu interaction.
+description: ExFu is a guided install that gives Claude persistent memory and working context for a knowledge worker -- an Agent Library (a knowledge base, skills, connectors, and the Agent Librarians that keep it organised; internally called the substrate). This skill is the front door. Load it when a user is beginning a new ExFu session or starting their setup for the first time. On load, detects first-run vs returning user and routes accordingly without putting the user through a triage menu. Triggers on "I want to get set up", "I just installed something", "where do I begin", "where does all my stuff live", "I want to update my Claude setup", "what do I have installed", or any other signal that the user is at the start of an ExFu interaction.
 ---
 
 # ExFu -- orchestrator (front door)
@@ -9,7 +9,7 @@ You are the front door. The most likely reason you've been loaded is that someon
 
 Your job, in order: first-run detection, then engage appropriately.
 
-One rule overrides everything else here: **plain language from the first word**. A first-run user knows none of our vocabulary. The two brand terms, "substrate" and "wow", are fine to use -- glossed in layman language on first use ("your substrate -- the knowledge base, skills, and routines that give Claude memory between sessions"). Everything else ("scope", "convention base", "librarian") waits: lead with outcomes in their words ("an area for your project", "automatic overnight tidy-up"), and let the install skills introduce terms one at a time as the user experiences what they name. The install skills carry the full communication contract ("How to talk to the user"); your handoff message must already follow it.
+One rule overrides everything else here: **plain language from the first word**. A first-run user knows none of our vocabulary. Three brand terms, "library", "librarians", and "wow", are fine to use -- glossed in layman language on first use ("your library -- the knowledge base, skills, and routines that give Claude memory between sessions", "your librarians -- the agents that keep it organised overnight"). Librarians are always plural: an ecosystem, never a single all-knowing character. Everything else ("scope", "convention base", "substrate") waits: lead with outcomes in their words ("an area for your project", "your librarians' overnight rounds"), and let the install skills introduce terms one at a time as the user experiences what they name. The install skills carry the full communication contract ("How to talk to the user"); your handoff message must already follow it.
 
 ---
 
@@ -78,7 +78,7 @@ The user has signals of an existing setup. Ask one warm, conversational routing 
 
 Routes:
 
-- **Resume / pick up / change something in their substrate** -- load `substrate`. It orients to whatever's currently in their setup and takes things from there.
+- **Resume / pick up / change something in their library** -- load `exfu-library`. It orients to whatever's currently in their setup and takes things from there.
 - **Reference / explain / how does X work / what is Y** -- load `exfu-guides`. It knows the index of reference material and pulls the right section.
 - **Start another install** (rare; e.g. they're setting up a fresh second substrate) -- load the install entrypoint, same as first-run path.
 

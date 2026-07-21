@@ -67,7 +67,7 @@ Write only inside [SUBSTRATE_ROOT], except where a business agent's definition e
 
 ## After the task runs
 
-The registry (`exfu/derived/agent-registry.json`) carries per-agent health; the log (`exfu/derived/agent-log.json`) carries the run history with one detail line per outcome. The substrate skill reads these at session start and surfaces failures or items needing attention. You don't need to check manually unless you want to.
+The registry (`exfu/derived/agent-registry.json`) carries per-agent health; the log (`exfu/derived/agent-log.json`) carries the run history with one detail line per outcome. The exfu-library skill reads these at session start and surfaces failures or items needing attention. You don't need to check manually unless you want to.
 
 ## Other cadences
 

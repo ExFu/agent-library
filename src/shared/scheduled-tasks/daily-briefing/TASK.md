@@ -35,7 +35,7 @@ Paste the following as the task prompt:
 
 Produce this morning's briefing.
 
-1. Load the `wow` skill (the user's personal WoW) so the briefing reflects their defaults. `wow` auto-loads `substrate`, which reads the index and orients to the substrate.
+1. Load the `wow` skill (the user's personal WoW) so the briefing reflects their defaults. `wow` auto-loads `exfu-library`, which reads the index and orients to the substrate.
 2. Read `exfu/derived/index.json` to find scopes with populated reminders, inbox, and todo folders.
 3. Check reminders folders across scopes for anything due or overdue. Show them as a short list.
 4. Check inbox folders across scopes. If total unsorted items > 5, flag it's getting full.

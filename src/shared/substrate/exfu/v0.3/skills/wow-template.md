@@ -1,6 +1,6 @@
 ---
 name: wow
-description: The user's personal way of working. Claude loads this skill at the start of every session to learn how THIS user's substrate is laid out (the navigation map) and to pick up the thin always-on kernel of instructions and summaries that apply universally. Triggers on "wow", "way of working", on fresh sessions, or when referenced in Global Instructions. Auto-loads the `substrate` skill and any other always-on skills on activation.
+description: The user's personal way of working. Claude loads this skill at the start of every session to learn how THIS user's substrate is laid out (the navigation map) and to pick up the thin always-on kernel of instructions and summaries that apply universally. Triggers on "wow", "way of working", on fresh sessions, or when referenced in Global Instructions. Auto-loads the `exfu-library` skill and any other always-on skills on activation.
 ---
 
 ---
@@ -10,7 +10,7 @@ description: The user's personal way of working. Claude loads this skill at the 
 
 # Way of Working (personal)
 
-This is the user's personal `wow` skill -- generated during setup and maintained as the user's substrate evolves. It is distinct from the generic `substrate` skill: `substrate` carries the shared architecture; `wow` carries the things specific to *this* user.
+This is the user's personal `wow` skill -- generated during setup and maintained as the user's substrate evolves. It is distinct from the generic `exfu-library` skill: `exfu-library` carries the shared architecture; `wow` carries the things specific to *this* user.
 
 `wow` does two jobs. Most of what makes Claude useful for this user lives in substrate **files** (`user/context/`, `scopes/`, `user/ontology/`). `wow` does *not* hold that material. `wow` holds:
 
@@ -23,9 +23,9 @@ The discipline: keep `wow` lean. Anything substantive belongs in a file, with `w
 
 ## Bootstrap -- what to do at session start
 
-### 1. Load the `substrate` skill
+### 1. Load the `exfu-library` skill
 
-On activation, load the `substrate` skill. It does the heavy lifting -- finds the knowledge base, reads the index, orients to the scope tree, checks reminders and inbox. Everything needed to be substrate-aware.
+On activation, load the `exfu-library` skill. It does the heavy lifting -- finds the knowledge base, reads the index, orients to the scope tree, checks reminders and inbox. Everything needed to be substrate-aware.
 
 ### 2. Load any other always-on skills
 

@@ -1,6 +1,6 @@
 ---
 name: exfu-install-solo
-description: Runs the full solo install conversation -- from first calibration through to a working personal substrate (knowledge base, skills, connectors, scheduled tasks). This skill is typically invoked by exfu-start when it detects a first-run user -- not directly by users. It covers migration checks, the storage question, convention base deployment, scope creation (user scope and first working scope), librarian registration, and wow generation. Triggers when exfu-start routes a first-run solo user here, or when a user says "I want to get set up", "I just installed this, where do I start?", "let's do the install", or similar first-session language.
+description: Runs the full solo install conversation -- from first calibration through to a working personal Agent Library (knowledge base, skills, connectors, and the librarians that keep it organised). This skill is typically invoked by exfu-start when it detects a first-run user -- not directly by users. It covers migration checks, the storage question, convention base deployment, scope creation (user scope and first working scope), librarian registration, and wow generation. Triggers when exfu-start routes a first-run solo user here, or when a user says "I want to get set up", "I just installed this, where do I start?", "let's do the install", or similar first-session language.
 ---
 
 # ExFu Install -- Solo
@@ -30,7 +30,7 @@ First contact is the highest-risk moment of the install. The user just installed
 
 **Golden circle, outcome first.** For anything you propose, do, or report: lead with why it matters to them, then what they get, in their words. The how gets one plain sentence at most. Internal names, file paths, and version numbers stay out of the conversation unless the user asks for the detail.
 
-**Two brand terms are free; gloss them.** "Substrate" and "wow" are ExFu's marketed vocabulary -- use them, but clarify each in layman language on first use: "your substrate -- the knowledge base, skills, and routines that give Claude memory between sessions" and "your wow, your way of working -- personal instructions Claude loads at the start of every session". After the gloss, use them plainly.
+**Three brand terms are free; gloss them.** "Library", "librarians", and "wow" are ExFu's marketed vocabulary -- use them, but clarify each in layman language on first use: "your library -- the knowledge base, skills, and routines that give Claude memory between sessions", "your librarians -- the agents that run on a schedule to keep your library organised, so you can find things when you need them", and "your wow, your way of working -- personal instructions Claude loads at the start of every session". After the gloss, use them plainly. Librarians are always plural: an ecosystem the user appeals to, never a single all-knowing character. "Substrate" is the internal name for how the library is implemented -- it stays out of the conversation unless the user asks how it works underneath.
 
 **All other vocabulary is earned.** Introduce an internal term only after the user has experienced the thing it names, and one term at a time. "Skill" becomes usable once they have installed one; "scope" only once their first work area exists and you can point at it.
 
@@ -38,11 +38,11 @@ First contact is the highest-risk moment of the install. The user just installed
 
 | Say | Never lead with |
 |---|---|
-| your substrate folder | substrate root |
+| your library folder | substrate root |
 | the folder structure and ground rules | convention base, exfu/v0.3/, ontology, latest.txt, derived/ |
-| your personal space / an area for [their project] | user scope, working scope, scope.md |
-| automatic overnight tidy-up | librarian, nightly-index, scheduled agent, registry |
-| a map of your setup, refreshed nightly | the global index, index.json |
+| your personal space / an area (or "shelf") for [their project] | user scope, working scope, scope.md |
+| your librarians' overnight rounds | nightly-index, scheduled agent, registry |
+| a map of your library, refreshed nightly | the global index, index.json |
 | things Claude can do for you | skills (until they have installed one), the buffet |
 
 **Don't brief the architecture.** Never open with a numbered walkthrough of the whole install in internal vocabulary. Offer the next one or two moves and the outcome of each. The full picture arrives through doing, not through a plan dump.
@@ -135,7 +135,7 @@ If none of these: continue.
 
 ### Step 2 -- Open with the diagram
 
-Show `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/substrate-diagram.png`. Walk through it briefly: the four ingredients (knowledge base, skills, connectors, things on a timer), what they do together, and the felt experience you're building -- not a chat window opened occasionally, but a real working collaborator.
+Show `${CLAUDE_PLUGIN_ROOT}/resources/diagrams/substrate-diagram.png`. Walk through it briefly: the four ingredients (knowledge base, skills, connectors, and things on a timer -- the librarians), what they do together, and the felt experience you're building -- not a chat window opened occasionally, but a real working collaborator with a well-kept library behind it.
 
 The diagram does heavy lifting. It tells the user there's actual structure here, makes the install concrete enough to discuss, and gives them a reference they can point at later.
 
@@ -147,21 +147,23 @@ While it's in front of you, plant two priors:
 
 ### Step 3 -- Storage setup
 
-Early in the conversation, before any file creation: *"Where would you like Claude's knowledge base to live? Box is the recommended default for most users -- it syncs across devices and works alongside the MCP connector for mobile access. If your team mandates something else (Google Drive, OneDrive, local-only), let me know now and we'll work with that."*
+Early in the conversation, before any file creation: *"Where would you like your library to live? Dropbox is the recommended default for most users -- it syncs across devices, and its connector gives Claude full access (including from mobile). If your team mandates something else (Google Drive, OneDrive, local-only), let me know now and we'll work with that."*
 
-**Box is the default.** If the user confirms Box:
+**Dropbox is the default.** If the user confirms Dropbox:
 
-Surface the offline-caching caveat explicitly and concretely: *"Box has a known limitation worth knowing about. If Box Drive is set to space-saver mode, files Claude tries to read may come back empty because Box hasn't downloaded them yet. The fix is to mark your knowledge base folder as always available offline."*
+Surface the hydration caveat explicitly and concretely: *"One thing worth setting now. Dropbox can keep files online-only to save disk space, and a file that isn't downloaded can read as empty. The fix is to keep your library folder fully downloaded."*
 
 Then give the user a concrete instruction:
-- **macOS:** In Finder, right-click the knowledge base folder inside your Box Drive folder. Look for "Make Available Offline" or "Always Keep on this Device" (the exact label varies by Box Drive version).
-- **Windows:** Right-click the folder in File Explorer within Box Drive. Select "Make Available Offline".
+- **macOS:** In Finder, right-click the library folder inside your Dropbox folder and choose "Make Available Offline".
+- **Windows:** Right-click the folder in File Explorer within Dropbox and select "Make available offline".
 
-**Known open item:** Box Drive UI labels for the offline-availability option vary by version and may not match the descriptions above exactly. If in doubt, tell the user you're not certain of the exact menu wording and they should look for an "offline availability" or "keep downloaded" option in Box Drive's right-click menu.
+Also confirm the Dropbox MCP connector is connected in Claude's settings, so mobile and unmounted sessions can reach the library. The connector supports create, move, and delete natively -- no special workarounds needed.
 
 If the user says local-only: "We'll set things up locally. Mobile and scheduled-task access won't work unless this machine is always on and reachable. Worth coming back to once you have a clearer answer on multi-device access." Proceed with local-only.
 
-If the user names a different cloud provider: "Most cloud drives work structurally the same way -- the knowledge base is just files in a folder. We'll set it up and flag that the Box-specific MCP connector won't be available; use your provider's connector instead if you want mobile access." Proceed.
+If the user names a different cloud provider: "Most cloud drives work structurally the same way -- the library is just files in a folder. We'll set it up and flag that the Dropbox-specific MCP connector won't be available; use your provider's connector instead if you want mobile access." Proceed.
+
+If the user names Box specifically: be straight with them. Box's connector has no native delete or move, and ExFu 0.4 no longer ships the Box workaround machinery. If Box is mandated, set up with filesystem access only (Box Drive mounted) and flag the connector limitations; otherwise recommend Dropbox.
 
 Use `request_cowork_directory` for the folder picker to identify the knowledge base root folder. Record the storage choice in the user scope's context later (Step 5), not in a separate `_meta/` file.
 
@@ -215,17 +217,17 @@ Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.
 ```
 # Don't use this folder
 
-This is a substrate root.
+This is the root of an ExFu Agent Library (internally: a substrate).
 
 Do not read, write, or otherwise interact with the contents of this folder
-unless your session has loaded the substrate skill (or a derivative
-that knows the substrate conventions).
+unless your session has loaded the exfu-library skill (or a derivative
+that knows the library's conventions).
 
 If you've accidentally been pointed here, stop and ask the user to either:
-- Load the appropriate substrate skill, or
+- Load the exfu-library skill, or
 - Work in a different location.
 
-This protects the substrate from being treated as a generic working folder.
+This protects the library from being treated as a generic working folder.
 ```
 
 ### Step 8 -- Librarian registration (delegate to install-scheduled-agent)
@@ -292,8 +294,8 @@ What's available, all pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock -- always installed:**
 - `skill-packaging` -- how Claude packages skills into files for the user to install. Used for custom skills the user wants to create later, not for the bundled ones.
-- `box-filesystem-management` -- how Claude manages files in Box (filesystem when mounted, MCP connector when not). Includes the daily cleanup scheduled task.
-- `substrate` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-dropbox-storage` -- how Claude manages files in Dropbox (filesystem when mounted, MCP connector when not; native delete and move, conflicted-copy handling).
+- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, delegates to the user's personal reminders and inbox skills at session start if they are installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks.
 
@@ -316,7 +318,7 @@ What's available, all pre-installed via the plugin. No URL fetching needed.
 A checklist, not a script:
 
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
-- Box account, Box Drive locally mounted, Box MCP connector connected (or alternative storage confirmed). Knowledge base folder identified via the folder picker. Offline-caching caveat surfaced and actioned.
+- Dropbox account, Dropbox folder locally synced, Dropbox MCP connector connected (or alternative storage confirmed). Library folder identified via the folder picker. Hydration caveat ("Make Available Offline") surfaced and actioned.
 - Convention base deployed at `exfu/v0.3/` with `exfu/latest.txt` pointing to `v0.3`.
 - User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
@@ -325,7 +327,7 @@ A checklist, not a script:
 - `nightly-agents` scheduled task created.
 - First index generated at `exfu/derived/index.json`.
 - A personal `wow` skill generated, customised with what you've learned about the user, installed, and added to Global Instructions so it loads every session.
-- `substrate` skill installed and operational.
+- `exfu-library` skill installed and operational.
 - One or more small wins demonstrated.
 - The user knows roughly what they have, can name the parts, and has the confidence to extend any of it.
 

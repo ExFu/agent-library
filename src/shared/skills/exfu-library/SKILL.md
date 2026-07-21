@@ -1,9 +1,11 @@
 ---
-name: substrate
-description: ExFu's substrate is the persistent system of files, skills, connectors, and scheduled tasks that gives Claude memory and working context across sessions -- a knowledge base covering who the user is, what they're working on, and how they operate. This skill bootstraps any session with that context -- it finds the knowledge base, reads the global index, resolves the conventions version, loads the user's personal context and ways of working, detects the storage backend, checks scheduled-agent health, and surfaces anything the overnight runs left. Load it at the start of any substrate-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "what's in my notes on Y?", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
+name: exfu-library
+description: ExFu's Agent Library is the persistent system of files, skills, connectors, and scheduled agents that gives Claude memory and working context across sessions -- a library of who the user is, what they're working on, and how they operate, kept organised by their Agent Librarians. This skill bootstraps any session with that context -- it finds the library, reads the global index, resolves the conventions version, loads the user's personal context and ways of working, detects the storage backend, checks librarian health, and surfaces anything the overnight runs left. Load it at the start of any library-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "what's in my notes on Y?", "check my library", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
 ---
 
-# Substrate skill -- v0.3.0
+# exfu-library skill -- the Agent Library boot sequence (v0.4.0)
+
+Vocabulary note before anything else: with the user, this is "your library", kept in order by "your librarians". "Substrate" is the internal register this skill is written in -- the implementation vocabulary. The two registers are defined in `exfu/<version>/ontology.md#vocabulary`.
 
 ## Hard constraints
 
@@ -32,7 +34,7 @@ Read these before doing anything else. They apply for the entire session.
 The substrate core lives in a knowledge base folder. It must be readable in this session for the rest of the boot sequence to work. Two access modes:
 
 - **Filesystem (preferred when available).** The substrate folder is added as a working folder. Direct reads/writes; supports delete, move, rename.
-- **Connector (when filesystem isn't available).** Mobile sessions, unmounted contexts. Reads and basic writes, slower than filesystem.
+- **Connector (when filesystem isn't available).** Mobile sessions, unmounted contexts. The Dropbox connector supports full create/read/move/delete by path; slower than filesystem.
 
 Check, in order:
 
@@ -62,7 +64,8 @@ At the substrate root, check whether `CLAUDE.md` exists.
 Infer the storage backend from the substrate's environment:
 
 - A `.git/` directory at the substrate root means **git-backed**.
-- The substrate root path inside a Box mount or `~/Library/CloudStorage/Box-Box/...` style location means **Box-backed**.
+- The substrate root path inside a Dropbox folder (`~/Dropbox/...` or a `~/Library/CloudStorage/Dropbox...` style location) means **Dropbox-backed**.
+- A path inside a Box mount (`~/Library/CloudStorage/Box-Box/...`) means a **legacy Box-backed** substrate from a pre-0.4 install: suggest the exfu-migrate-to-dropbox skill, and avoid destructive operations until migrated.
 - Otherwise, default to **local** (no automated sync layer; the user manages propagation).
 
 Note the backend for the rest of the session. It determines which verb vocabulary to surface and whether sync logic applies.
@@ -82,7 +85,7 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 - ExFu version pins per scope
 - Which exfu versions are in use and which is latest
 
-**If the index exists,** use it for all scope discovery and navigation. Do not walk the filesystem to find scopes when the index is available. The index is faster, more complete, and works even when the filesystem is slow (Box with caching issues, large substrates).
+**If the index exists,** use it for all scope discovery and navigation. Do not walk the filesystem to find scopes when the index is available. The index is faster, more complete, and works even when the filesystem is slow (cloud drives with hydration delays, large substrates).
 
 **If the index doesn't exist,** fall back to filesystem discovery:
 
@@ -162,7 +165,7 @@ Do not mention git commands at any point. Users interact through the verbs above
 
 **When checking for updates (git only):** prefer a non-LLM approach first. Compare the local HEAD commit hash against the remote HEAD hash. Only invoke a full sync process when there is a confirmed delta. Tokens are consumed only when needed.
 
-**Box-backed substrates.** Box's own access controls determine what files the user can read and write; no separate permission lookup is needed. Surface a backend-appropriate verb set: `save` (write to the relevant Box folder), `check for updates` (rare; Box auto-syncs in most cases), `share for review` (notify a colleague to look -- no built-in PR concept), `fix clashes` (walk the user through Box's version history if a sync conflict arose). The git-specific verbs (`approve change`, `review`, `reject`) do not apply.
+**Dropbox-backed substrates.** Dropbox's own sharing controls determine what files the user can read and write; no separate permission lookup is needed. Surface a backend-appropriate verb set: `save` (write the file; Dropbox syncs it), `check for updates` (rare; Dropbox auto-syncs), `share for review` (notify a colleague to look -- no built-in PR concept), `fix clashes` (Dropbox writes "conflicted copy" files when two edits collide -- find them, compare versions, reconcile with the user; revision history is available for recovery). The git-specific verbs (`approve change`, `review`, `reject`) do not apply.
 
 **Local-only substrates.** The user has full rights to their local filesystem. No permission lookup, no fallback note. Verbs collapse to direct filesystem operations: `save` (write the file), `check for updates` (no remote to check; could mean "show me what changed since last session" if useful). Sharing-and-review verbs do not apply because there is no automated propagation layer; the user handles distribution manually.
 
@@ -214,7 +217,7 @@ If the user hasn't asked for anything specific yet, briefly confirm what you've 
 
 ## CLAUDE.md guard creation
 
-The substrate root must contain a `CLAUDE.md` file. Its purpose is to prevent Claude from treating the substrate as a generic working folder when loaded in a session without the substrate skill.
+The substrate root must contain a `CLAUDE.md` file. Its purpose is to prevent Claude from treating the substrate as a generic working folder when loaded in a session without the exfu-library skill.
 
 **When this skill is called by an install skill at substrate creation time:**
 
@@ -227,17 +230,17 @@ Canonical content (copy this exactly):
 ```
 # Don't use this folder
 
-This is a substrate root.
+This is the root of an ExFu Agent Library (internally: a substrate).
 
 Do not read, write, or otherwise interact with the contents of this folder
-unless your session has loaded the substrate skill (or a derivative
-that knows the substrate conventions).
+unless your session has loaded the exfu-library skill (or a derivative
+that knows the library's conventions).
 
 If you've accidentally been pointed here, stop and ask the user to either:
-- Load the appropriate substrate skill, or
+- Load the exfu-library skill, or
 - Work in a different location.
 
-This protects the substrate from being treated as a generic working folder.
+This protects the library from being treated as a generic working folder.
 ```
 
 ---
@@ -386,16 +389,16 @@ When writing new ontology entries that touch existing terms, annotate the intent
 
 ## Wrapping plugin awareness
 
-The substrate skill operates in two modes depending on whether a wrapping plugin is active.
+The exfu-library skill operates in two modes depending on whether a wrapping plugin is active.
 
-**With a wrapping plugin:** the wrapper provides the permission lookup function and any verb overrides. The substrate skill defers to the wrapper for these. The wrapper is detected via a marker in `${CLAUDE_PLUGIN_ROOT}`.
+**With a wrapping plugin:** the wrapper provides the permission lookup function and any verb overrides. The exfu-library skill defers to the wrapper for these. The wrapper is detected via a marker in `${CLAUDE_PLUGIN_ROOT}`.
 
 **Without a wrapping plugin:** fall back to install-time-resolved values or use safe defaults:
 
 - Permission level: `member`
 - Surface a note that permission detection wasn't available, and suggest the user run the install skill if they haven't yet
 
-The substrate skill does not require a wrapping plugin to function. Wrappers are additive. Solo installs have no wrapper and that's correct.
+The exfu-library skill does not require a wrapping plugin to function. Wrappers are additive. Solo installs have no wrapper and that's correct.
 
 ---
 
@@ -403,7 +406,7 @@ The substrate skill does not require a wrapping plugin to function. Wrappers are
 
 These are internalised here so they're available even when the convention base hasn't been loaded yet in a given conversation.
 
-**Substrate.** The combination of files, skills, connectors, and scheduled tasks that together give Claude persistent memory and context across sessions and devices. No single component is the substrate -- it's the interplay.
+**Substrate (the Agent Library).** The combination of files, skills, connectors, and scheduled agents that together give Claude persistent memory and context across sessions and devices. No single component is the substrate -- it's the interplay. To its user, the whole thing is their Agent Library; substrate is the internal register (see `ontology.md#vocabulary`).
 
 **Scope.** A bounded context with its own knowledge, definitions, and conventions. Everything is a scope: personal space, org, team, project, client. Every scope has the same internal shape (the 10 folder-types). Scopes can nest via their own `scopes/` subdirectory. A scope is identified by the presence of `scope.md`.
 
@@ -411,13 +414,13 @@ These are internalised here so they're available even when the convention base h
 
 **Convention base.** The exfu-shipped definitions at `exfu/<version>/`. Defines what each folder-type means and how it behaves by default. Every agent.md references the convention base and records only local deviations.
 
-**Scheduled agent.** Recurring work defined as agent instructions: a markdown definition an agent reads cold and carries out on a cadence, registered in `exfu/derived/agent-registry.json` and executed by one scheduled task per cadence. Two kinds with identical mechanics: **librarians** (remit: the substrate itself; definitions in `librarians/` folders; the nightly index is the canonical example) and **business agents** (remit: the user's recurring domain work; definitions in `scheduled/` folders). Librarians run before business agents within a cadence.
+**Scheduled agent.** Recurring work defined as agent instructions: a markdown definition an agent reads cold and carries out on a cadence, registered in `exfu/derived/agent-registry.json` and executed by one scheduled task per cadence. Two kinds with identical mechanics: **librarians** (remit: the substrate itself; definitions in `librarians/` folders; the nightly index is the canonical example) and **business agents** (remit: the user's recurring domain work; definitions in `scheduled/` folders). Librarians run before business agents within a cadence. In the user-facing register, the librarians are the user's Agent Librarians -- the ecosystem that keeps their library organised.
 
 **Global index.** The file at `exfu/derived/index.json`. One read gives the whole-substrate map: every scope, where it sits, what it contains, which conventions it follows. Generated by the nightly index librarian. The primary navigation tool for agents.
 
 **Skill.** A named bundle of instructions and conventions that Claude loads on demand. Every skill has a name, a description (which controls when it triggers), and a body of guidance.
 
-**Access modes.** When the filesystem is mounted in this session, use it directly. When it's not (mobile, unmounted sessions), use the connector. Filesystem is faster and supports delete, move, and rename.
+**Access modes.** When the filesystem is mounted in this session, use it directly. When it's not (mobile, unmounted sessions), use the connector. Filesystem is faster; the Dropbox connector also supports delete, move, and rename natively, addressed by path.
 
 **Data tiers.**
 - Tier 1: project files -- source code, documents, designs. Live in their natural home. Referenced from the substrate, not stored in it.
@@ -430,7 +433,7 @@ These are internalised here so they're available even when the convention base h
 
 - **Follow substrate conventions.** Folder structure, naming (lowercase hyphen-separated, date-prefix for time-sensitive files), agent.md maintenance via the reference+delta pattern.
 - **Use the right access mode.** Filesystem when mounted, connector when not.
-- **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Box-backed substrates, defer file CRUD to `box-filesystem-management`. For local-only substrates, direct filesystem operations are sufficient.
+- **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Dropbox-backed substrates, defer file CRUD to `exfu-dropbox-storage`. For local-only substrates, direct filesystem operations are sufficient. For legacy Box-backed substrates, suggest `exfu-migrate-to-dropbox` before doing substantive file work.
 - **Navigate via the index.** When you need to find a scope or understand the substrate's shape, read the index first. Only walk the filesystem when the index is unavailable.
 - **Maintain discoverability.** When you create new folders or content, create or update agent.md files with `Follows:` anchor references into the convention base's `ontology.md`. When you create a new scope, scaffold scope.md with the correct parent and version pin.
 - **Materialise on demand, write no state into descriptors, prefer fewer complete files.** Don't create empty folder-types; add them when their first content appears. Never write "currently empty", counts, or status into agent.md/readme.md/scope.md. Extend existing files rather than scattering siblings; keep ontologies flat with one complete file per concept. (Full authoring rules: `exfu/<version>/ontology.md#authoring-rules`.)
@@ -438,4 +441,4 @@ These are internalised here so they're available even when the convention base h
 - **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.
 - **Surface only what's actually there.** Don't invent scopes, folder-types, or permissions. Read the files and report what you find.
 - **Keep git invisible.** For team substrates, all user-facing communication uses the verb vocabulary above. Git operations happen underneath; the user never needs to see them.
-- **Plain language with users.** "Substrate" and "wow" are brand terms -- use them, glossed in layman language on first use ("your substrate -- the knowledge base, skills, and routines that give Claude memory between sessions"). Don't use other internal vocabulary ("scope", "ontology", "folder-type", "librarian") unless the user has introduced those terms themselves; speak in terms the user has earned: "the Acme area", "your definitions", "your background info", "the nightly tidy-up." Golden circle every explanation -- why it matters to them, the outcome in their words, at most one sentence of mechanics. File paths and internal names surface only when the user asks for the detail.
+- **Plain language with users.** "Your library" and "your librarians" are the user-facing terms -- gloss them on first use ("your library: the knowledge base, skills, and routines that give Claude memory between sessions", "your librarians: the scheduled agents that keep it organised"). Librarians are always plural with users -- an ecosystem, never a single all-knowing character. "wow" stays wow. "Substrate" is internal register: surface it only when the user asks how things work underneath. Don't use other internal vocabulary ("scope", "ontology", "folder-type") unless the user has introduced those terms themselves; a scope can be introduced as a "shelf" or "working area" -- an analogy, not a rename. Speak in terms the user has earned: "the Acme area", "your definitions", "your background info", "the nightly tidy-up." Golden circle every explanation -- why it matters to them, the outcome in their words, at most one sentence of mechanics. File paths and internal names surface only when the user asks for the detail.

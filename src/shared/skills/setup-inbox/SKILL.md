@@ -54,7 +54,7 @@ Once you have the intake answers:
 
 ### 1. Determine the username
 
-Read `context/me/about.md` from the user's substrate. Look for their name. If the file exists and a name is clear, default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`, or if the about.md spells out a preferred handle, use that). If the name is ambiguous or the file doesn't exist, ask: "What should we call your inbox skill? Something like `al-inbox` or `sarah-inbox` — first name or nickname is fine."
+Read `user/context/about-me.md` from the user's substrate. Look for their name. If the file exists and a name is clear, default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`, or if the about-me spells out a preferred handle, use that). If the name is ambiguous or the file doesn't exist, ask: "What should we call your inbox skill? Something like `al-inbox` or `sarah-inbox` — first name or nickname is fine."
 
 The per-user skill will be named `<username>-inbox` and its frontmatter `name:` will reflect this.
 
@@ -88,5 +88,5 @@ If the user ever wants a fresh setup — different file location, different pref
 ## Dependencies
 
 - `skill-packaging` — used to package and present the generated skill.
-- `substrate` skill calls the user's inbox skill (by name) at session start if it is installed.
+- `exfu-library` skill calls the user's inbox skill (by name) at session start if it is installed.
 - The template at `${CLAUDE_PLUGIN_ROOT}/templates/inbox-template.md` contains the operational logic.

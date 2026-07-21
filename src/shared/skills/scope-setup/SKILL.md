@@ -192,7 +192,7 @@ followed by the protective header.
 
 1. **Confirm.** Tell the user what you built and why each part exists: the scope name, which folder-types materialised and what content went into them, whether anything points to an external tool. Two or three sentences.
 2. **Hand back.** If the install conversation called you, hand control back. If the user called you directly, ask if they want to do anything with the new scope right away or if they're done.
-3. **Don't create a scope skill automatically.** Scope skills are a separate concern; the scope is usable immediately through the substrate skill.
+3. **Don't create a scope skill automatically.** Scope skills are a separate concern; the scope is usable immediately through the exfu-library skill.
 4. **Suggest an index refresh** if several scopes changed: the nightly-index librarian will catch up overnight anyway, so only mention it when the user needs current navigation immediately.
 
 ---

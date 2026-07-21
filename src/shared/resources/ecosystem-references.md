@@ -67,7 +67,7 @@ These are the resources ExFu trusts most right now for Anthropic's own guidance.
 ### Introduction to Claude Cowork
 **URL:** Via Anthropic Skilljar (search "Claude Cowork")
 **What it covers:** The Cowork surface that ExFu installs run on. Covers skills, Projects, Dispatch, scheduled tasks. Directly relevant to what ExFu sets up.
-**When to point at it:** When a user wants to understand the Cowork surface itself — what Claude can do natively before ExFu adds the substrate layer on top. Also useful for users who want to understand why ExFu uses certain Cowork primitives.
+**When to point at it:** When a user wants to understand the Cowork surface itself — what Claude can do natively before ExFu adds the Agent Library on top. Also useful for users who want to understand why ExFu uses certain Cowork primitives.
 
 ### Anthropic docs
 **URL:** https://docs.claude.com and https://support.claude.com
@@ -93,7 +93,7 @@ These are community-maintained resources ExFu finds useful. Quality is generally
 
 ### Superpowers
 **What it covers:** A well-respected community skill collection. Covers a range of Claude capabilities and workflows. Some overlap with ExFu's bundled skills; some goes further.
-**When to point at it:** When a user wants to explore Claude capabilities beyond what ExFu installs — more advanced skills, specialist workflows, community-developed patterns. Worth recommending for users who want to extend their substrate significantly after the initial install.
+**When to point at it:** When a user wants to explore Claude capabilities beyond what ExFu installs — more advanced skills, specialist workflows, community-developed patterns. Worth recommending for users who want to extend their library significantly after the initial install.
 **Note:** Community project. Quality is generally high but varies by skill. Review before installing anything.
 
 ### oh-my-claude

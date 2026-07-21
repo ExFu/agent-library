@@ -35,7 +35,7 @@ These are not judgment calls. Do not do them.
 
 **Never resolve merge conflicts automatically.** Conflicts are ambiguous by definition. Present them to the user, explain what each side contains, and let them decide. Your job is to make the decision easy, not to make it for them.
 
-**Watch for personal files on shared branches.** If a file from `context/me/` appears staged for a commit on the team's main branch, warn the user. That directory is personal-only. It may have ended up there by accident.
+**Watch for personal files on shared branches.** If a file from a personal `user/` scope (or the old `context/me/` layout) appears staged for a commit on the team's main branch, warn the user. Personal content is personal-only. It may have ended up there by accident.
 
 ---
 
@@ -136,7 +136,7 @@ Run these checks before staging:
 
 1. **Credential scan.** Check all staged files against the patterns listed above. Refuse if anything matches.
 2. **File-name scan.** If any staged file is named `passwords.md`, `secrets.md`, `tokens.md`, or similar, warn and ask the user to confirm it contains nothing sensitive before proceeding.
-3. **Personal-file-on-shared-branch check.** If any file from `context/me/` is staged, warn. Personal context belongs in the personal substrate, not the shared repo.
+3. **Personal-file-on-shared-branch check.** If any file from a personal `user/` scope (or the old `context/me/` layout) is staged, warn. Personal context belongs in the personal substrate, not the shared repo.
 4. **Binary size check.** Log a warning for files over 10 MB; refuse files over 100 MB.
 
 These checks protect the user from mistakes that are embarrassing or difficult to undo once pushed.
@@ -202,7 +202,7 @@ Be direct about the severity. Don't minimise it. And remind the user: if the sen
 
 ## How this skill fits with others
 
-**Substrate skill.** The substrate skill reads files at session start. This skill ensures files are fresh before that happens. Pull comes before the substrate skill reads anything.
+**exfu-library skill.** The exfu-library skill reads files at session start. This skill ensures files are fresh before that happens. Pull comes before the exfu-library skill reads anything.
 
 **Team-shared-skills-authoring skill (admin only).** When the substrate champion writes or edits a shared skill, those file changes land in the team's shared substrate repo. This skill commits and pushes those changes, using a commit message in the `skills:shared — ` namespace.
 

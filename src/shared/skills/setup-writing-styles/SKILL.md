@@ -57,7 +57,7 @@ This gives the user a chance to correct a misread before it gets baked in. One r
 
 ### Step 4 — Write the voice profile
 
-Write the profile at `context/me/writing-style.md` in the user's substrate, using this shape:
+Write the profile at `user/context/writing-style.md` in the user's substrate, using this shape:
 
 ```
 # Writing style — [username]
@@ -103,7 +103,7 @@ Once the voice profile is written:
 
 ### 1. Determine the username
 
-Read `context/me/about.md` from the user's substrate. Look for their name. Default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`). If the name is ambiguous or the file doesn't exist, ask: "What should we call your writing-styles skill? Something like `al-writing-styles` or `sarah-writing-styles` — first name or nickname is fine."
+Read `user/context/about-me.md` from the user's substrate. Look for their name. Default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`). If the name is ambiguous or the file doesn't exist, ask: "What should we call your writing-styles skill? Something like `al-writing-styles` or `sarah-writing-styles` — first name or nickname is fine."
 
 The per-user skill will be named `<username>-writing-styles`.
 
@@ -112,7 +112,7 @@ The per-user skill will be named `<username>-writing-styles`.
 Read the writing-styles template from `${CLAUDE_PLUGIN_ROOT}/templates/writing-styles-template.md`. Fill in the placeholders:
 
 - `{{username}}` → the resolved username
-- `{{voice_profile_path}}` → the path where you wrote the voice profile (e.g. `context/me/writing-style.md`)
+- `{{voice_profile_path}}` → the path where you wrote the voice profile (e.g. `user/context/writing-style.md`)
 
 The template contains the anti-slop layer and the full operational logic for the per-user skill. You are not reproducing that content here — you are pointing the template at the right profile location and packaging it.
 
@@ -129,7 +129,7 @@ Once the skill is installed, this setup is done. Going forward:
 - Writing or editing on the user's behalf → `<username>-writing-styles`
 - Updating the voice profile when the user pushes back or refines → `<username>-writing-styles` (the skill handles profile iteration)
 
-If the user ever wants a full re-intake — new samples, fresh profile — they can re-run `setup-writing-styles`. The old profile at `context/me/writing-style.md` will be overwritten. The generated skill will be replaced.
+If the user ever wants a full re-intake — new samples, fresh profile — they can re-run `setup-writing-styles`. The old profile at `user/context/writing-style.md` will be overwritten. The generated skill will be replaced.
 
 ---
 
@@ -144,5 +144,5 @@ The profile will improve over time through the per-user skill's iteration loop. 
 ## Dependencies
 
 - `skill-packaging` — used to package and present the generated skill.
-- The profile lives at `context/me/writing-style.md` in the user's substrate.
+- The profile lives at `user/context/writing-style.md` in the user's substrate.
 - The template at `${CLAUDE_PLUGIN_ROOT}/templates/writing-styles-template.md` contains the operational logic for the per-user skill.

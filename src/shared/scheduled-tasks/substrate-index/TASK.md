@@ -7,7 +7,7 @@ description: Scheduled task that generates a scope-level JSON index of the subst
 
 ## What this task does
 
-Runs a Python script that walks your substrate folder tree and writes a fresh JSON index to `exfu/derived/index.json`. The index maps every scope: its tree position, which folder-types are populated, version pins, and parent relationships.
+Runs a Python script that walks your library's folder tree and writes a fresh JSON index to `exfu/derived/index.json`. The index maps every scope: its tree position, which folder-types are populated, version pins, and parent relationships.
 
 The index gives any agent a whole-substrate picture in one read. No directory walking needed.
 

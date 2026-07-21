@@ -1,7 +1,7 @@
 {
   "name": "exfu-team",
-  "version": "0.3.4",
-  "description": "ExFu: install your personal Claude as a working collaborator inside a team substrate. Joiner edition.",
+  "version": "0.4.0",
+  "description": "ExFu: join your team's shared Agent Library and build your personal layer on top. Joiner edition.",
   "author": {
     "name": "Alastair Brayne",
     "email": "al@exfu.ai",
@@ -11,6 +11,8 @@
   "license": "Proprietary",
   "keywords": [
     "exfu",
+    "agent-library",
+    "librarians",
     "substrate",
     "knowledge-base",
     "cowork",

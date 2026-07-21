@@ -1,6 +1,6 @@
 ---
 name: {{username}}-inbox
-description: Quick-capture log for {{username}}. Use when {{username}} wants to dump something out of their head without sorting it, when they ask what's piled up in their inbox, or when they want to process and sort captured items. Also called by the substrate skill at session start to flag pending items. Triggers on "save this", "capture that", "hold onto this", "jot this down for me", "I want to come back to this", "don't lose this thought", "this is important but I don't know where it goes yet", "what's in my inbox", "process my inbox", or any time the user wants frictionless capture of something that doesn't have a home yet.
+description: Quick-capture log for {{username}}. Use when {{username}} wants to dump something out of their head without sorting it, when they ask what's piled up in their inbox, or when they want to process and sort captured items. Also called by the exfu-library skill at session start to flag pending items. Triggers on "save this", "capture that", "hold onto this", "jot this down for me", "I want to come back to this", "don't lose this thought", "this is important but I don't know where it goes yet", "what's in my inbox", "process my inbox", or any time the user wants frictionless capture of something that doesn't have a home yet.
 ---
 
 **About this template:** This file is a template used by `setup-inbox` to generate each user's personal inbox skill. The frontmatter above is what the generated skill's frontmatter will look like. When `setup-inbox` runs, it fills in this template with the user's actual preferences and packages the result as their personal inbox skill.
@@ -53,7 +53,7 @@ Triggers: "what's in my inbox", "process inbox", "sort my inbox", "clear the inb
    - **Actionable right now?** → do it, then remove.
 3. Save remaining items (if any).
 
-### Count (called on session load by `substrate`)
+### Count (called on session load by `exfu-library`)
 
 1. Read the file.
 2. Count non-empty lines.
@@ -73,5 +73,5 @@ Triggers: "what's in my inbox", "process inbox", "sort my inbox", "clear the inb
 
 ## Dependencies
 
-- `substrate` skill delegates to this skill on session load.
+- `exfu-library` skill delegates to this skill on session load.
 - The processing step may hand items to `{{username}}-reminders` or the user's task manager MCP.

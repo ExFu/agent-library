@@ -1190,7 +1190,7 @@ def render_graph_js():
       if (a.origin === 'exfu') { if (!showExfu) return; }
       else if (a.kind === 'librarian' && !showLib) return;
       else if (a.kind === 'agent' && !showBiz) return;
-      var hub = a.origin === 'exfu' ? 'ExFu' : (a.scope || 'Your substrate');
+      var hub = a.origin === 'exfu' ? 'ExFu' : (a.scope || 'Your library');
       (hubs[hub] = hubs[hub] || []).push(a);
     });
     var names = Object.keys(hubs), n = names.length || 1;
@@ -1832,9 +1832,9 @@ def render_substrate_map(index_data):
     if index_data is None:
         return (
             '<div class="empty-state">'
-            "<h3>No substrate index found</h3>"
+            "<h3>No library index found</h3>"
             "<p>Run the nightly index first to populate this view. "
-            "The index librarian walks your substrate and builds the map.</p>"
+            "The index librarian walks your library and builds the map.</p>"
             "</div>"
         )
 
@@ -1845,7 +1845,7 @@ def render_substrate_map(index_data):
         return (
             '<div class="empty-state">'
             "<h3>No scopes found</h3>"
-            "<p>Your substrate exists but has no scopes yet. "
+            "<p>Your library exists but has no scopes yet. "
             "Create your first scope to see it here.</p>"
             "</div>"
         )
@@ -2093,7 +2093,7 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
             + hint(
                 "Agents are recurring jobs your AI runs for you on a schedule "
                 "(e.g. Claude Cowork Scheduled tasks). Librarians are special "
-                "agents that keep the substrate itself tidy; business agents do "
+                "agents that keep the library itself tidy and findable; business agents do "
                 "your domain work, like scanning listings or drafting digests."
             )
             + " what's an agent?</span></div>"
@@ -2106,7 +2106,7 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
     if user_agents:
         by_scope = {}
         for a in user_agents:
-            by_scope.setdefault(a.get("scope_name") or "Your substrate", []).append(a)
+            by_scope.setdefault(a.get("scope_name") or "Your library", []).append(a)
         for scope_name in sorted(by_scope.keys()):
             group = sorted(
                 by_scope[scope_name],
@@ -2295,7 +2295,7 @@ def render_workspace_views(root, index_data):
     if index_data is None:
         return (
             '<div class="empty-state">'
-            "<h3>No substrate index found</h3>"
+            "<h3>No library index found</h3>"
             "<p>Run the nightly index first. Workspace views need the index "
             "to know where to look for todo, reminders, and inbox items.</p>"
             "</div>"
@@ -2664,7 +2664,7 @@ def render_workspace_view(root, index_data, kind, label, empty_guidance):
     """
     if index_data is None:
         return (
-            '<div class="empty-state"><h3>No substrate index found</h3>'
+            '<div class="empty-state"><h3>No library index found</h3>'
             "<p>Run the nightly index first. This view needs the index to know "
             "where to look.</p></div>"
         )
@@ -2831,8 +2831,8 @@ def generate_dashboard(root):
         if s.get("type") == "user":
             user_name = s.get("name", "")
             break
-    title_h1 = f"{esc(user_name)}&rsquo;s substrate" if user_name else "Your substrate"
-    page_title = f"ExFu -- {user_name} substrate" if user_name else "ExFu -- your substrate"
+    title_h1 = f"{esc(user_name)}&rsquo;s library" if user_name else "Your library"
+    page_title = f"ExFu -- {user_name}'s library" if user_name else "ExFu -- your library"
 
     # Assemble page
     page = f"""<!DOCTYPE html>
@@ -2848,7 +2848,7 @@ def generate_dashboard(root):
   <div class="main">
   <div class="container">
     <header>
-      <div class="eyebrow">ExFu &middot; substrate snapshot</div>
+      <div class="eyebrow">ExFu &middot; library snapshot</div>
       <h1>{title_h1}</h1>
       <div class="subtitle">Generated {esc(now)}{' -- index from ' + esc(index_ts) if index_ts else ''}</div>
     </header>
