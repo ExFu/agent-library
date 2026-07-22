@@ -6,6 +6,26 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.5.0 -- 2026-07-22
+
+The dashboard learns to take instructions. Interactions queue prompts instead of touching files: the Action Basket. Plus an ontology reference view, linked pointer chips, date-aware reminders, a staleness banner, and a visualisations gallery.
+
+**Added**
+- **The Action Basket.** The dashboard stays read-only about the library's files, but its controls now queue editable instructions: tick a task checkbox, mark an item for deletion, use the + New task / scope / reminder / capture forms, type into the sidebar's ask-about inputs, or press a suggest button on a guidance line. Instructions collect in a drawer (inline edit, reorder, remove; persisted in the browser per library root) and export two ways: **Copy prompt** (a complete, path-annotated prompt for any session) or **Open in Claude** (a `claude://cowork/new` deep link that prefills a Cowork session; the user still presses send; over ~13k characters the link disables and points at Copy). Queued changes render optimistically with a dashed amber "queued" style; instructions written against an older page snapshot are flagged. Nothing on disk changes until the user's AI does the work -- the basket is a prompt under construction, which is also how it teaches the conversational model.
+- **How it works view.** The core ontology rendered as a visual reference: the folder-type catalogue as a card grid, every section of `ontology.md` readable in collapsibles. The sidebar now also surfaces each scope's own `ontology/` files alongside `context/`.
+- **Gallery.** Your scopes now ends with every visualisation bundle across scopes (with or without a `viz.md` manifest), linked to open; `view: true` bundles still mount as top-level tabs.
+- **Staleness banner.** When the index behind the page is older than 36 hours, a banner says so and offers to queue a refresh instruction.
+
+**Changed**
+- Pointer chips ("Managed in ClickUp") become real links when the folder's own agent.md names a URL -- never fabricated. The sidebar detail gains an "Open in your tool" button.
+- Reminders group by urgency: Overdue (red), Coming up within 7 days (amber), then the rest as written. ISO dates are parsed best-effort; entries without one render exactly as before. Bullet-entry titles shed their checkbox markers and leading dates.
+- The example library now demonstrates the new surfaces out of the box: dated reminders, an inbox capture with triage status, and a ClickUp board URL on the pointer todo.
+
+**Fixed**
+- Removed two stray duplicate definitions of `grouping_label`/`hint` in dashboard-generator.py left behind by an earlier editing pass, and synced the example's dashboard-generator librarian definition to the v0.3.1 gallery placement it had missed.
+
+---
+
 ## v0.4.0 -- 2026-07-20
 
 The Agent Library release: the pitch is renamed, the plumbing is not; and storage moves from Box to Dropbox.

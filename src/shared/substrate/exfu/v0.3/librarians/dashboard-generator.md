@@ -14,7 +14,7 @@ writes:
   - "exfu/visualisations/dashboard/index.html"
 depends_on:
   - nightly-index
-description: Generates a static HTML dashboard showing substrate map, librarian health, and workspace views
+description: Generates the library dashboard, a static HTML page with the scope map, agent health, workspace views, and the instruction basket
 ---
 
 # Dashboard generator librarian
@@ -42,7 +42,9 @@ The substrate is powerful but invisible: the user interacts with it through conv
 
 1. **Substrate map** -- every scope as a card: name, purpose, folder-type population, version pin, parent/child relationships. A conceptual map, not a filesystem tree.
 2. **Librarian dashboard** -- registered librarians with health indicators, last run, cadence, and recent history from the log.
-3. **Workspace views** -- aggregated todo, reminders, and inbox items across scopes. Data-bearing folders show content; pointer folders show where the data lives instead (e.g. "Managed in ClickUp").
+3. **Workspace views** -- aggregated todo, reminders, and inbox items across scopes. Data-bearing folders show content; pointer folders show where the data lives instead (e.g. "Managed in ClickUp", linked when the folder names a URL). Reminders group by date: overdue, coming up, the rest.
+4. **How it works** -- the core ontology rendered as a visual reference: the folder-type catalogue as cards, the full conventions as collapsible sections.
+5. **The Action Basket** -- the page's controls (tick a task, mark for deletion, create forms, ask-about inputs) do not write anything; each queues an editable instruction in a basket the user copies to their AI, or opens as a prefilled Claude Cowork session via deep link. Queued changes render with a dashed "queued" style until an agent actually makes them and regenerates the page.
 
 ## What it touches
 

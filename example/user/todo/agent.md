@@ -7,3 +7,4 @@ Local deviations:
 - Tasks are tracked in ClickUp, not stored locally
 - Use the ClickUp MCP connector for read/write
 - Default workspace: "Alastair's Workspace"
+- Board: https://app.clickup.com/2461358/v/b/alastairs-workspace

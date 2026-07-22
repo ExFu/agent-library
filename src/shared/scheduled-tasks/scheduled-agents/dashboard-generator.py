@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dashboard Generator (v0.3.4)
+Dashboard Generator (v0.5.0)
 
 Reads the substrate index, the scheduled-agent registry, and the run log,
 plus workspace content from individual scopes, and generates a
@@ -8,6 +8,11 @@ self-contained HTML dashboard at exfu/visualisations/dashboard/index.html
 (the substrate's visualisations gallery). Falls back to the pre-rename
 registry/log filenames so it works on substrates that predate the
 scheduled-agent vocabulary.
+
+The page is read-only about the substrate's files. Its interactive
+controls feed the Action Basket: queued, editable instructions the user
+hands to their AI (copy-paste or a claude:// deep link). Pending changes
+render optimistically; the agent makes them real and regenerates.
 
 Usage:
     python3 dashboard-generator.py /path/to/substrate-root
@@ -143,6 +148,43 @@ def inline_md(s):
     s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
     s = re.sub(r"\[\[(.+?)\]\]", r"\1", s)
     return s
+
+
+URL_RE = re.compile(r"https?://[^\s)\]>\"']+")
+
+
+def extract_url(text):
+    """First http(s) URL found in text, or None. Never fabricated."""
+    m = URL_RE.search(text or "")
+    return m.group(0).rstrip(".,;") if m else None
+
+
+ISO_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+
+
+def classify_reminder_date(text):
+    """
+    Best-effort: find the first ISO date in a reminder entry and classify it
+    as overdue / soon (next 7 days) / later. Unparseable text simply gets no
+    date; the entry renders as ordinary content, never an error.
+    Returns (iso_string_or_None, group_or_None).
+    """
+    m = ISO_DATE_RE.search(text or "")
+    if not m:
+        return None, None
+    try:
+        due = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                       tzinfo=timezone.utc)
+    except ValueError:
+        return None, None
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
+                                               microsecond=0)
+    delta = (due - today).days
+    if delta < 0:
+        return m.group(0), "overdue"
+    if delta <= 7:
+        return m.group(0), "soon"
+    return m.group(0), "later"
 
 
 CHECKBOX_RE = re.compile(r"^[-*] \[( |x|X)\]\s*(.*)$")
@@ -1025,6 +1067,189 @@ def render_css():
     .gedge.g-hot { stroke: var(--rust); opacity: 0.85; }
     .gnode.g-focus text, .gnode:hover text { fill: var(--ink); font-weight: 700; }
 
+    /* Pointer chips that link out to the user's own tool */
+    a.chip-link { text-decoration: none; cursor: pointer; transition: all 0.15s var(--ease); }
+    a.chip-link:hover { background: var(--blue); color: #FFFFFF; }
+
+    /* Item card actions: tick and mark-for-deletion */
+    .item-scope { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; }
+    .item-actions { display: inline-flex; gap: 0.3rem; opacity: 0; transition: opacity 0.15s var(--ease); }
+    .item-card:hover .item-actions, .item-card.pending-delete .item-actions { opacity: 1; }
+    button.bk-del {
+      appearance: none; border: 1px solid var(--line); background: var(--card);
+      color: var(--muted); width: 1.2rem; height: 1.2rem; border-radius: 50%;
+      font-size: 0.8rem; line-height: 1; cursor: pointer; padding: 0;
+      transition: all 0.15s var(--ease);
+    }
+    button.bk-del:hover { color: var(--red); border-color: var(--red); }
+    button.ws-box { appearance: none; cursor: pointer; padding: 0; transition: all 0.15s var(--ease); }
+    button.ws-box:hover { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+
+    /* Pending overlays: the change is queued in the basket, not yet real */
+    .pending-chip {
+      display: inline-block; background: var(--amber-soft); color: var(--amber);
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0.08rem 0.5rem; border-radius: 999px;
+      margin-left: 0.4rem; vertical-align: middle;
+    }
+    .item-card.pending-tick { border-style: dashed; border-color: var(--amber); }
+    .pending-tick .ws-box { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+    .pending-tick .ws-box:empty::before { content: "\\2713"; }
+    .item-card.pending-delete { border-style: dashed; border-color: var(--red); opacity: 0.55; }
+    .pending-delete .item-title { text-decoration: line-through; }
+
+    /* Date-grouped reminders */
+    .item-overdue { border-left: 3px solid var(--red); }
+    .item-soon { border-left: 3px solid var(--amber); }
+    .reminder-group-overdue h3 { color: var(--red); }
+    .reminder-group-soon h3 { color: var(--amber); }
+
+    /* Stale-index banner */
+    .stale-banner {
+      background: var(--amber-soft); color: var(--ink-soft);
+      border: 1px solid #E8D5B5; border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; font-size: 0.84rem;
+      padding: 0.6rem 0.9rem; margin-bottom: 1.2rem;
+    }
+
+    /* How it works: the ontology as a visual reference */
+    .ont-h { font-family: var(--serif); font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+    .ont-intro { max-width: 46rem; }
+    .ont-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 0.7rem; }
+    .ont-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0.7rem 0.85rem; box-shadow: var(--shadow-1); }
+    .ont-card-name { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--rust); }
+    .ont-card-q { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; }
+    details.ont-doc { padding: 0.55rem 0.8rem; }
+    .ont-code {
+      font-family: var(--mono); font-size: 0.74rem; line-height: 1.5;
+      background: var(--paper-deep); border: 1px solid var(--line-soft);
+      border-radius: 8px; padding: 0.6rem 0.75rem; margin: 0.45rem 0;
+      overflow-x: auto; white-space: pre;
+    }
+    .ont-table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.82rem; }
+    .ont-table th, .ont-table td { border: 1px solid var(--line-soft); padding: 0.3rem 0.6rem; text-align: left; vertical-align: top; }
+    .ont-table th { background: var(--paper-deep); font-weight: 600; }
+    .panel-prose code, .ont-card-name code, .map-conventions code {
+      font-family: var(--mono); background: var(--paper-deep);
+      border-radius: 4px; padding: 0 0.25rem; font-size: 0.9em;
+    }
+
+    /* Gallery */
+    .gallery-section { margin-top: 1.8rem; }
+    .gallery-hint { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.6rem; }
+    a.gallery-card { display: block; text-decoration: none; color: inherit; }
+
+    /* Basket create-forms */
+    details.bk-form { margin: 0 0 1rem; }
+    details.bk-form > summary {
+      cursor: pointer; list-style: none; display: inline-block;
+      font-size: 0.76rem; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--rust); border: 1px dashed var(--rust);
+      border-radius: 999px; padding: 0.3rem 0.9rem;
+      transition: all 0.15s var(--ease);
+    }
+    details.bk-form > summary::-webkit-details-marker { display: none; }
+    details.bk-form > summary:hover { background: var(--rust-soft); }
+    .bk-form-body {
+      margin-top: 0.6rem; padding: 0.8rem 0.9rem; background: var(--card);
+      border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-1);
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      max-width: 46rem;
+    }
+    .bk-input {
+      font-family: var(--sans); font-size: 0.84rem; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.4rem 0.6rem; flex: 1 1 12rem; min-width: 8rem;
+    }
+    textarea.bk-input { flex-basis: 100%; resize: vertical; }
+    .bk-input:focus { outline: none; border-color: var(--rust); }
+    .bk-label { font-size: 0.72rem; color: var(--muted); flex: none; }
+    .bk-form-row { flex-basis: 100%; display: flex; align-items: center; gap: 0.7rem; }
+    .bk-submit {
+      appearance: none; border: none; background: var(--rust); color: #FCF9F6;
+      font-family: var(--sans); font-size: 0.76rem; font-weight: 600;
+      border-radius: 999px; padding: 0.4rem 1rem; cursor: pointer;
+      transition: background 0.15s var(--ease);
+    }
+    .bk-submit:hover { background: var(--rust-deep); }
+    .bk-form-note { font-size: 0.72rem; color: var(--faint); }
+    button.bk-suggest {
+      appearance: none; border: 1px dashed var(--rust); background: none;
+      color: var(--rust); font-family: var(--sans); font-size: 0.72rem;
+      font-weight: 600; border-radius: 999px; padding: 0.14rem 0.6rem;
+      cursor: pointer; transition: all 0.15s var(--ease);
+    }
+    button.bk-suggest:hover { background: var(--rust-soft); }
+
+    /* The basket itself: pill plus drawer */
+    #bk-pill {
+      position: fixed; left: 1.2rem; bottom: 1.2rem; z-index: 40;
+      appearance: none; border: none; cursor: pointer;
+      background: var(--ink); color: #F4F1EC;
+      font-family: var(--sans); font-size: 0.78rem; font-weight: 600;
+      border-radius: 999px; padding: 0.55rem 1.1rem;
+      box-shadow: var(--shadow-2); display: flex; align-items: center; gap: 0.5rem;
+      transition: transform 0.2s var(--ease);
+    }
+    #bk-pill:hover { transform: translateY(-2px); }
+    #bk-pill .bk-count {
+      background: var(--rust); border-radius: 999px; min-width: 1.25rem;
+      height: 1.25rem; line-height: 1.25rem; text-align: center;
+      font-size: 0.7rem; padding: 0 0.3rem;
+    }
+    #bk-pill.bk-pulse .bk-count { animation: bkpulse 0.5s var(--ease); }
+    @keyframes bkpulse {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+    #bk-drawer {
+      position: fixed; left: 1.2rem; bottom: 3.9rem; z-index: 41;
+      width: min(440px, calc(100vw - 2.4rem));
+      max-height: min(34rem, 72vh);
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; box-shadow: var(--shadow-2);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    #bk-drawer.open { display: flex; }
+    .bk-head { padding: 0.85rem 1rem 0.6rem; border-bottom: 1px solid var(--line-soft); }
+    .bk-head h3 { font-family: var(--serif); font-size: 1.05rem; margin: 0; }
+    .bk-sub { font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+    .bk-list { overflow-y: auto; padding: 0.5rem 0.75rem; flex: 1; }
+    .bk-item { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.45rem 0.25rem; border-bottom: 1px solid var(--line-soft); }
+    .bk-item-text {
+      font-size: 0.82rem; color: var(--ink-soft); line-height: 1.4;
+      border-radius: 6px; padding: 0.15rem 0.3rem; overflow-wrap: break-word;
+    }
+    .bk-item-text:focus { outline: 1px solid var(--rust); background: var(--paper); }
+    .bk-item-src { display: block; font-size: 0.64rem; color: var(--faint); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 0.15rem; padding-left: 0.3rem; }
+    .bk-item-stale { color: var(--amber); }
+    .bk-item-btns { display: flex; flex-direction: column; gap: 0.15rem; flex: none; }
+    .bk-item-btns button {
+      appearance: none; border: 1px solid var(--line); background: var(--card);
+      color: var(--muted); border-radius: 6px; width: 1.4rem; height: 1.15rem;
+      font-size: 0.62rem; line-height: 1; cursor: pointer; padding: 0;
+    }
+    .bk-item-btns button:hover { color: var(--rust); border-color: var(--rust); }
+    .bk-empty { color: var(--faint); font-size: 0.8rem; padding: 1rem 0.5rem; text-align: center; }
+    .bk-addrow { display: flex; gap: 0.4rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--line-soft); }
+    .bk-addrow input { flex: 1; }
+    .bk-foot { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding: 0.6rem 0.75rem 0.75rem; border-top: 1px solid var(--line-soft); background: var(--paper); }
+    .bk-btn {
+      appearance: none; font-family: var(--sans); font-size: 0.74rem; font-weight: 600;
+      border-radius: 999px; padding: 0.38rem 0.9rem; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+      transition: all 0.15s var(--ease); text-decoration: none; display: inline-block;
+    }
+    .bk-btn:hover { border-color: var(--rust); color: var(--rust); }
+    .bk-btn-primary { background: var(--rust); border-color: var(--rust); color: #FCF9F6; }
+    .bk-btn-primary:hover { background: var(--rust-deep); color: #FCF9F6; }
+    .bk-btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+    .bk-foot-note { font-size: 0.68rem; color: var(--faint); flex-basis: 100%; }
+    .panel-act-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.6rem; }
+    .panel-ask { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+    .panel-ask input { flex: 1; }
+
     footer {
       margin-top: 3rem;
       padding-top: 1.1rem;
@@ -1075,6 +1300,398 @@ def render_tab_js():
       });
     });
     """
+
+
+def render_basket_js():
+    """
+    The Action Basket: every interaction queues an editable instruction into
+    a list the user hands to their AI (copy, or a Claude deep link). Nothing
+    here writes to the library -- the basket is a prompt under construction,
+    and the pending styles are a preview of what the AI will be asked to do.
+    """
+    return """
+(function () {
+  var D = window.EXFU_DATA || {};
+  var LS_KEY = 'exfu-basket:' + (D.root || 'default');
+  var state = load();
+  var drawer = null, pill = null;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.items) return parsed;
+      }
+    } catch (e) {}
+    return { items: [] };
+  }
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function uid() { return 'b' + Math.random().toString(36).slice(2, 10); }
+
+  function itemFor(ref) {
+    if (!ref) return null;
+    var parts = ref.split(':');
+    var list = (D.workspace || {})[parts[0]] || [];
+    var it = list[parseInt(parts[1], 10)];
+    return it ? { kind: parts[0], it: it } : null;
+  }
+  function keyFor(kind, it) {
+    return kind + ':' + (it.rel || '') + (it.file || '') + ':' + (it.title || '');
+  }
+  function locFor(it) { return (it.rel || '') + (it.file || ''); }
+
+  function toggleInstruction(kind, it) {
+    if (it.done) {
+      return 'In ' + locFor(it) + ', mark the task "' + it.title +
+        '" as not done again (untick it).';
+    }
+    return 'In ' + locFor(it) + ', mark the task "' + it.title +
+      '" as done. Follow the folder conventions (tick it, or move it to ' +
+      'done.md if that is the pattern there).';
+  }
+  function deleteInstruction(kind, it) {
+    if (kind === 'inbox') {
+      return 'Delete the inbox item "' + it.title + '" (' + locFor(it) +
+        '). I have decided it is not needed.';
+    }
+    if (kind === 'reminders') {
+      return 'Remove the reminder "' + it.title + '" from ' + locFor(it) + '.';
+    }
+    return 'Remove the task "' + it.title + '" from ' + locFor(it) + '.';
+  }
+
+  function add(text, source, key, verb) {
+    if (!text) return;
+    if (key && verb) {
+      // clicking the same control again is a change of mind: unqueue it
+      for (var i = 0; i < state.items.length; i++) {
+        if (state.items[i].key === key && state.items[i].verb === verb) {
+          state.items.splice(i, 1);
+          save(); renderAll(false);
+          return;
+        }
+      }
+    }
+    state.items.push({
+      id: uid(), text: text, source: source || '', key: key || '',
+      verb: verb || '', snapshotAt: D.generatedAt || ''
+    });
+    save(); renderAll(true);
+  }
+  function removeById(id) {
+    for (var i = 0; i < state.items.length; i++) {
+      if (state.items[i].id === id) { state.items.splice(i, 1); break; }
+    }
+    save(); renderAll(false);
+  }
+  function moveById(id, delta) {
+    for (var i = 0; i < state.items.length; i++) {
+      if (state.items[i].id === id) {
+        var j = i + delta;
+        if (j < 0 || j >= state.items.length) return;
+        var tmp = state.items[i];
+        state.items[i] = state.items[j];
+        state.items[j] = tmp;
+        break;
+      }
+    }
+    save(); renderAll(false);
+  }
+
+  function buildPrompt() {
+    var lines = [];
+    lines.push('Open my Agent Library: load my wow skill (or the ' +
+      'exfu-library skill) first.');
+    lines.push('');
+    lines.push('Below are changes I queued from my library dashboard ' +
+      '(snapshot: ' + (D.generatedAt || 'unknown') + '). Paths are relative ' +
+      'to my library root. Apply each one following the library ' +
+      'conventions, and check with me if anything is ambiguous.');
+    lines.push('');
+    for (var i = 0; i < state.items.length; i++) {
+      lines.push((i + 1) + '. ' + state.items[i].text);
+    }
+    lines.push('');
+    lines.push('When done, re-run the library index and regenerate the ' +
+      'dashboard so it reflects reality.');
+    return lines.join('\\n');
+  }
+
+  function applyOverlays() {
+    var byKey = {};
+    state.items.forEach(function (b) {
+      if (b.key) (byKey[b.key] = byKey[b.key] || []).push(b);
+    });
+    var nodes = document.querySelectorAll('[data-bk-key]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      el.classList.remove('pending-tick', 'pending-delete');
+      var old = el.querySelector('.pending-chip');
+      if (old) old.parentNode.removeChild(old);
+      var list = byKey[el.getAttribute('data-bk-key')] || [];
+      if (!list.length) continue;
+      var verbs = list.map(function (b) { return b.verb; });
+      if (verbs.indexOf('delete') !== -1) el.classList.add('pending-delete');
+      else if (verbs.indexOf('toggle') !== -1) el.classList.add('pending-tick');
+      var chip = document.createElement('span');
+      chip.className = 'pending-chip';
+      chip.textContent = 'queued';
+      (el.querySelector('.item-title') || el).appendChild(chip);
+    }
+  }
+
+  function renderList() {
+    var list = drawer.querySelector('.bk-list');
+    if (!state.items.length) {
+      list.innerHTML = '<div class="bk-empty">Nothing queued yet. Tick a ' +
+        'task, mark something for deletion, or use a + button anywhere on ' +
+        'the page.</div>';
+      return;
+    }
+    var h = '';
+    state.items.forEach(function (b) {
+      var stale = b.snapshotAt && D.generatedAt && b.snapshotAt !== D.generatedAt;
+      h += '<div class="bk-item" data-bk-id="' + b.id + '">' +
+        '<div style="flex:1;min-width:0">' +
+        '<div class="bk-item-text" contenteditable="true" spellcheck="false">' +
+        esc(b.text) + '</div>' +
+        '<span class="bk-item-src">' + esc(b.source || 'instruction') +
+        (stale ? ' <span class="bk-item-stale">from an older snapshot</span>' : '') +
+        '</span></div>' +
+        '<div class="bk-item-btns">' +
+        '<button data-bk-mv="-1" title="Move up">&#9650;</button>' +
+        '<button data-bk-mv="1" title="Move down">&#9660;</button>' +
+        '<button data-bk-rm="1" title="Remove">&#215;</button>' +
+        '</div></div>';
+    });
+    list.innerHTML = h;
+  }
+
+  function renderAll(pulse) {
+    if (!drawer) return;
+    renderList();
+    var count = pill.querySelector('.bk-count');
+    count.textContent = String(state.items.length);
+    if (pulse) {
+      pill.classList.remove('bk-pulse');
+      void pill.offsetWidth;
+      pill.classList.add('bk-pulse');
+    }
+    var link = drawer.querySelector('#bk-open');
+    var note = drawer.querySelector('#bk-note');
+    var prompt = buildPrompt();
+    var encoded = 'claude://cowork/new?q=' + encodeURIComponent(prompt);
+    if (!state.items.length) {
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('href', '#');
+      note.textContent = '';
+    } else if (encoded.length > 13000) {
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('href', '#');
+      note.textContent = 'Too long for one click now; use Copy prompt and ' +
+        'paste it into your AI.';
+    } else {
+      link.removeAttribute('aria-disabled');
+      link.setAttribute('href', encoded);
+      note.textContent = 'Copy pastes anywhere; Open in Claude prefills a ' +
+        'Cowork session (you still press send).';
+    }
+    applyOverlays();
+  }
+
+  function copyText(t, btn, label) {
+    function done() {
+      var was = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(function () { btn.textContent = was; }, 1500);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
+  }
+
+  function buildUi() {
+    pill = document.createElement('button');
+    pill.id = 'bk-pill';
+    pill.setAttribute('title', 'Your queued instructions');
+    pill.innerHTML = 'Basket <span class="bk-count">0</span>';
+    drawer = document.createElement('div');
+    drawer.id = 'bk-drawer';
+    drawer.innerHTML =
+      '<div class="bk-head"><h3>Instructions for your AI</h3>' +
+      '<div class="bk-sub">Changes queue here; hand the list to your AI in ' +
+      'one go. Nothing in your library changes until it does the work.</div>' +
+      '</div>' +
+      '<div class="bk-list"></div>' +
+      '<div class="bk-addrow"><input class="bk-input" id="bk-free" ' +
+      'maxlength="500" placeholder="Add your own instruction">' +
+      '<button class="bk-btn" id="bk-addbtn">Add</button></div>' +
+      '<div class="bk-foot">' +
+      '<button class="bk-btn bk-btn-primary" id="bk-copy">Copy prompt</button>' +
+      '<a class="bk-btn" id="bk-open" href="#" aria-disabled="true">' +
+      'Open in Claude</a>' +
+      '<button class="bk-btn" id="bk-clear">Clear</button>' +
+      '<span class="bk-foot-note" id="bk-note"></span></div>';
+    document.body.appendChild(pill);
+    document.body.appendChild(drawer);
+
+    pill.addEventListener('click', function () {
+      drawer.classList.toggle('open');
+    });
+    drawer.querySelector('#bk-copy').addEventListener('click', function (ev) {
+      if (state.items.length) copyText(buildPrompt(), ev.currentTarget);
+    });
+    drawer.querySelector('#bk-clear').addEventListener('click', function () {
+      if (!state.items.length) return;
+      if (window.confirm('Clear all queued instructions?')) {
+        state.items = [];
+        save(); renderAll(false);
+      }
+    });
+    drawer.querySelector('#bk-addbtn').addEventListener('click', function () {
+      var inp = drawer.querySelector('#bk-free');
+      if (inp.value.trim()) {
+        add(inp.value.trim(), 'written by you', '', 'note');
+        inp.value = '';
+      }
+    });
+    drawer.querySelector('#bk-free').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        drawer.querySelector('#bk-addbtn').click();
+      }
+    });
+    drawer.addEventListener('click', function (ev) {
+      var row = ev.target.closest ? ev.target.closest('.bk-item') : null;
+      if (!row) return;
+      var id = row.getAttribute('data-bk-id');
+      if (ev.target.hasAttribute('data-bk-rm')) removeById(id);
+      else if (ev.target.hasAttribute('data-bk-mv')) {
+        moveById(id, parseInt(ev.target.getAttribute('data-bk-mv'), 10));
+      }
+    });
+    drawer.addEventListener('focusout', function (ev) {
+      if (!ev.target.classList || !ev.target.classList.contains('bk-item-text')) return;
+      var row = ev.target.closest('.bk-item');
+      if (!row) return;
+      var id = row.getAttribute('data-bk-id');
+      for (var i = 0; i < state.items.length; i++) {
+        if (state.items[i].id === id) {
+          var t = ev.target.textContent.replace(/\\s+/g, ' ').trim();
+          if (t) state.items[i].text = t;
+          break;
+        }
+      }
+      save(); renderAll(false);
+    });
+  }
+
+  function onDocClick(ev) {
+    var sg = ev.target.closest ? ev.target.closest('.bk-suggest') : null;
+    if (sg) {
+      add(sg.getAttribute('data-bk-suggest') || '', 'suggested', '', 'note');
+      return;
+    }
+    var go = ev.target.closest ? ev.target.closest('[data-ask-go]') : null;
+    if (go) {
+      var wrap = go.parentNode;
+      var inp = wrap.querySelector('input');
+      if (!inp || !inp.value.trim()) return;
+      var about = inp.getAttribute('data-ask-about') || '';
+      add((about ? 'About ' + about + ': ' : '') + inp.value.trim(),
+          'about an item', '', 'note');
+      inp.value = '';
+      return;
+    }
+    var b = ev.target.closest ? ev.target.closest('.bk-act') : null;
+    if (!b) return;
+    var found = itemFor(b.getAttribute('data-bk-item'));
+    if (!found) return;
+    var verb = b.getAttribute('data-bk-verb');
+    var key = keyFor(found.kind, found.it);
+    if (verb === 'toggle') {
+      add(toggleInstruction(found.kind, found.it), found.it.scope || '', key, 'toggle');
+    } else if (verb === 'delete') {
+      add(deleteInstruction(found.kind, found.it), found.it.scope || '', key, 'delete');
+    }
+  }
+
+  function onFormSubmit(ev) {
+    var f = ev.target.closest ? ev.target.closest('form[data-bk-form]') : null;
+    if (!f) return;
+    ev.preventDefault();
+    var kind = f.getAttribute('data-bk-form');
+    var v = {};
+    var names = ['text', 'scope', 'date', 'title', 'note', 'name',
+                 'purpose', 'parent'];
+    for (var i = 0; i < names.length; i++) {
+      var el = f.querySelector('[name="' + names[i] + '"]');
+      if (el) v[names[i]] = el.value.trim();
+    }
+    var text = '', src = '';
+    if (kind === 'create-task') {
+      text = 'Add a task to the ' + v.scope + ' scope\\u2019s todo: "' +
+        v.text + '". Create the todo folder first if it does not exist yet.';
+      src = 'new task';
+    } else if (kind === 'create-reminder') {
+      text = 'Add a reminder in the ' + v.scope + ' scope' +
+        (v.date ? ' for ' + v.date : '') + ': "' + v.text +
+        '". Create the reminders folder first if needed.';
+      src = 'new reminder';
+    } else if (kind === 'create-capture') {
+      text = 'Capture to the ' + v.scope + ' scope\\u2019s inbox: "' +
+        v.title + '"' + (v.note ? '. The note: ' + v.note : '') +
+        '. Create the inbox folder first if needed.';
+      src = 'inbox capture';
+    } else if (kind === 'create-scope') {
+      text = 'Create a new scope named "' + v.name + '"' +
+        (v.parent && v.parent !== 'top level'
+          ? ' inside the ' + v.parent + ' scope' : ' at the top level') +
+        (v.purpose ? ', purpose: "' + v.purpose + '"' : '') +
+        '. Use the scope-setup flow.';
+      src = 'new scope';
+    }
+    if (text) {
+      add(text, src, '', 'create');
+      f.reset();
+      var det = f.closest ? f.closest('details') : null;
+      if (det) det.removeAttribute('open');
+    }
+  }
+
+  function init() {
+    buildUi();
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('submit', onFormSubmit);
+    renderAll(false);
+  }
+
+  window.EXFU_BASKET = { add: add, itemKey: keyFor };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+"""
 
 
 def render_graph_js():
@@ -1534,6 +2151,18 @@ def render_graph_js():
              (sc.contextMore === 1 ? '' : 's') + ' -- open the folder to browse</div>';
       }
     }
+    var ont = sc.ontologyDocs || [];
+    if (ont.length) {
+      h += '<div class="panel-section">Ontology</div>';
+      ont.forEach(function (c) {
+        h += '<details class="panel-doc"><summary>' + esc(c.title) +
+             '</summary><div class="panel-prose">' + c.html + '</div></details>';
+      });
+    }
+    h += '<div class="panel-ask"><input class="bk-input" maxlength="400" ' +
+         'data-ask-about="the ' + esc(sc.name) + ' scope" ' +
+         'placeholder="Queue a question or change for this scope">' +
+         '<button class="bk-btn" data-ask-go="1">Queue</button></div>';
     h += '<div class="panel-guidance">Ask your AI about this scope by name -- it knows where everything lives.</div>';
     openPanel(h);
   }
@@ -1549,9 +2178,19 @@ def render_graph_js():
     if (a.cadence) h += '<div class="panel-section">Cadence</div><div>' + esc(a.cadence) + '</div>';
     if (a.scope) h += '<div class="panel-section">Scope</div><div>' + esc(a.scope) + '</div>';
     if (a.lastRun) h += '<div class="panel-section">Last run</div><div>' + esc(a.lastRun) + '</div>';
+    var install = 'Register the staged agent &quot;' + esc(a.name) +
+      '&quot; so it starts running on its cadence.';
+    var investigate = 'Investigate why the agent &quot;' + esc(a.name) +
+      '&quot; is failing, fix what you can, and report back.';
     h += '<div class="panel-guidance">' + (a.registered
-      ? 'To change or pause it, just tell your AI.'
-      : 'Staged, not yet running. Tell your AI "install ' + esc(a.name) + '" to switch it on.') + '</div>';
+      ? 'To change or pause it, just tell your AI. '
+      : 'Staged, not yet running. ');
+    if (!a.registered) {
+      h += '<button class="bk-suggest" data-bk-suggest="' + install + '">queue install</button>';
+    } else if (a.status === 'failing' || a.status === 'warning') {
+      h += '<button class="bk-suggest" data-bk-suggest="' + investigate + '">queue an investigation</button>';
+    }
+    h += '</div>';
     openPanel(h);
   }
 
@@ -1579,13 +2218,30 @@ def render_graph_js():
     if (it.html) h += '<div class="panel-section">Detail</div><div class="panel-prose">' + it.html + '</div>';
     if (it.pointer) {
       h += '<div class="panel-section">Where it lives</div><div class="panel-prose">' + esc(it.pointer) + '</div>';
+      if (it.pointerUrl) {
+        h += '<div class="panel-act-row"><a class="bk-btn" target="_blank" rel="noopener" href="' +
+             esc(it.pointerUrl) + '">Open in your tool &#8599;</a></div>';
+      }
     }
     if (it.path) {
       h += '<div class="panel-section">Folder</div>' + pathRow(it.path, it.rel || it.path);
     }
+    if (it.kind !== 'pointer') {
+      h += '<div class="panel-act-row">';
+      if (it.kind === 'task') {
+        h += '<button class="bk-btn bk-act" data-bk-verb="toggle" data-bk-item="' +
+             kind + ':' + idx + '">' + (it.done ? 'Untick' : 'Tick off') + '</button>';
+      }
+      h += '<button class="bk-btn bk-act" data-bk-verb="delete" data-bk-item="' +
+           kind + ':' + idx + '">Mark for deletion</button></div>';
+      h += '<div class="panel-ask"><input class="bk-input" maxlength="400" ' +
+           'data-ask-about="&quot;' + esc(it.title) + '&quot; (' + esc((it.rel || '') + (it.file || '')) + ')" ' +
+           'placeholder="Queue a question or change about this">' +
+           '<button class="bk-btn" data-ask-go="1">Queue</button></div>';
+    }
     h += '<div class="panel-guidance">' + (kind === 'inbox'
       ? 'To file it, tell your AI where it belongs -- or let the nightly sweep suggest a home.'
-      : 'Mention this to your AI by name to update or complete it.') + '</div>';
+      : 'Buttons here queue instructions in your basket; your AI makes the actual change.') + '</div>';
     openPanel(h);
   }
 
@@ -1721,40 +2377,6 @@ def render_graph_js():
   }
 })();
 """
-
-
-def grouping_label(scope):
-    """Grouping-folder path between scopes/ and the scope dir, or ''."""
-    segs = [s for s in scope.get("path", "").strip("/").split("/") if s]
-    middle = segs[1:-1]
-    if len(segs) > 2 and "scopes" not in middle and scope.get("type") != "user":
-        return " / ".join(middle)
-    return ""
-
-
-def hint(text):
-    """A small '?' that reveals an explanation on hover or focus."""
-    return (
-        '<span class="hint" tabindex="0">?'
-        f'<span class="hint-pop">{esc(text)}</span></span>'
-    )
-
-
-def grouping_label(scope):
-    """Grouping-folder path between scopes/ and the scope dir, or ''."""
-    segs = [s for s in scope.get("path", "").strip("/").split("/") if s]
-    middle = segs[1:-1]
-    if len(segs) > 2 and "scopes" not in middle and scope.get("type") != "user":
-        return " / ".join(middle)
-    return ""
-
-
-def hint(text):
-    """A small '?' that reveals an explanation on hover or focus."""
-    return (
-        '<span class="hint" tabindex="0">?'
-        f'<span class="hint-pop">{esc(text)}</span></span>'
-    )
 
 
 def grouping_label(scope):
@@ -2133,6 +2755,11 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
         parts.append('<div class="cadence-section">')
         parts.append('<div class="cadence-header">Found, not installed</div>')
         for u in unregistered:
+            scope_bit = f' from the {u.get("scope")} scope' if u.get("scope") else ""
+            install_txt = (
+                f'Register the staged agent "{u.get("name", "")}"{scope_bit} '
+                "so it starts running on its cadence."
+            )
             meta_bits = []
             if u.get("cadence"):
                 meta_bits.append(
@@ -2158,7 +2785,8 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
                 "</div>"
                 '<div class="lib-status">'
                 '<span class="lib-status-label status-unknown">Not installed</span>'
-                '<div class="lib-last-run">ask your AI to install it</div>'
+                '<div class="lib-last-run"><button class="bk-suggest" '
+                f'data-bk-suggest="{esc(install_txt)}">queue install</button></div>'
                 "</div></div></div>"
             )
         parts.append("</div>")
@@ -2185,7 +2813,10 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
         '<div class="guidance">To create an agent, describe the job to your AI '
         "in a conversation: \"Every Monday, scan ... and note anything new in "
         'scope X." It writes the definition into that scope and stages it here '
-        "for your approval.</div>"
+        "for your approval. "
+        '<button class="bk-suggest" data-bk-suggest="Create a new scheduled '
+        'agent for me. The job and its cadence: (describe it here).">'
+        "queue an agent idea</button></div>"
     )
 
     # Run history
@@ -2377,11 +3008,41 @@ def enrich_agents(registry_data, unregistered, scopes_flat):
         u["scope_name"] = u.get("scope", "")
 
 
+def _collect_md_excerpts(folder):
+    """
+    Capped excerpts of a folder's markdown files (readme.md first -- that's
+    the human intro), pre-rendered to safe HTML. Returns (items, subdir_count):
+    every file ships; only subfolders stay behind for in-folder browsing.
+    """
+    items = []
+    subdirs = 0
+    if folder.is_dir():
+        try:
+            entries = list(folder.iterdir())
+        except OSError:
+            entries = []
+        files = [
+            f for f in sorted(entries)
+            if f.is_file() and f.suffix == ".md" and f.name != "agent.md"
+        ]
+        files.sort(key=lambda f: 0 if f.name == "readme.md" else 1)
+        subdirs = len([f for f in entries if f.is_dir()])
+        for f in files:
+            text = strip_frontmatter(read_file_text(f, max_bytes=1600))
+            if not text.strip():
+                continue
+            items.append({
+                "title": ("About this folder" if f.name == "readme.md"
+                          else deslug(f.name)),
+                "html": render_markdown_mini(text, max_items=12),
+            })
+    return items, subdirs
+
+
 def collect_scope_docs(root, scope):
     """
     Scope-level prose for the sidebar: the scope.md body, a root readme.md
-    if one exists, and capped excerpts of the context/ folder (its own
-    readme.md first -- that's the human intro). Pre-rendered to safe HTML.
+    if one exists, plus excerpts of the context/ and ontology/ folders.
     """
     base = root / scope.get("path", "")
     about_parts = []
@@ -2398,40 +3059,17 @@ def collect_scope_docs(root, scope):
     if rd and rd.strip():
         about_parts.append(render_markdown_mini(strip_frontmatter(rd), max_items=12))
 
-    context_items = []
-    more = 0
-    cdir = base / "context"
-    if cdir.is_dir():
-        try:
-            entries = list(cdir.iterdir())
-        except OSError:
-            entries = []
-        files = [
-            f for f in sorted(entries)
-            if f.is_file() and f.suffix == ".md" and f.name != "agent.md"
-        ]
-        files.sort(key=lambda f: 0 if f.name == "readme.md" else 1)
-        subdirs = [f for f in entries if f.is_dir()]
-        for f in files:
-            text = strip_frontmatter(read_file_text(f, max_bytes=1600))
-            if not text.strip():
-                continue
-            context_items.append({
-                "title": ("About this folder" if f.name == "readme.md"
-                          else deslug(f.name)),
-                "html": render_markdown_mini(text, max_items=12),
-            })
-        # Every file ships; the sidebar folds the long tail into an expander.
-        # Only subfolders stay behind -- browse those in the folder itself.
-        more = len(subdirs)
-    return "\n".join(about_parts), context_items, more
+    context_items, more = _collect_md_excerpts(base / "context")
+    ontology_items, _ = _collect_md_excerpts(base / "ontology")
+    return "\n".join(about_parts), context_items, more, ontology_items
 
 
 def build_dashboard_data(root, registry_data, unregistered, scopes_flat):
     """The JSON payload the client-side graph views and sidebar render from."""
     scopes = []
     for s in scopes_flat:
-        about_html, context_items, context_more = collect_scope_docs(root, s)
+        about_html, context_items, context_more, ontology_items = \
+            collect_scope_docs(root, s)
         scopes.append({
             "name": s.get("name", ""),
             "path": s.get("path", ""),
@@ -2445,6 +3083,7 @@ def build_dashboard_data(root, registry_data, unregistered, scopes_flat):
             "aboutHtml": about_html,
             "context": context_items,
             "contextMore": context_more,
+            "ontologyDocs": ontology_items,
         })
     agents = []
     if registry_data:
@@ -2532,7 +3171,16 @@ def split_reminder_entries(body):
         return entries
     bullets = [l.strip() for l in lines if l.strip().startswith(("- ", "* "))]
     if bullets:
-        return [(b.lstrip("-* ").strip(), b) for b in bullets]
+        entries = []
+        for b in bullets:
+            title = b.lstrip("-* ").strip()
+            m = CHECKBOX_RE.match(b)
+            if m:
+                title = m.group(2).strip()
+            # the date stays in the body for classification; the title reads clean
+            title = re.sub(r"^\d{4}-\d{2}-\d{2}\s*(--|—|-|:)?\s*", "", title) or title
+            entries.append((title, b))
+        return entries
     if body.strip():
         return [(first_snippet(body) or "Reminder", body)]
     return []
@@ -2566,6 +3214,8 @@ def build_workspace_items(root, index_data):
                 out[kind].append(dict(base, **{
                     "title": f"Managed in {tool}" if tool else "Managed elsewhere",
                     "pointer": pointer,
+                    "pointerUrl": extract_url(pointer)
+                    or extract_url(it.get("agent_text", "")),
                     "meta": "the folder points at your existing tool",
                     "html": "",
                     "kind": "pointer",
@@ -2573,13 +3223,13 @@ def build_workspace_items(root, index_data):
                 continue
 
             if kind == "todos":
-                task_lines = list(it.get("agent_tasks", []))
+                task_sources = [("agent.md", l) for l in it.get("agent_tasks", [])]
                 for cf in content_files:
                     body = strip_frontmatter(cf["text"])
                     for line in body.split("\n"):
                         if CHECKBOX_RE.match(line.strip()):
-                            task_lines.append(line.strip())
-                for line in task_lines:
+                            task_sources.append((cf["filename"], line.strip()))
+                for fname, line in task_sources:
                     m = CHECKBOX_RE.match(line)
                     if not m:
                         continue
@@ -2588,6 +3238,7 @@ def build_workspace_items(root, index_data):
                     out[kind].append(dict(base, **{
                         "title": text,
                         "done": done,
+                        "file": fname,
                         "meta": "done" if done else "open",
                         "html": render_markdown_mini(line, max_items=4),
                         "kind": "task",
@@ -2596,10 +3247,19 @@ def build_workspace_items(root, index_data):
                 for cf in content_files:
                     body = strip_frontmatter(cf["text"])
                     for title, entry_body in split_reminder_entries(body):
+                        date_iso, date_group = classify_reminder_date(
+                            title + " " + entry_body)
+                        snippet = first_snippet(entry_body)
+                        # a one-line entry's snippet just repeats the title
+                        if title and title in snippet:
+                            snippet = date_iso or ""
                         out[kind].append(dict(base, **{
                             "title": title,
+                            "file": cf["filename"],
+                            "date": date_iso,
+                            "dateGroup": date_group,
                             "meta": deslug(cf["filename"]),
-                            "snippet": first_snippet(entry_body),
+                            "snippet": snippet,
                             "html": render_markdown_mini(entry_body, max_items=30),
                             "kind": "reminder",
                         }))
@@ -2612,6 +3272,7 @@ def build_workspace_items(root, index_data):
                     meta_bits = [b for b in (age, status) if b]
                     out[kind].append(dict(base, **{
                         "title": deslug(cf["filename"]),
+                        "file": cf["filename"],
                         "meta": " -- ".join(meta_bits),
                         "snippet": first_snippet(body),
                         "html": render_markdown_mini(body, max_items=30),
@@ -2620,30 +3281,81 @@ def build_workspace_items(root, index_data):
     return out
 
 
-def render_item_cards(kind, items, label, empty_guidance):
-    """One workspace ontology as a grid of clickable item cards."""
-    guidance = f'<div class="guidance">{empty_guidance}</div>'
+def item_key(kind, it):
+    """Stable overlay key linking a rendered card to a basket action."""
+    return f'{kind}:{it.get("rel", "")}{it.get("file", "")}:{it.get("title", "")}'
+
+
+def pointer_chip(it):
+    """The 'Managed in X' chip; a real link when the folder names a URL."""
+    title = esc(it.get("title", ""))
+    url = it.get("pointerUrl")
+    if url:
+        return (
+            f'<a class="chip chip-link" href="{esc(url)}" target="_blank" '
+            f'rel="noopener" title="Open {title.replace("Managed in ", "")}">'
+            f"{title} &#8599;</a>"
+        )
+    return f'<span class="chip">{title}</span>'
+
+
+def render_item_cards(kind, items, label, empty_guidance, pairs=None,
+                      lead_html=""):
+    """
+    One workspace ontology as a grid of clickable item cards. `pairs`
+    optionally narrows the grid to (index, item) tuples so grouped views
+    (reminders) keep indexing into the same flat workspace list the
+    sidebar reads from.
+    """
+    guidance = (f'<div class="guidance">{empty_guidance}</div>'
+                if empty_guidance else "")
     if not items:
         return (
             f'<div class="empty-state"><h3>Nothing in {esc(label.lower())} yet</h3>'
-            "<p>This view fills itself from your scopes.</p></div>" + guidance
+            "<p>This view fills itself from your scopes.</p></div>"
+            + lead_html + guidance
         )
-    parts = ['<div class="item-grid">']
-    for i, it in enumerate(items):
+    seq = pairs if pairs is not None else list(enumerate(items))
+    parts = [lead_html, '<div class="item-grid">']
+    for i, it in seq:
         classes = "item-card"
         if it.get("done"):
             classes += " item-done"
-        parts.append(f'<div class="{classes}" data-item="{kind}:{i}">')
-        parts.append(f'<div class="item-scope">{esc(it.get("scope", ""))}</div>')
+        if it.get("dateGroup") == "overdue":
+            classes += " item-overdue"
+        elif it.get("dateGroup") == "soon":
+            classes += " item-soon"
+        key = esc(item_key(kind, it))
+        parts.append(
+            f'<div class="{classes}" data-item="{kind}:{i}" data-bk-key="{key}">'
+        )
+        actions = ""
+        if it.get("kind") != "pointer":
+            actions = (
+                '<span class="item-actions">'
+                f'<button class="bk-del bk-act" data-bk-verb="delete" '
+                f'data-bk-item="{kind}:{i}" '
+                'title="Mark for deletion (queues an instruction for your AI)">'
+                "&#215;</button></span>"
+            )
+        parts.append(
+            f'<div class="item-scope"><span>{esc(it.get("scope", ""))}</span>'
+            f"{actions}</div>"
+        )
         if it.get("kind") == "pointer":
-            parts.append(f'<span class="chip">{esc(it.get("title", ""))}</span>')
+            parts.append(pointer_chip(it))
             pointer_line = first_snippet(it.get("pointer", "")) or it.get("pointer", "")
             parts.append(f'<div class="item-meta">{esc(pointer_line)}</div>')
         else:
             tick = ""
             if it.get("kind") == "task":
                 mark = "&#10003;" if it.get("done") else ""
-                tick = f'<span class="ws-box">{mark}</span> '
+                tick = (
+                    f'<button class="ws-box bk-act" data-bk-verb="toggle" '
+                    f'data-bk-item="{kind}:{i}" '
+                    'title="Tick off (queues an instruction for your AI)">'
+                    f"{mark}</button> "
+                )
             parts.append(f'<div class="item-title">{tick}{esc(it.get("title", ""))}</div>')
             snippet = it.get("snippet", "")
             if snippet:
@@ -2654,6 +3366,47 @@ def render_item_cards(kind, items, label, empty_guidance):
     parts.append("</div>")
     parts.append(guidance)
     return "\n".join(parts)
+
+
+def render_reminders_view(items, empty_guidance, lead_html=""):
+    """
+    Reminders grouped by urgency: overdue first, then the next seven days,
+    then everything else as written. Undated reminders are ordinary content.
+    """
+    if not items:
+        return render_item_cards("reminders", items, "Reminders",
+                                 empty_guidance, lead_html=lead_html)
+    groups = [
+        ("overdue", "Overdue"),
+        ("soon", "Coming up"),
+        (None, "The rest"),
+    ]
+    pointer_pairs = [(i, it) for i, it in enumerate(items)
+                     if it.get("kind") == "pointer"]
+    parts = [lead_html]
+    for group_key, group_label in groups:
+        pairs = [
+            (i, it) for i, it in enumerate(items)
+            if it.get("kind") != "pointer"
+            and (it.get("dateGroup") == group_key
+                 if group_key else it.get("dateGroup") in (None, "later"))
+        ]
+        if not pairs:
+            continue
+        cls = f" reminder-group-{group_key}" if group_key else ""
+        parts.append(f'<div class="workspace-section{cls}">')
+        parts.append(f"<h3>{esc(group_label)}</h3>")
+        parts.append(render_item_cards("reminders", items, "Reminders", "",
+                                       pairs=pairs))
+        parts.append("</div>")
+    if pointer_pairs:
+        parts.append(render_item_cards("reminders", items, "Reminders", "",
+                                       pairs=pointer_pairs))
+    body = "\n".join(p for p in parts if p)
+    if not body.strip():
+        return render_item_cards("reminders", items, "Reminders",
+                                 empty_guidance, lead_html=lead_html)
+    return body + f'<div class="guidance">{empty_guidance}</div>'
 
 
 def render_workspace_view(root, index_data, kind, label, empty_guidance):
@@ -2683,13 +3436,13 @@ def render_workspace_view(root, index_data, kind, label, empty_guidance):
     return body + guidance
 
 
-def discover_scope_views(root, scopes_flat):
+def collect_visualisations(root, scopes_flat):
     """
-    Scope-provided dashboard views -- the pluggable half of the view registry.
-    Any scope's visualisations/<name>/ folder carrying a viz.md manifest with
-    `view: true` is mounted as a top-level tab, embedded by iframe relative to
-    the dashboard's own folder. Drop a bundle in a scope, regenerate, and it
-    appears; nothing in the dashboard needs to know about it in advance.
+    Every visualisation bundle across scopes, for the gallery and the view
+    registry. A viz.md manifest supplies name, description, entry, and the
+    view flag; a manifest-less folder still lists under its own name. Entry
+    paths come back relative to the dashboard's folder so links work from
+    file:// with no server.
     """
     found = []
     dash_dir = root / "exfu" / "visualisations" / "dashboard"
@@ -2707,27 +3460,348 @@ def discover_scope_views(root, scopes_flat):
             fields = parse_yaml_frontmatter(
                 read_file_text(sub / "viz.md", max_bytes=2048)
             )
-            if str(fields.get("view", "")).lower() not in ("true", "yes"):
-                continue
             name = fields.get("name") or deslug(sub.name)
             entry = sub / fields.get("entry", "index.html")
             if not entry.exists():
                 continue
-            rel = os.path.relpath(entry, dash_dir)
-            byline = f'From the {esc(s.get("name", ""))} scope'
-            desc = fields.get("description", "")
-            if desc:
-                byline += f" -- {esc(desc)}"
-            slug = re.sub(r"[^a-z0-9]+", "-", str(name).lower()).strip("-")
             found.append({
-                "id": f"tab-viz-{slug}",
-                "label": name,
-                "html": (
-                    f'<div class="viz-byline">{byline}</div>'
-                    f'<iframe class="viz-frame" src="{esc(rel)}" title="{esc(name)}"></iframe>'
-                ),
+                "name": name,
+                "scope": s.get("name", ""),
+                "description": fields.get("description", ""),
+                "rel": os.path.relpath(entry, dash_dir),
+                "view": str(fields.get("view", "")).lower() in ("true", "yes"),
             })
     return found
+
+
+def discover_scope_views(visualisations):
+    """
+    Scope-provided dashboard views -- the pluggable half of the view registry.
+    Any visualisation whose manifest declares `view: true` mounts as a
+    top-level tab, embedded by iframe. Drop a bundle in a scope, regenerate,
+    and it appears; nothing in the dashboard needs to know about it upfront.
+    """
+    found = []
+    for v in visualisations:
+        if not v["view"]:
+            continue
+        byline = f'From the {esc(v["scope"])} scope'
+        if v["description"]:
+            byline += f' -- {esc(v["description"])}'
+        slug = re.sub(r"[^a-z0-9]+", "-", str(v["name"]).lower()).strip("-")
+        found.append({
+            "id": f"tab-viz-{slug}",
+            "label": v["name"],
+            "html": (
+                f'<div class="viz-byline">{byline}</div>'
+                f'<iframe class="viz-frame" src="{esc(v["rel"])}" '
+                f'title="{esc(v["name"])}"></iframe>'
+            ),
+        })
+    return found
+
+
+def render_gallery_section(viz_list):
+    """The gallery: every visualisation the library holds, linked to open."""
+    if not viz_list:
+        return ""
+    parts = [
+        '<div class="gallery-section"><h3 class="ont-h">Gallery</h3>',
+        '<div class="gallery-hint">Visual outputs agents have made for you, '
+        "from every scope.</div>",
+        '<div class="item-grid">',
+    ]
+    for v in viz_list:
+        bits = [
+            '<a class="item-card gallery-card" target="_blank" rel="noopener" '
+            f'href="{esc(v["rel"])}">'
+            f'<div class="item-scope"><span>{esc(v["scope"])}</span></div>'
+            f'<div class="item-title">{esc(v["name"])} &#8599;</div>'
+        ]
+        if v["description"]:
+            bits.append(f'<div class="item-meta">{esc(v["description"])}</div>')
+        if v["view"]:
+            bits.append('<div class="item-meta">also open as a tab above</div>')
+        bits.append("</a>")
+        parts.append("".join(bits))
+    parts.append("</div></div>")
+    return "\n".join(parts)
+
+
+def find_convention_dir(root):
+    """The convention base the library follows: exfu/<latest.txt>, falling
+    back to the newest v* directory that carries an ontology.md."""
+    latest = read_file_text(root / "exfu" / "latest.txt", max_bytes=64).strip()
+    if latest and (root / "exfu" / latest / "ontology.md").exists():
+        return root / "exfu" / latest, latest
+    exfu_dir = root / "exfu"
+    if not exfu_dir.is_dir():
+        return None, None
+    try:
+        candidates = sorted(
+            d for d in exfu_dir.iterdir()
+            if d.is_dir() and d.name.startswith("v")
+            and (d / "ontology.md").exists()
+        )
+    except OSError:
+        candidates = []
+    if candidates:
+        return candidates[-1], candidates[-1].name
+    return None, None
+
+
+def inline_rich(s):
+    """inline_md plus backtick code spans, for conventions prose."""
+    s = esc(s)
+    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"\[\[(.+?)\]\]", r"\1", s)
+    return s
+
+
+def parse_md_table(lines, start):
+    """Parse a pipe table starting at lines[start]: (rows, next_index)."""
+    rows = []
+    i = start
+    while i < len(lines) and lines[i].strip().startswith("|"):
+        raw = lines[i].strip().strip("|")
+        cells = [c.strip() for c in raw.split("|")]
+        if not all(re.fullmatch(r":?-{2,}:?", c.replace(" ", "")) for c in cells):
+            rows.append(cells)
+        i += 1
+    return rows, i
+
+
+def render_ontology_body(text):
+    """Conventions prose to HTML: headings, lists, code fences, and pipe
+    tables all render; loose input degrades to plain lines, never errors."""
+    lines = text.split("\n")
+    out = []
+    i = 0
+    in_code = False
+    code_buf = []
+    while i < len(lines):
+        line = lines[i]
+        s = line.strip()
+        if s.startswith("```"):
+            if in_code:
+                out.append('<pre class="ont-code">'
+                           + esc("\n".join(code_buf)) + "</pre>")
+                code_buf = []
+            in_code = not in_code
+            i += 1
+            continue
+        if in_code:
+            code_buf.append(line)
+            i += 1
+            continue
+        if s.startswith("|"):
+            rows, i = parse_md_table(lines, i)
+            if rows:
+                out.append('<table class="ont-table">')
+                for ri, cells in enumerate(rows):
+                    tag = "th" if ri == 0 else "td"
+                    out.append("<tr>" + "".join(
+                        f"<{tag}>{inline_rich(c)}</{tag}>" for c in cells)
+                        + "</tr>")
+                out.append("</table>")
+            continue
+        if not s or s == "---" or s.startswith("<!--"):
+            i += 1
+            continue
+        if s.startswith("#"):
+            label = re.sub(r"\s*\{#[^}]*\}\s*", "", s.lstrip("#")).strip()
+            if label:
+                out.append(f'<div class="ws-heading">{inline_rich(label)}</div>')
+            i += 1
+            continue
+        m = re.match(r"^\d+\.\s+(.*)$", s)
+        if m:
+            out.append(f'<div class="ws-bullet">{inline_rich(m.group(1))}</div>')
+            i += 1
+            continue
+        if s.startswith(("- ", "* ")):
+            out.append(f'<div class="ws-bullet">{inline_rich(s[2:].strip())}</div>')
+            i += 1
+            continue
+        out.append(f'<div class="ws-line">{inline_rich(s.lstrip(">").strip())}</div>')
+        i += 1
+    if in_code and code_buf:
+        out.append('<pre class="ont-code">' + esc("\n".join(code_buf)) + "</pre>")
+    return "\n".join(out)
+
+
+def render_ontology_view(root):
+    """
+    The "How it works" tab: the core ontology the library follows, rendered
+    as a visual reference. Folder-types get a card grid up front; every
+    section of the file remains readable in full below it.
+    """
+    conv_dir, conv_name = find_convention_dir(root)
+    if not conv_dir:
+        return (
+            '<div class="empty-state"><h3>No conventions found</h3>'
+            "<p>The exfu/ convention base has no ontology to show. "
+            "This usually means the library has not been set up yet.</p></div>"
+        )
+    text = strip_frontmatter(
+        read_file_text(conv_dir / "ontology.md", max_bytes=65536))
+
+    sections = []
+    intro_lines = []
+    current = None
+    for line in text.split("\n"):
+        if line.startswith("## "):
+            title = re.sub(r"\s*\{#[^}]*\}\s*", "", line[3:]).strip()
+            current = {"title": title, "lines": []}
+            sections.append(current)
+        elif line.startswith("# ") and current is None:
+            continue
+        elif current is None:
+            intro_lines.append(line)
+        else:
+            current["lines"].append(line)
+
+    parts = [
+        '<div class="map-meta"><span class="map-conventions">'
+        f"The shared map you and your AI both work from: ExFu {esc(conv_name)}"
+        ", read from <span class=\"panel-mono\">"
+        f"exfu/{esc(conv_name)}/ontology.md</span></span></div>"
+    ]
+    intro = render_ontology_body("\n".join(intro_lines))
+    if intro.strip():
+        parts.append(f'<div class="ont-intro panel-prose">{intro}</div>')
+
+    ft = next((s for s in sections
+               if s["title"].lower().startswith("folder-type")), None)
+    if ft:
+        rows, _ = parse_md_table(
+            ft["lines"],
+            next((k for k, l in enumerate(ft["lines"])
+                  if l.strip().startswith("|")), 0))
+        data_rows = [r for r in rows[1:] if len(r) >= 2] if rows else []
+        if data_rows:
+            parts.append('<h3 class="ont-h">Where things go: the folder-types</h3>')
+            parts.append('<div class="ont-grid">')
+            for r in data_rows:
+                parts.append(
+                    '<div class="ont-card">'
+                    f'<div class="ont-card-name">{inline_rich(r[0])}</div>'
+                    f'<div class="ont-card-q">{inline_rich(r[1])}</div></div>'
+                )
+            parts.append("</div>")
+
+    parts.append('<h3 class="ont-h">The full conventions</h3>')
+    for k, s in enumerate(sections):
+        parts.append(
+            f'<details class="panel-doc ont-doc"{" open" if k == 0 else ""}>'
+            f'<summary>{esc(s["title"])}</summary><div class="panel-prose">'
+            f'{render_ontology_body(chr(10).join(s["lines"]))}</div></details>'
+        )
+    parts.append(
+        '<div class="guidance">This page is the reference; the library is the '
+        "real thing. To go deeper on any idea here, ask your AI about it by "
+        "name.</div>"
+    )
+    return "\n".join(parts)
+
+
+def staleness_banner(index_data):
+    """A gentle warning when the index behind this page has gone stale."""
+    if not index_data:
+        return ""
+    gen = index_data.get("generated", "")
+    try:
+        dt = datetime.fromisoformat(str(gen).replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return ""
+    age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+    if age_h <= 36:
+        return ""
+    days = int(age_h // 24)
+    label = (f"{days} day{'s' if days != 1 else ''}"
+             if days >= 1 else f"{int(age_h)} hours")
+    return (
+        f'<div class="stale-banner">Your library index last ran {label} ago, '
+        "so this page may be behind reality. "
+        '<button class="bk-suggest" data-bk-suggest="Re-run the library index '
+        'and regenerate the dashboard.">queue a refresh</button></div>'
+    )
+
+
+def _scope_select(scopes_flat, name, user_first=True, include_top=False):
+    """A scope picker for the basket forms."""
+    opts = []
+    if include_top:
+        opts.append('<option value="top level" selected>top level</option>')
+    user_name = next((s.get("name", "") for s in scopes_flat
+                      if s.get("type") == "user"), "")
+    ordered = []
+    if user_first and user_name:
+        ordered.append(user_name)
+    for s in scopes_flat:
+        n = s.get("name", "")
+        if n and n != user_name:
+            ordered.append(n)
+    if not user_first and user_name:
+        ordered.append(user_name)
+    for n in ordered:
+        opts.append(f'<option value="{esc(n)}">{esc(n)}</option>')
+    return (f'<select name="{name}" class="bk-input">'
+            + "".join(opts) + "</select>")
+
+
+def basket_form(verb, summary, fields_html):
+    """An inline form whose submit queues one basket instruction."""
+    return (
+        f'<details class="bk-form"><summary>{summary}</summary>'
+        f'<form class="bk-form-body" data-bk-form="{verb}">{fields_html}'
+        '<div class="bk-form-row"><button type="submit" class="bk-submit">'
+        "Queue it</button>"
+        '<span class="bk-form-note">adds an instruction to your basket; '
+        "nothing changes until you send it to your AI</span></div>"
+        "</form></details>"
+    )
+
+
+def workspace_forms(scopes_flat, which):
+    """The create-forms that feed the basket, one per view."""
+    if which == "todos":
+        return basket_form(
+            "create-task", "+ New task",
+            '<input class="bk-input" name="text" required maxlength="300" '
+            'placeholder="What needs doing?">'
+            '<label class="bk-label">in scope</label>'
+            + _scope_select(scopes_flat, "scope"))
+    if which == "reminders":
+        return basket_form(
+            "create-reminder", "+ New reminder",
+            '<input class="bk-input" name="text" required maxlength="300" '
+            'placeholder="What should surface later?">'
+            '<label class="bk-label">date (optional)</label>'
+            '<input class="bk-input" type="date" name="date">'
+            '<label class="bk-label">in scope</label>'
+            + _scope_select(scopes_flat, "scope"))
+    if which == "inbox":
+        return basket_form(
+            "create-capture", "+ Capture something",
+            '<input class="bk-input" name="title" required maxlength="120" '
+            'placeholder="A short title">'
+            '<textarea class="bk-input" name="note" rows="3" maxlength="1000" '
+            'placeholder="The thought itself (optional)"></textarea>'
+            '<label class="bk-label">in scope</label>'
+            + _scope_select(scopes_flat, "scope"))
+    if which == "scope":
+        return basket_form(
+            "create-scope", "+ New scope",
+            '<input class="bk-input" name="name" required maxlength="80" '
+            'placeholder="Scope name, e.g. a client or project">'
+            '<input class="bk-input" name="purpose" maxlength="200" '
+            'placeholder="One line on what it is for">'
+            '<label class="bk-label">inside</label>'
+            + _scope_select(scopes_flat, "parent", user_first=False,
+                            include_top=True))
+    return ""
 
 
 def generate_dashboard(root):
@@ -2753,6 +3827,7 @@ def generate_dashboard(root):
 
     # Figure out generated timestamp
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     index_ts = ""
     if index_data:
         index_ts = format_timestamp(index_data.get("generated", ""))
@@ -2763,11 +3838,14 @@ def generate_dashboard(root):
     scopes_flat = flatten_scopes(index_data)
     enrich_agents(registry_data, unregistered, scopes_flat)
     librarian_html = render_librarian_dashboard(registry_data, log_data, unregistered)
+    visualisations = collect_visualisations(root, scopes_flat)
+    banner_html = staleness_banner(index_data)
 
     # Client-side payload for the graph views and sidebar
     workspace_items = build_workspace_items(root, index_data)
     payload = build_dashboard_data(root, registry_data, unregistered, scopes_flat)
     payload["workspace"] = workspace_items
+    payload["generatedAt"] = now_iso
     data_json = json.dumps(payload).replace("</", "<\\/")
 
     scope_filters = (
@@ -2781,9 +3859,14 @@ def generate_dashboard(root):
     )
 
     # The view registry: built-in views first, then any views scopes provide.
+    scopes_list_html = (
+        substrate_map_html
+        + workspace_forms(scopes_flat, "scope")
+        + render_gallery_section(visualisations)
+    )
     scopes_panel = (
         render_view_bar("scopes", scope_filters)
-        + f'<div data-pane="scopes-list">{substrate_map_html}</div>'
+        + f'<div data-pane="scopes-list">{scopes_list_html}</div>'
         + '<div data-pane="scopes-graph" style="display:none">'
         + '<div id="scope-graph" class="graph-mount"></div>'
         + '<div class="guidance">Click any node to see what lives there, and drag '
@@ -2804,18 +3887,23 @@ def generate_dashboard(root):
         {"id": "tab-librarians", "label": "Agents", "html": agents_panel},
         {"id": "tab-todos", "label": "Todos", "html": render_item_cards(
             "todos", workspace_items["todos"], "Todos",
-            "To track tasks in a scope, tell your AI -- stored as simple "
-            "checklists here, or pointed at the tool you already use.")},
-        {"id": "tab-reminders", "label": "Reminders", "html": render_item_cards(
-            "reminders", workspace_items["reminders"], "Reminders",
-            'To set up nudges, tell your AI things like "flag the VAT return '
-            'from the 20th of the month" -- they collect here.')},
+            "Tick a box or use + New task: each queues an instruction for "
+            "your AI. Scopes can also point at the task tool you already use.",
+            lead_html=workspace_forms(scopes_flat, "todos"))},
+        {"id": "tab-reminders", "label": "Reminders", "html": render_reminders_view(
+            workspace_items["reminders"],
+            'Use + New reminder, or tell your AI things like "flag the VAT '
+            'return from the 20th of the month" -- they collect here.',
+            lead_html=workspace_forms(scopes_flat, "reminders"))},
         {"id": "tab-inbox", "label": "Inbox", "html": render_item_cards(
             "inbox", workspace_items["inbox"], "Inbox",
             "Anything you or your AI drops into a scope's inbox waits here "
-            "until it finds a home; the nightly sweep suggests where.")},
+            "until it finds a home; the nightly sweep suggests where.",
+            lead_html=workspace_forms(scopes_flat, "inbox"))},
+        {"id": "tab-ontology", "label": "How it works",
+         "html": render_ontology_view(root)},
     ]
-    views.extend(discover_scope_views(root, scopes_flat))
+    views.extend(discover_scope_views(visualisations))
 
     tabs_html = "".join(
         f'<button class="tab{" active" if i == 0 else ""}" data-tab="{v["id"]}">{esc(v["label"])}</button>'
@@ -2853,6 +3941,8 @@ def generate_dashboard(root):
       <div class="subtitle">Generated {esc(now)}{' -- index from ' + esc(index_ts) if index_ts else ''}</div>
     </header>
 
+    {banner_html}
+
     <div class="tabs">
       {tabs_html}
     </div>
@@ -2873,6 +3963,7 @@ def generate_dashboard(root):
 
   <script>window.EXFU_DATA = {data_json};</script>
   <script>{render_tab_js()}</script>
+  <script>{render_basket_js()}</script>
   <script>{render_graph_js()}</script>
 </body>
 </html>"""

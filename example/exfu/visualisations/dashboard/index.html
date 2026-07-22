@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ExFu -- Alastair substrate</title>
+  <title>ExFu -- Alastair&#x27;s library</title>
   <style>@font-face {
   font-family: 'Source Serif 4';
   font-style: normal;
@@ -610,6 +610,189 @@
     .gedge.g-hot { stroke: var(--rust); opacity: 0.85; }
     .gnode.g-focus text, .gnode:hover text { fill: var(--ink); font-weight: 700; }
 
+    /* Pointer chips that link out to the user's own tool */
+    a.chip-link { text-decoration: none; cursor: pointer; transition: all 0.15s var(--ease); }
+    a.chip-link:hover { background: var(--blue); color: #FFFFFF; }
+
+    /* Item card actions: tick and mark-for-deletion */
+    .item-scope { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; }
+    .item-actions { display: inline-flex; gap: 0.3rem; opacity: 0; transition: opacity 0.15s var(--ease); }
+    .item-card:hover .item-actions, .item-card.pending-delete .item-actions { opacity: 1; }
+    button.bk-del {
+      appearance: none; border: 1px solid var(--line); background: var(--card);
+      color: var(--muted); width: 1.2rem; height: 1.2rem; border-radius: 50%;
+      font-size: 0.8rem; line-height: 1; cursor: pointer; padding: 0;
+      transition: all 0.15s var(--ease);
+    }
+    button.bk-del:hover { color: var(--red); border-color: var(--red); }
+    button.ws-box { appearance: none; cursor: pointer; padding: 0; transition: all 0.15s var(--ease); }
+    button.ws-box:hover { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+
+    /* Pending overlays: the change is queued in the basket, not yet real */
+    .pending-chip {
+      display: inline-block; background: var(--amber-soft); color: var(--amber);
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0.08rem 0.5rem; border-radius: 999px;
+      margin-left: 0.4rem; vertical-align: middle;
+    }
+    .item-card.pending-tick { border-style: dashed; border-color: var(--amber); }
+    .pending-tick .ws-box { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+    .pending-tick .ws-box:empty::before { content: "\2713"; }
+    .item-card.pending-delete { border-style: dashed; border-color: var(--red); opacity: 0.55; }
+    .pending-delete .item-title { text-decoration: line-through; }
+
+    /* Date-grouped reminders */
+    .item-overdue { border-left: 3px solid var(--red); }
+    .item-soon { border-left: 3px solid var(--amber); }
+    .reminder-group-overdue h3 { color: var(--red); }
+    .reminder-group-soon h3 { color: var(--amber); }
+
+    /* Stale-index banner */
+    .stale-banner {
+      background: var(--amber-soft); color: var(--ink-soft);
+      border: 1px solid #E8D5B5; border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; font-size: 0.84rem;
+      padding: 0.6rem 0.9rem; margin-bottom: 1.2rem;
+    }
+
+    /* How it works: the ontology as a visual reference */
+    .ont-h { font-family: var(--serif); font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+    .ont-intro { max-width: 46rem; }
+    .ont-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 0.7rem; }
+    .ont-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0.7rem 0.85rem; box-shadow: var(--shadow-1); }
+    .ont-card-name { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--rust); }
+    .ont-card-q { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; line-height: 1.4; }
+    details.ont-doc { padding: 0.55rem 0.8rem; }
+    .ont-code {
+      font-family: var(--mono); font-size: 0.74rem; line-height: 1.5;
+      background: var(--paper-deep); border: 1px solid var(--line-soft);
+      border-radius: 8px; padding: 0.6rem 0.75rem; margin: 0.45rem 0;
+      overflow-x: auto; white-space: pre;
+    }
+    .ont-table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.82rem; }
+    .ont-table th, .ont-table td { border: 1px solid var(--line-soft); padding: 0.3rem 0.6rem; text-align: left; vertical-align: top; }
+    .ont-table th { background: var(--paper-deep); font-weight: 600; }
+    .panel-prose code, .ont-card-name code, .map-conventions code {
+      font-family: var(--mono); background: var(--paper-deep);
+      border-radius: 4px; padding: 0 0.25rem; font-size: 0.9em;
+    }
+
+    /* Gallery */
+    .gallery-section { margin-top: 1.8rem; }
+    .gallery-hint { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.6rem; }
+    a.gallery-card { display: block; text-decoration: none; color: inherit; }
+
+    /* Basket create-forms */
+    details.bk-form { margin: 0 0 1rem; }
+    details.bk-form > summary {
+      cursor: pointer; list-style: none; display: inline-block;
+      font-size: 0.76rem; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--rust); border: 1px dashed var(--rust);
+      border-radius: 999px; padding: 0.3rem 0.9rem;
+      transition: all 0.15s var(--ease);
+    }
+    details.bk-form > summary::-webkit-details-marker { display: none; }
+    details.bk-form > summary:hover { background: var(--rust-soft); }
+    .bk-form-body {
+      margin-top: 0.6rem; padding: 0.8rem 0.9rem; background: var(--card);
+      border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-1);
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      max-width: 46rem;
+    }
+    .bk-input {
+      font-family: var(--sans); font-size: 0.84rem; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+      padding: 0.4rem 0.6rem; flex: 1 1 12rem; min-width: 8rem;
+    }
+    textarea.bk-input { flex-basis: 100%; resize: vertical; }
+    .bk-input:focus { outline: none; border-color: var(--rust); }
+    .bk-label { font-size: 0.72rem; color: var(--muted); flex: none; }
+    .bk-form-row { flex-basis: 100%; display: flex; align-items: center; gap: 0.7rem; }
+    .bk-submit {
+      appearance: none; border: none; background: var(--rust); color: #FCF9F6;
+      font-family: var(--sans); font-size: 0.76rem; font-weight: 600;
+      border-radius: 999px; padding: 0.4rem 1rem; cursor: pointer;
+      transition: background 0.15s var(--ease);
+    }
+    .bk-submit:hover { background: var(--rust-deep); }
+    .bk-form-note { font-size: 0.72rem; color: var(--faint); }
+    button.bk-suggest {
+      appearance: none; border: 1px dashed var(--rust); background: none;
+      color: var(--rust); font-family: var(--sans); font-size: 0.72rem;
+      font-weight: 600; border-radius: 999px; padding: 0.14rem 0.6rem;
+      cursor: pointer; transition: all 0.15s var(--ease);
+    }
+    button.bk-suggest:hover { background: var(--rust-soft); }
+
+    /* The basket itself: pill plus drawer */
+    #bk-pill {
+      position: fixed; left: 1.2rem; bottom: 1.2rem; z-index: 40;
+      appearance: none; border: none; cursor: pointer;
+      background: var(--ink); color: #F4F1EC;
+      font-family: var(--sans); font-size: 0.78rem; font-weight: 600;
+      border-radius: 999px; padding: 0.55rem 1.1rem;
+      box-shadow: var(--shadow-2); display: flex; align-items: center; gap: 0.5rem;
+      transition: transform 0.2s var(--ease);
+    }
+    #bk-pill:hover { transform: translateY(-2px); }
+    #bk-pill .bk-count {
+      background: var(--rust); border-radius: 999px; min-width: 1.25rem;
+      height: 1.25rem; line-height: 1.25rem; text-align: center;
+      font-size: 0.7rem; padding: 0 0.3rem;
+    }
+    #bk-pill.bk-pulse .bk-count { animation: bkpulse 0.5s var(--ease); }
+    @keyframes bkpulse {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+    #bk-drawer {
+      position: fixed; left: 1.2rem; bottom: 3.9rem; z-index: 41;
+      width: min(440px, calc(100vw - 2.4rem));
+      max-height: min(34rem, 72vh);
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; box-shadow: var(--shadow-2);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    #bk-drawer.open { display: flex; }
+    .bk-head { padding: 0.85rem 1rem 0.6rem; border-bottom: 1px solid var(--line-soft); }
+    .bk-head h3 { font-family: var(--serif); font-size: 1.05rem; margin: 0; }
+    .bk-sub { font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+    .bk-list { overflow-y: auto; padding: 0.5rem 0.75rem; flex: 1; }
+    .bk-item { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.45rem 0.25rem; border-bottom: 1px solid var(--line-soft); }
+    .bk-item-text {
+      font-size: 0.82rem; color: var(--ink-soft); line-height: 1.4;
+      border-radius: 6px; padding: 0.15rem 0.3rem; overflow-wrap: break-word;
+    }
+    .bk-item-text:focus { outline: 1px solid var(--rust); background: var(--paper); }
+    .bk-item-src { display: block; font-size: 0.64rem; color: var(--faint); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 0.15rem; padding-left: 0.3rem; }
+    .bk-item-stale { color: var(--amber); }
+    .bk-item-btns { display: flex; flex-direction: column; gap: 0.15rem; flex: none; }
+    .bk-item-btns button {
+      appearance: none; border: 1px solid var(--line); background: var(--card);
+      color: var(--muted); border-radius: 6px; width: 1.4rem; height: 1.15rem;
+      font-size: 0.62rem; line-height: 1; cursor: pointer; padding: 0;
+    }
+    .bk-item-btns button:hover { color: var(--rust); border-color: var(--rust); }
+    .bk-empty { color: var(--faint); font-size: 0.8rem; padding: 1rem 0.5rem; text-align: center; }
+    .bk-addrow { display: flex; gap: 0.4rem; padding: 0.5rem 0.75rem; border-top: 1px solid var(--line-soft); }
+    .bk-addrow input { flex: 1; }
+    .bk-foot { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding: 0.6rem 0.75rem 0.75rem; border-top: 1px solid var(--line-soft); background: var(--paper); }
+    .bk-btn {
+      appearance: none; font-family: var(--sans); font-size: 0.74rem; font-weight: 600;
+      border-radius: 999px; padding: 0.38rem 0.9rem; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+      transition: all 0.15s var(--ease); text-decoration: none; display: inline-block;
+    }
+    .bk-btn:hover { border-color: var(--rust); color: var(--rust); }
+    .bk-btn-primary { background: var(--rust); border-color: var(--rust); color: #FCF9F6; }
+    .bk-btn-primary:hover { background: var(--rust-deep); color: #FCF9F6; }
+    .bk-btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+    .bk-foot-note { font-size: 0.68rem; color: var(--faint); flex-basis: 100%; }
+    .panel-act-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.6rem; }
+    .panel-ask { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+    .panel-ask input { flex: 1; }
+
     footer {
       margin-top: 3rem;
       padding-top: 1.1rem;
@@ -643,13 +826,15 @@
   <div class="main">
   <div class="container">
     <header>
-      <div class="eyebrow">ExFu &middot; substrate snapshot</div>
-      <h1>Alastair&rsquo;s substrate</h1>
-      <div class="subtitle">Generated 2026-06-10 21:02 UTC -- index from 2026-06-10 14:18 UTC</div>
+      <div class="eyebrow">ExFu &middot; library snapshot</div>
+      <h1>Alastair&rsquo;s library</h1>
+      <div class="subtitle">Generated 2026-07-22 12:09 UTC -- index from 2026-06-10 14:18 UTC</div>
     </header>
 
+    <div class="stale-banner">Your library index last ran 41 days ago, so this page may be behind reality. <button class="bk-suggest" data-bk-suggest="Re-run the library index and regenerate the dashboard.">queue a refresh</button></div>
+
     <div class="tabs">
-      <button class="tab active" data-tab="tab-map">Your scopes</button><button class="tab" data-tab="tab-librarians">Agents</button><button class="tab" data-tab="tab-todos">Todos</button><button class="tab" data-tab="tab-reminders">Reminders</button><button class="tab" data-tab="tab-inbox">Inbox</button><button class="tab" data-tab="tab-viz-trend-snapshot">Trend snapshot</button>
+      <button class="tab active" data-tab="tab-map">Your scopes</button><button class="tab" data-tab="tab-librarians">Agents</button><button class="tab" data-tab="tab-todos">Todos</button><button class="tab" data-tab="tab-reminders">Reminders</button><button class="tab" data-tab="tab-inbox">Inbox</button><button class="tab" data-tab="tab-ontology">How it works</button><button class="tab" data-tab="tab-viz-trend-snapshot">Trend snapshot</button>
     </div>
 
     <div id="tab-map" class="tab-panel active">
@@ -709,10 +894,14 @@
 </div>
 </div>
 </div>
-<div class="guidance">To create a scope, tell your AI: "Set up a new scope for ..." -- it scaffolds the folders and the next index picks it up.</div></div><div data-pane="scopes-graph" style="display:none"><div id="scope-graph" class="graph-mount"></div><div class="guidance">Click any node to see what lives there, and drag nodes to rearrange the map. You sit in the middle; every scope radiates out from you.</div></div>
+<div class="guidance">To create a scope, tell your AI: "Set up a new scope for ..." -- it scaffolds the folders and the next index picks it up.</div><details class="bk-form"><summary>+ New scope</summary><form class="bk-form-body" data-bk-form="create-scope"><input class="bk-input" name="name" required maxlength="80" placeholder="Scope name, e.g. a client or project"><input class="bk-input" name="purpose" maxlength="200" placeholder="One line on what it is for"><label class="bk-label">inside</label><select name="parent" class="bk-input"><option value="top level" selected>top level</option><option value="Acme">Acme</option><option value="Q3 Renewal">Q3 Renewal</option><option value="Side Project">Side Project</option><option value="Alastair">Alastair</option></select><div class="bk-form-row"><button type="submit" class="bk-submit">Queue it</button><span class="bk-form-note">adds an instruction to your basket; nothing changes until you send it to your AI</span></div></form></details><div class="gallery-section"><h3 class="ont-h">Gallery</h3>
+<div class="gallery-hint">Visual outputs agents have made for you, from every scope.</div>
+<div class="item-grid">
+<a class="item-card gallery-card" target="_blank" rel="noopener" href="../../../scopes/side-project/visualisations/trend-snapshot/index.html"><div class="item-scope"><span>Side Project</span></div><div class="item-title">Trend snapshot &#8599;</div><div class="item-meta">Weekly trends the scan agent has noticed, as a simple chart</div><div class="item-meta">also open as a tab above</div></a>
+</div></div></div><div data-pane="scopes-graph" style="display:none"><div id="scope-graph" class="graph-mount"></div><div class="guidance">Click any node to see what lives there, and drag nodes to rearrange the map. You sit in the middle; every scope radiates out from you.</div></div>
 </div>
 <div id="tab-librarians" class="tab-panel">
-<div class="view-bar"><div class="view-toggle"><button class="active" data-view="agents-list">List</button><button data-view="agents-graph">Map</button></div><div class="graph-filters" data-pane="agents-graph" style="display:none"><label><input type="checkbox" id="f-lib" checked> librarians</label><label><input type="checkbox" id="f-biz" checked> business agents</label><label><input type="checkbox" id="f-exfu"> ExFu agents</label></div></div><div data-pane="agents-list"><div class="map-meta"><span><strong>Nightly</strong>: 8h ago &nbsp;&middot;&nbsp; <strong>Weekly</strong>: 8h ago</span><span class="map-conventions"><span class="hint" tabindex="0">?<span class="hint-pop">Agents are recurring jobs your AI runs for you on a schedule (e.g. Claude Cowork Scheduled tasks). Librarians are special agents that keep the substrate itself tidy; business agents do your domain work, like scanning listings or drafting digests.</span></span> what's an agent?</span></div>
+<div class="view-bar"><div class="view-toggle"><button class="active" data-view="agents-list">List</button><button data-view="agents-graph">Map</button></div><div class="graph-filters" data-pane="agents-graph" style="display:none"><label><input type="checkbox" id="f-lib" checked> librarians</label><label><input type="checkbox" id="f-biz" checked> business agents</label><label><input type="checkbox" id="f-exfu"> ExFu agents</label></div></div><div data-pane="agents-list"><div class="map-meta"><span><strong>Nightly</strong>: 41 days ago &nbsp;&middot;&nbsp; <strong>Weekly</strong>: 41 days ago</span><span class="map-conventions"><span class="hint" tabindex="0">?<span class="hint-pop">Agents are recurring jobs your AI runs for you on a schedule (e.g. Claude Cowork Scheduled tasks). Librarians are special agents that keep the library itself tidy and findable; business agents do your domain work, like scanning listings or drafting digests.</span></span> what's an agent?</span></div>
 <details class="agent-group" open>
 <summary>Side Project<span class="group-count">1</span></summary>
 <div class="card" data-agent="weekly-trends-scan">
@@ -727,7 +916,7 @@
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">8h ago</div>
+<div class="lib-last-run">41 days ago</div>
 </div>
 </div>
 </div>
@@ -745,7 +934,7 @@
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">8h ago</div>
+<div class="lib-last-run">41 days ago</div>
 </div>
 </div>
 </div>
@@ -760,7 +949,7 @@
 </div>
 <div class="lib-status">
 <span class="lib-status-label status-healthy">Healthy</span>
-<div class="lib-last-run">8h ago</div>
+<div class="lib-last-run">41 days ago</div>
 </div>
 </div>
 </div>
@@ -780,7 +969,7 @@
 </div>
 </div>
 </details>
-<div class="guidance">To create an agent, describe the job to your AI in a conversation: "Every Monday, scan ... and note anything new in scope X." It writes the definition into that scope and stages it here for your approval.</div>
+<div class="guidance">To create an agent, describe the job to your AI in a conversation: "Every Monday, scan ... and note anything new in scope X." It writes the definition into that scope and stages it here for your approval. <button class="bk-suggest" data-bk-suggest="Create a new scheduled agent for me. The job and its cadence: (describe it here).">queue an agent idea</button></div>
 <div class="run-history">
 <h3>Recent runs</h3>
 <div class="run-entry"><span class="run-dot" style="background:var(--green)"></span><span class="run-cadence">weekly</span><span class="run-time">2026-06-10 12:25 UTC</span><span class="run-results">weekly-trends-scan: success -- 3 items noted in trends-notes.md</span></div>
@@ -790,35 +979,266 @@
 </div></div><div data-pane="agents-graph" style="display:none"><div id="agents-graph" class="graph-mount"></div><div class="guidance">Each agent hangs off the scope it works for. Click one for its story.</div></div>
 </div>
 <div id="tab-todos" class="tab-panel">
+<details class="bk-form"><summary>+ New task</summary><form class="bk-form-body" data-bk-form="create-task"><input class="bk-input" name="text" required maxlength="300" placeholder="What needs doing?"><label class="bk-label">in scope</label><select name="scope" class="bk-input"><option value="Alastair">Alastair</option><option value="Acme">Acme</option><option value="Q3 Renewal">Q3 Renewal</option><option value="Side Project">Side Project</option></select><div class="bk-form-row"><button type="submit" class="bk-submit">Queue it</button><span class="bk-form-note">adds an instruction to your basket; nothing changes until you send it to your AI</span></div></form></details>
 <div class="item-grid">
-<div class="item-card" data-item="todos:0">
-<div class="item-scope">Alastair</div>
+<div class="item-card" data-item="todos:0" data-bk-key="todos:user/todo/:Managed in ClickUp">
+<div class="item-scope"><span>Alastair</span></div>
+<a class="chip chip-link" href="https://app.clickup.com/2461358/v/b/alastairs-workspace" target="_blank" rel="noopener" title="Open ClickUp">Managed in ClickUp &#8599;</a>
+<div class="item-meta">Tasks are tracked in ClickUp, not stored locally</div>
+</div>
+<div class="item-card" data-item="todos:1" data-bk-key="todos:scopes/acme/todo/:Managed in ClickUp">
+<div class="item-scope"><span>Acme</span></div>
 <span class="chip">Managed in ClickUp</span>
 <div class="item-meta">Tasks are tracked in ClickUp, not stored locally</div>
 </div>
-<div class="item-card" data-item="todos:1">
-<div class="item-scope">Acme</div>
-<span class="chip">Managed in ClickUp</span>
-<div class="item-meta">Tasks are tracked in ClickUp, not stored locally</div>
-</div>
-<div class="item-card" data-item="todos:2">
-<div class="item-scope">Q3 Renewal</div>
-<div class="item-title"><span class="ws-box"></span> Confirm renewal pricing with finance</div>
+<div class="item-card" data-item="todos:2" data-bk-key="todos:scopes/acme/scopes/q3-renewal/todo/agent.md:Confirm renewal pricing with finance">
+<div class="item-scope"><span>Q3 Renewal</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="todos:2" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title"><button class="ws-box bk-act" data-bk-verb="toggle" data-bk-item="todos:2" title="Tick off (queues an instruction for your AI)"></button> Confirm renewal pricing with finance</div>
 <div class="item-meta">open</div>
 </div>
-<div class="item-card" data-item="todos:3">
-<div class="item-scope">Q3 Renewal</div>
-<div class="item-title"><span class="ws-box"></span> Draft the renewal proposal deck</div>
+<div class="item-card" data-item="todos:3" data-bk-key="todos:scopes/acme/scopes/q3-renewal/todo/agent.md:Draft the renewal proposal deck">
+<div class="item-scope"><span>Q3 Renewal</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="todos:3" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title"><button class="ws-box bk-act" data-bk-verb="toggle" data-bk-item="todos:3" title="Tick off (queues an instruction for your AI)"></button> Draft the renewal proposal deck</div>
 <div class="item-meta">open</div>
 </div>
 </div>
-<div class="guidance">To track tasks in a scope, tell your AI -- stored as simple checklists here, or pointed at the tool you already use.</div>
+<div class="guidance">Tick a box or use + New task: each queues an instruction for your AI. Scopes can also point at the task tool you already use.</div>
 </div>
 <div id="tab-reminders" class="tab-panel">
-<div class="empty-state"><h3>Nothing in reminders yet</h3><p>This view fills itself from your scopes.</p></div><div class="guidance">To set up nudges, tell your AI things like "flag the VAT return from the 20th of the month" -- they collect here.</div>
+<details class="bk-form"><summary>+ New reminder</summary><form class="bk-form-body" data-bk-form="create-reminder"><input class="bk-input" name="text" required maxlength="300" placeholder="What should surface later?"><label class="bk-label">date (optional)</label><input class="bk-input" type="date" name="date"><label class="bk-label">in scope</label><select name="scope" class="bk-input"><option value="Alastair">Alastair</option><option value="Acme">Acme</option><option value="Q3 Renewal">Q3 Renewal</option><option value="Side Project">Side Project</option></select><div class="bk-form-row"><button type="submit" class="bk-submit">Queue it</button><span class="bk-form-note">adds an instruction to your basket; nothing changes until you send it to your AI</span></div></form></details>
+<div class="workspace-section reminder-group-overdue">
+<h3>Overdue</h3>
+
+<div class="item-grid">
+<div class="item-card item-overdue" data-item="reminders:0" data-bk-key="reminders:user/reminders/reminders.md:Chase the Acme security questionnaire if it still has not come back.">
+<div class="item-scope"><span>Alastair</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="reminders:0" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title">Chase the Acme security questionnaire if it still has not come back.</div>
+<div class="item-meta">2026-07-01</div>
+</div>
+</div>
+
+</div>
+<div class="workspace-section reminder-group-soon">
+<h3>Coming up</h3>
+
+<div class="item-grid">
+<div class="item-card item-soon" data-item="reminders:1" data-bk-key="reminders:user/reminders/reminders.md:Ask me whether the renewal pricing confirmation went to finance.">
+<div class="item-scope"><span>Alastair</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="reminders:1" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title">Ask me whether the renewal pricing confirmation went to finance.</div>
+<div class="item-meta">2026-07-23</div>
+</div>
+</div>
+
+</div>
+<div class="workspace-section">
+<h3>The rest</h3>
+
+<div class="item-grid">
+<div class="item-card" data-item="reminders:2" data-bk-key="reminders:user/reminders/reminders.md:Start planning the January review of scopes and agents.">
+<div class="item-scope"><span>Alastair</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="reminders:2" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title">Start planning the January review of scopes and agents.</div>
+<div class="item-meta">2026-12-01</div>
+</div>
+</div>
+
+</div><div class="guidance">Use + New reminder, or tell your AI things like "flag the VAT return from the 20th of the month" -- they collect here.</div>
 </div>
 <div id="tab-inbox" class="tab-panel">
-<div class="empty-state"><h3>Nothing in inbox yet</h3><p>This view fills itself from your scopes.</p></div><div class="guidance">Anything you or your AI drops into a scope's inbox waits here until it finds a home; the nightly sweep suggests where.</div>
+<details class="bk-form"><summary>+ Capture something</summary><form class="bk-form-body" data-bk-form="create-capture"><input class="bk-input" name="title" required maxlength="120" placeholder="A short title"><textarea class="bk-input" name="note" rows="3" maxlength="1000" placeholder="The thought itself (optional)"></textarea><label class="bk-label">in scope</label><select name="scope" class="bk-input"><option value="Alastair">Alastair</option><option value="Acme">Acme</option><option value="Q3 Renewal">Q3 Renewal</option><option value="Side Project">Side Project</option></select><div class="bk-form-row"><button type="submit" class="bk-submit">Queue it</button><span class="bk-form-note">adds an instruction to your basket; nothing changes until you send it to your AI</span></div></form></details>
+<div class="item-grid">
+<div class="item-card" data-item="inbox:0" data-bk-key="inbox:user/inbox/2026-07-18-meetup-lightning-talk-idea.md:Meetup lightning talk idea">
+<div class="item-scope"><span>Alastair</span><span class="item-actions"><button class="bk-del bk-act" data-bk-verb="delete" data-bk-item="inbox:0" title="Mark for deletion (queues an instruction for your AI)">&#215;</button></span></div>
+<div class="item-title">Meetup lightning talk idea</div>
+<div class="item-meta">Heard about a small-business AI meetup in Bristol. Might be worth a</div>
+</div>
+</div>
+<div class="guidance">Anything you or your AI drops into a scope's inbox waits here until it finds a home; the nightly sweep suggests where.</div>
+</div>
+<div id="tab-ontology" class="tab-panel">
+<div class="map-meta"><span class="map-conventions">The shared map you and your AI both work from: ExFu v0.3, read from <span class="panel-mono">exfu/v0.3/ontology.md</span></span></div>
+<div class="ont-intro panel-prose"><div class="ws-line">This is the complete structural vocabulary of an ExFu substrate, in one file. Read it top to bottom once and you know how everything here is organised: what a scope is, what each folder-type means, how scheduled agents and librarians work, and the authoring rules that keep the substrate ingestible.</div>
+<div class="ws-line">It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. <code>Follows:</code> references elsewhere in the substrate point into this file using heading anchors, e.g. <code>Follows: exfu/v0.3/ontology.md#todo</code>.</div></div>
+<h3 class="ont-h">Where things go: the folder-types</h3>
+<div class="ont-grid">
+<div class="ont-card"><div class="ont-card-name"><code>ontology/</code></div><div class="ont-card-q">What do this scope&#x27;s concepts and terms mean?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>context/</code></div><div class="ont-card-q">What background should an agent know here?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>skills/</code></div><div class="ont-card-q">What skill definitions belong to this scope?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>librarians/</code></div><div class="ont-card-q">What substrate maintenance runs here on a schedule?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>scheduled/</code></div><div class="ont-card-q">What business-logic work runs here on a schedule?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>todo/</code></div><div class="ont-card-q">How does this scope handle tasks?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>reminders/</code></div><div class="ont-card-q">How does this scope handle time-based nudges?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>inbox/</code></div><div class="ont-card-q">Where do uncategorised captures go?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>databases/</code></div><div class="ont-card-q">Where do structured, repeating records live?</div></div>
+<div class="ont-card"><div class="ont-card-name"><code>visualisations/</code></div><div class="ont-card-q">Where do visual outputs live?</div></div>
+</div>
+<h3 class="ont-h">The full conventions</h3>
+<details class="panel-doc ont-doc" open><summary>The substrate</summary><div class="panel-prose"><div class="ws-line">A substrate is the persistent system that gives an AI collaborator memory and working context across sessions: a knowledge base of files (this folder tree), plus skills, connectors, and scheduled agents. No single component is the substrate -- it&#x27;s the interplay.</div>
+<div class="ws-line">Top-level layout:</div>
+<pre class="ont-code">substrate-root/
+  CLAUDE.md          # guard file: warns sessions that haven&#x27;t loaded the conventions
+  exfu/              # convention base (plugin-owned; agents and users don&#x27;t edit it)
+    v0.3/            # this version&#x27;s conventions, templates, shipped definitions
+    latest.txt       # current version name, e.g. &quot;v0.3&quot;
+    derived/         # generated cache: index, registries, dashboard. Never hand-edited.
+  user/              # the personal scope (special: unversioned, parent: none)
+  scopes/            # every other scope</pre></div></details>
+<details class="panel-doc ont-doc"><summary>Scope</summary><div class="panel-prose"><div class="ws-line">A scope is a bounded working context. It is the single structural concept in the substrate -- everything is a scope. A project is a scope. A client is a scope. A team is a scope. Your personal workspace is a scope.</div>
+<div class="ws-line">A directory is a scope if and only if it contains a <code>scope.md</code> file. That file is the boundary marker.</div>
+<div class="ws-line"><strong>What a scope is not:</strong> not an org chart (scopes map to whatever contexts you actually work in), not permanent (create, archive, delete as work evolves), not isolated (a scope declares its parent and can draw on ancestor definitions).</div>
+<div class="ws-heading">scope.md format</div>
+<div class="ws-line">Minimal by design. The rich picture lives in the global index, not here.</div>
+<pre class="ont-code">---
+name: &lt;human-readable name&gt;
+purpose: &lt;one-line purpose&gt;
+parent: &lt;parent scope name, or &quot;root&quot; for top-level scopes&gt;
+exfu: v0.3
+---</pre>
+<div class="ws-line">Followed by the protective header (see [Authoring rules](#authoring-rules)) and an optional two-to-three sentence elaboration of purpose.</div>
+<div class="ws-bullet"><strong>name</strong> -- human-readable; usually matches the directory name but doesn&#x27;t have to.</div>
+<div class="ws-bullet"><strong>purpose</strong> -- one sentence, enough for an agent to decide whether to read deeper.</div>
+<div class="ws-bullet"><strong>parent</strong> -- the parent scope&#x27;s name, or <code>root</code>. A portability safeguard: if the scope is shared or extracted alone, the agent knows context is missing above it.</div>
+<div class="ws-bullet"><strong>exfu</strong> -- which convention version this scope follows. New scopes pin whatever <code>latest.txt</code> says at creation time; pins only change by explicit migration.</div>
+<div class="ws-line">scope.md does NOT contain state, status, dates, entity lists, or dependencies. Those live in folder-types or the derived index.</div>
+<div class="ws-line"><strong>Special cases:</strong> the <code>user/</code> scope has <code>parent: none</code> and no <code>exfu:</code> field (it is unversioned and always follows latest). The <code>exfu/</code> directory has no scope.md at all -- it is the convention base, not a scope.</div>
+<div class="ws-heading">Nesting</div>
+<div class="ws-line">Scopes nest through a dedicated <code>scopes/</code> subdirectory; the pattern is self-similar at every depth.</div>
+<div class="ws-bullet">A scope&#x27;s own folder-types sit at its root level.</div>
+<div class="ws-bullet">Child scopes appear ONLY inside a <code>scopes/</code> subdirectory.</div>
+<div class="ws-bullet"><code>scopes/</code> is structural, not a folder-type: no agent.md, no readme.md.</div>
+<div class="ws-bullet">Grouping folders (directories without scope.md, e.g. <code>scopes/clients/</code>) may appear inside <code>scopes/</code> purely for organisation. Agents ignore them structurally.</div>
+<div class="ws-bullet">Depth is unlimited; practical use rarely exceeds three levels.</div>
+<pre class="ont-code">acme/
+  scope.md            # parent: root
+  context/
+  todo/
+  scopes/
+    q3-renewal/
+      scope.md        # parent: Acme
+      context/</pre>
+<div class="ws-line">Without the <code>scopes/</code> boundary, an agent couldn&#x27;t tell folder-types (known conventions) from child scopes (independent structure). The boundary makes it unambiguous.</div>
+<div class="ws-heading">Version resolution</div>
+<div class="ws-bullet">Every pinned scope reads its conventions from <code>exfu/&lt;pin&gt;/</code>.</div>
+<div class="ws-bullet">The <code>user/</code> scope reads through <code>exfu/latest.txt</code> (a plain text file naming the current version; used instead of a symlink because some sync layers, Box included, don&#x27;t sync symlinks).</div>
+<div class="ws-bullet">Convention versions install side by side (<code>exfu/v0.3/</code>, <code>exfu/v0.6/</code>). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.</div>
+<div class="ws-bullet"><code>exfu/derived/</code> is unversioned generated content -- the global index, the scheduled-agent registry and log, the dashboard. It is a cache: never hand-edited, safe to delete and regenerate.</div></div></details>
+<details class="panel-doc ont-doc"><summary>Folder-types</summary><div class="panel-prose"><div class="ws-line">Inside any scope, these ten folder-types are the standard vocabulary for where things go:</div>
+<table class="ont-table">
+<tr><th>Folder</th><th>What it answers</th></tr>
+<tr><td><code>ontology/</code></td><td>What do this scope&#x27;s concepts and terms mean?</td></tr>
+<tr><td><code>context/</code></td><td>What background should an agent know here?</td></tr>
+<tr><td><code>skills/</code></td><td>What skill definitions belong to this scope?</td></tr>
+<tr><td><code>librarians/</code></td><td>What substrate maintenance runs here on a schedule?</td></tr>
+<tr><td><code>scheduled/</code></td><td>What business-logic work runs here on a schedule?</td></tr>
+<tr><td><code>todo/</code></td><td>How does this scope handle tasks?</td></tr>
+<tr><td><code>reminders/</code></td><td>How does this scope handle time-based nudges?</td></tr>
+<tr><td><code>inbox/</code></td><td>Where do uncategorised captures go?</td></tr>
+<tr><td><code>databases/</code></td><td>Where do structured, repeating records live?</td></tr>
+<tr><td><code>visualisations/</code></td><td>Where do visual outputs live?</td></tr>
+</table>
+<div class="ws-line">Three rules govern all of them:</div>
+<div class="ws-line"><strong>Materialise on demand.</strong> Create a folder-type only when there is content to put in it, or the user has explicitly asked for it. Never scaffold empty folders &quot;for completeness&quot; -- an empty folder with boilerplate descriptors is noise that every future read pays for. Any agent can add a folder-type to an existing scope later: create the directory, add its <code>agent.md</code> with the right <code>Follows:</code> line, done. The catalogue guarantees *where things go when they exist*, not that everything exists.</div>
+<div class="ws-line"><strong>Store or point.</strong> A folder-type may hold actual data, or its agent.md may say the data lives elsewhere (&quot;tasks are in ClickUp&quot;). The convention guarantees the location is *discoverable*; whether data is stored locally is per-scope, per-user. Pointer folders record the external tool and any connection details as <code>Local deviations:</code> in agent.md.</div>
+<div class="ws-line"><strong>The catalogue is open.</strong> A scope may add a folder-type not listed here if it genuinely needs one. Define it in the scope&#x27;s ontology so future agents know what it means.</div>
+<div class="ws-heading">ontology/</div>
+<div class="ws-line">The scope&#x27;s shared vocabulary: definitions of what concepts and terms mean here. Analogy: a glossary.</div>
+<div class="ws-bullet">Agents read the ontology when entering a scope, and check it before asking the user about an ambiguous term.</div>
+<div class="ws-bullet"><strong>Ontologies are flat lists of complete files.</strong> One file per concept (or one file for the whole ontology if it&#x27;s small), each file the *complete* definition of its concept. Never shard a concept across many small files and never nest subfolders of fragments -- completeness-per-file is what makes ingestion reliable.</div>
+<div class="ws-bullet">Ontology holds *concepts*, not instances. &quot;What a weekly report is&quot; belongs here; an actual weekly report does not. If a thing is an instance of an existing concept, it goes in the folder-type that concept prescribes (a librarian definition goes in librarians/, a record goes in databases/), never in ontology/.</div>
+<div class="ws-bullet">When a definition touches a term defined elsewhere (parent scope, user/, or this file), annotate the relationship: extension, override, or orthogonal use of the same word.</div>
+<div class="ws-bullet">Boundaries: background information goes in context/; task conventions in todo/; capability definitions in skills/.</div>
+<div class="ws-heading">context/</div>
+<div class="ws-line">Background an agent should know about this scope -- the briefing material that makes an agent useful rather than generic. Analogy: a wiki plus a filing drawer.</div>
+<div class="ws-bullet">Personal background, project history, stakeholders, situational awareness, decisions and their reasoning.</div>
+<div class="ws-bullet"><strong>Reference documents live here too</strong>: PDFs, spreadsheets, email transcripts, exported reports, meeting notes worth keeping. A captured document is context with a file extension, sitting beside the prose that gives it meaning. Use subfolders if volume warrants; a flat set of well-named files is fine.</div>
+<div class="ws-bullet">Context doesn&#x27;t need to be comprehensive. A few paragraphs that improve an agent&#x27;s decisions beat an exhaustive wiki nobody maintains.</div>
+<div class="ws-bullet">Boundaries: definitions of terms go in ontology/; structured repeating records go in databases/; tasks go in todo/.</div>
+<div class="ws-heading">skills/</div>
+<div class="ws-line">Skill definitions belonging to this scope: the *source of truth* markdown for skills the user installs into their AI platform. Analogy: functions.</div>
+<div class="ws-bullet">A skill here knows the scope&#x27;s ontology and conventions rather than duplicating them.</div>
+<div class="ws-bullet">The user scope&#x27;s skills/ typically holds the source of the user&#x27;s personal generated skills -- their way-of-working skill, reminders skill, inbox skill. Edit the source here, then repackage and reinstall (the skill-packaging skill handles that).</div>
+<div class="ws-bullet">ExFu&#x27;s own shipped skill sources live in the convention base at <code>exfu/&lt;version&gt;/skills/</code> (e.g. the way-of-working template). Scope skills/ folders hold scope-specific ones.</div>
+<div class="ws-bullet">Boundaries: scheduled work goes in librarians/ or scheduled/; one-off background goes in context/.</div>
+<div class="ws-heading">librarians/</div>
+<div class="ws-line">Scheduled agents whose remit is the substrate itself: keeping this scope tidy, current, and ingestible. Analogy: cron jobs for housekeeping.</div>
+<div class="ws-bullet">Sweeping the inbox, regenerating the index, reconciling todo/ with an external tracker, archiving stale context, flagging unreferenced versions.</div>
+<div class="ws-bullet">Each librarian is one definition file in the scheduled-agent format (see [Scheduled agents](#scheduled-agents)). Definitions are *instances*, and they live here -- not in ontology/ (a librarian definition is not a concept).</div>
+<div class="ws-bullet">ExFu ships its own librarians in the convention base at <code>exfu/&lt;version&gt;/librarians/</code> (nightly-index, inbox-triage, dashboard-generator, version-cleanup). Scope librarians/ folders hold scope-specific ones.</div>
+<div class="ws-bullet">Boundaries: work whose remit is the *user&#x27;s domain* rather than the substrate goes in scheduled/. Ad hoc capabilities go in skills/.</div>
+<div class="ws-heading">scheduled/</div>
+<div class="ws-line">Scheduled agents whose remit is the user&#x27;s business logic: recurring domain work that runs without the user asking. Analogy: a standing brief given to an assistant.</div>
+<div class="ws-bullet">Scanning listings sites for a car that matches a brief. Drafting a weekly progress digest. Watching a mailbox for invoices and filing them. Monitoring a dashboard and flagging anomalies.</div>
+<div class="ws-bullet">Same definition format, same registry, same cadence sessions as librarians -- the mechanics are identical (see [Scheduled agents](#scheduled-agents)). The difference is the remit: librarians maintain the substrate; agents do the user&#x27;s work.</div>
+<div class="ws-bullet">Boundaries: if the job&#x27;s purpose is keeping the substrate itself healthy, it&#x27;s a librarian and goes in librarians/. If a capability should run only when invoked in conversation, it&#x27;s a skill.</div>
+<div class="ws-heading">todo/</div>
+<div class="ws-line">How this scope handles tasks -- things with a completion state. Analogy: a task list.</div>
+<div class="ws-bullet">The pointer pattern is the common case: most users already have a task tool (ClickUp, Linear, Todoist). The folder&#x27;s value is that an agent always knows *where to ask* about tasks for this scope.</div>
+<div class="ws-bullet">Stored form: task files or a task list in markdown, each task with at least a description and completion state.</div>
+<div class="ws-bullet">Boundaries: time-based nudges without a completion state go in reminders/; fleeting thoughts in inbox/.</div>
+<div class="ws-heading">reminders/</div>
+<div class="ws-line">Lightweight time-based or condition-based nudges, with no completion state. Analogy: a notification list.</div>
+<div class="ws-bullet">&quot;Flag the VAT return from the 20th of the month.&quot; &quot;Chase if no reply within 3 days.&quot; One markdown file of natural-language rules covers most scopes; pointer form names the external tool (Apple Reminders, calendar).</div>
+<div class="ws-bullet">A reminder may *trigger* a todo, but the reminder is the trigger, not the task.</div>
+<div class="ws-bullet">Boundaries: recurring scheduled work goes in librarians/ or scheduled/; tasks in todo/.</div>
+<div class="ws-heading">inbox/</div>
+<div class="ws-line">Quick capture for things that don&#x27;t have a home yet. Analogy: an inbox tray.</div>
+<div class="ws-bullet">Deliberately unstructured; its job is to lower the friction of capture. One file per captured item, named by date or topic.</div>
+<div class="ws-bullet">Inbox is not storage. Items get triaged into their real home (context/, todo/, databases/...) -- the inbox-triage librarian sweeps and suggests; the user decides.</div>
+<div class="ws-bullet">Boundaries: anything already categorisable goes straight to its folder-type.</div>
+<div class="ws-heading">databases/</div>
+<div class="ws-line">Structured data with repeating records and consistent fields. Analogy: a spreadsheet or record store.</div>
+<div class="ws-bullet">Contacts, CRM records, opportunity pipelines, inventories, sightings logs -- and <strong>recurring personal records like daily logs or journals</strong>: anything written repeatedly with the same shape is a database, even when each record is prose. The test: &quot;will there be another one of these next week, with the same fields?&quot;</div>
+<div class="ws-bullet">Each database is a subfolder (or single file) with a <code>schema.md</code> describing the record shape; record filenames are the natural keys (so wikilinks resolve).</div>
+<div class="ws-bullet">Pointer form names the external system and its schema (&quot;contacts live in HubSpot; fields: name, company, role, last-contact&quot;).</div>
+<div class="ws-bullet">Boundaries: one-off reference documents go in context/; unstructured captures in inbox/.</div>
+<div class="ws-heading">visualisations/</div>
+<div class="ws-line">Visual outputs produced by agents for this scope: HTML pages, dashboards, charts, diagrams. Analogy: a gallery.</div>
+<div class="ws-bullet">Each visualisation in its own subfolder with all of its assets, named for what it shows.</div>
+<div class="ws-bullet">The ExFu-shipped example is the substrate dashboard generated nightly at <code>exfu/derived/dashboard/index.html</code> (it lives in derived/ because it&#x27;s regenerated cache; scope-level visualisations live here because they&#x27;re kept work).</div>
+<div class="ws-bullet">Boundaries: source data goes in databases/; the thing that *generates* a recurring visualisation is a librarian or agent.</div></div></details>
+<details class="panel-doc ont-doc"><summary>Scheduled agents</summary><div class="panel-prose"><div class="ws-line">A scheduled agent is recurring work defined as *agent instructions*: a markdown file an AI session reads cold and carries out with judgment, on a cadence, without the user asking. Scheduled agents come in two classes with identical mechanics and different remits:</div>
+<div class="ws-bullet"><strong>Librarians</strong> maintain the substrate itself. They live in <code>librarians/</code> folders.</div>
+<div class="ws-bullet"><strong>Agents</strong> (business agents) do the user&#x27;s recurring domain work. They live in <code>scheduled/</code> folders.</div>
+<div class="ws-heading">Definition format</div>
+<div class="ws-line">A definition is a markdown file with YAML frontmatter. Required: <code>name</code>, <code>cadence</code>, <code>description</code>. The body below the frontmatter is the work itself -- instructions a cold agent can follow.</div>
+<pre class="ont-code">---
+name: nightly-index
+cadence: nightly          # nightly | weekly | hourly | on-demand
+description: Walks the substrate and regenerates the global scope index
+scripts:                  # optional: deterministic tools the body tells you to run
+  - scheduled-tasks/substrate-index/index.py
+reads: [&quot;*/scope.md&quot;]     # optional: what it touches, for conflict checks and the dashboard
+writes: [&quot;exfu/derived/index.json&quot;]
+depends_on: []            # optional: agents that must run first within the same cadence
+---</pre>
+<div class="ws-line">Where a definition references a script, the script is a *tool* -- deterministic legwork like walking a tree or rendering HTML. Run it, check the result, apply judgment to what comes back. The script never replaces the agentic work. A definition with no scripts is fully agentic.</div>
+<div class="ws-line">Definitions should be idempotent: running one twice produces the same result as running it once.</div>
+<div class="ws-heading">Registry and execution</div>
+<div class="ws-line">Registration is what makes a definition live. The registry at <code>exfu/derived/agent-registry.json</code> lists every registered scheduled agent: name, <code>kind</code> (<code>librarian</code> or <code>agent</code>), cadence, source path, enabled flag, and run health (last run, last status, consecutive failures). A definition file that exists but isn&#x27;t registered does nothing -- which is also how you stage work for the user to approve.</div>
+<div class="ws-line">One scheduled task per cadence (e.g. <code>nightly-agents</code>, created in the user&#x27;s AI platform) is the execution environment. In that session, Claude asks the helper what is due, then for each due definition: reads it, does the work, and records the outcome before moving on. Within a cadence, librarians run before business agents (the substrate gets tidied and the index refreshed before domain work consumes them), then dependency order applies.</div>
+<div class="ws-line">The run log lives at <code>exfu/derived/agent-log.json</code>. Both files are derived cache: managed by the registration skill and the cadence sessions, never hand-edited.</div></div></details>
+<details class="panel-doc ont-doc"><summary>Way of working (wow)</summary><div class="panel-prose"><div class="ws-line">A way of working is ExFu&#x27;s concept for a person&#x27;s standing operating manual: how their substrate is laid out (the navigation map) and the thin kernel of always-on instructions that apply to every session (communication style, decision defaults, hard constraints).</div>
+<div class="ws-bullet">It materialises as a personal skill (&quot;wow&quot;) generated from the template at <code>exfu/&lt;version&gt;/skills/wow-template.md</code>, installed into the user&#x27;s AI platform, and loaded at the start of every session.</div>
+<div class="ws-bullet">The skill&#x27;s source of truth lives in the substrate at <code>user/skills/wow/</code>; the installed copy is a packaged artefact. Edit the source, repackage, reinstall.</div>
+<div class="ws-bullet">A wow is a *map plus kernel*, never a workflow engine. Workflow logic belongs in skills, scheduled agents, or scope content. If the wow grows past a few screens, something is in the wrong place.</div></div></details>
+<details class="panel-doc ont-doc"><summary>Authoring rules</summary><div class="panel-prose"><div class="ws-line">These apply to every file an agent writes inside the substrate.</div>
+<div class="ws-heading">File economy</div>
+<div class="ws-line">Fewer, more complete files. Every extra file is a read a future agent might skip; a concept split across five fragments will be half-ingested. Prefer one complete file over a folder of shards; prefer extending an existing file over creating a sibling; create subfolders only when volume genuinely demands it. This is why this ontology is one file.</div>
+<div class="ws-heading">The agent.md reference+delta pattern</div>
+<div class="ws-line">Every materialised folder-type directory contains an <code>agent.md</code>:</div>
+<div class="ws-bullet"><strong>Protective header</strong> (always first, verbatim):</div>
+<pre class="ont-code">   &gt; This folder follows ExFu conventions. If you haven&#x27;t loaded them yet,
+   &gt; ask your user to set you up with their WoW or ExFu skills.</pre>
+<div class="ws-bullet"><strong><code>Follows:</code> line</strong> naming the convention it implements, by versioned anchor into this file:</div>
+<div class="ws-line"><code>Follows: exfu/v0.3/ontology.md#todo</code></div>
+<div class="ws-bullet"><strong><code>Local deviations:</code></strong> -- a bullet list of only what differs from the convention (e.g. &quot;Tasks are tracked in ClickUp, folder 901514259169&quot;). Omit the section entirely when nothing differs.</div>
+<div class="ws-line">A folder with no deviations is the header plus one line. A sibling <code>readme.md</code> with a single human-friendly sentence is optional and conventional.</div>
+<div class="ws-heading">Descriptors carry no state</div>
+<div class="ws-line">agent.md, readme.md, and scope.md describe what a folder or scope *is for* -- static facts that stay true. They never capture state: no &quot;currently empty&quot;, no item counts, no &quot;last updated&quot;, no status notes. State is only true at write time and goes stale silently, misleading every later reader. Current state belongs in the derived index, the dashboard, and the content itself.</div>
+<div class="ws-heading">Naming</div>
+<div class="ws-line">Lowercase, hyphen-separated filenames (<code>who-i-am.md</code>). Date-prefix time-sensitive files (<code>2026-06-10-skill-drafts.md</code>). Database record filenames are their natural keys, kept stable so wikilinks resolve.</div>
+<div class="ws-heading">Annotate intent</div>
+<div class="ws-line">Real knowledge is messy and won&#x27;t always fit the &quot;right&quot; place. When placement is a judgment call, say *why* in the file or its agent.md deviations -- an agent that knows why something lives somewhere can work with imperfect placement; one that only knows where, cannot.</div></div></details>
+<div class="guidance">This page is the reference; the library is the real thing. To go deeper on any idea here, ask your AI about it by name.</div>
 </div>
 <div id="tab-viz-trend-snapshot" class="tab-panel">
 <div class="viz-byline">From the Side Project scope -- Weekly trends the scan agent has noticed, as a simple chart</div><iframe class="viz-frame" src="../../../scopes/side-project/visualisations/trend-snapshot/index.html" title="Trend snapshot"></iframe>
@@ -836,7 +1256,7 @@
   </aside>
   </div>
 
-  <script>window.EXFU_DATA = {"scopes": [{"name": "Alastair", "path": "user/", "type": "user", "parent": null, "version": null, "purpose": "Personal workspace and global defaults", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer", "reminders": "data", "inbox": "empty"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">Personal context, preferences, and defaults that apply across everything I work on.<\/div>", "context": [{"title": "About me", "html": "<div class=\"ws-heading\">About Alastair<\/div>\n<div class=\"ws-line\">Alastair Brayne. Founder of WhaleyBear Ltd, which trades as ExFu (the AI collaborator install service this substrate supports). Based in the UK. Twenty-plus years in product and engineering leadership; the last few years going deep on agentic AI as the next platform shift.<\/div>\n<div class=\"ws-heading\">What I do<\/div>\n<div class=\"ws-line\">1. <strong>ExFu.<\/strong> Designing and shipping the installable substrate that turns Claude into a real working collaborator. Plugin development, install conversations, planning, the website at exfu.ai, and paid installs with founders and small teams.<\/div>\n<div class=\"ws-line\">2. <strong>Lope (lope.works).<\/strong> Bespoke skill engineering, agentic workflow development, and internal training for teams that want deeper engagement than ExFu&#x27;s install model.<\/div>\n<div class=\"ws-heading\">How I work<\/div>\n<div class=\"ws-line\">I think visually. I dictate a lot. I want concise responses, not preambles. I prefer prose over bullets for explanations, bullets for actual lists of things. I will tell you when I want detail; default to short.<\/div>\n<div class=\"ws-line\">I plan deliberately using golden-circle (Why, How, What) and tiered planning (T1, T2, T3). I expect the same of agents that work with me.<\/div>\n<div class=\"ws-line\">I don&#x27;t use em-dashes. Ever. Use commas, semicolons, or full stops instead.<\/div>\n<div class=\"ws-line\">I don&#x27;t want unilateral action on commits, merges, colour changes, or anything visual. Ask first.<\/div>"}], "contextMore": 0}, {"name": "Acme", "path": "scopes/acme/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Client relationship and commercial engagement with Acme Corp", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer"}, "group": "", "children": ["Q3 Renewal"], "aboutHtml": "<div class=\"ws-line\">Everything related to the Acme Corp account: relationship history, deal context, project scopes, and task tracking.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background on Acme Corp, relationship history, and key contacts.<\/div>"}, {"title": "Account overview", "html": "<div class=\"ws-heading\">Acme Corp<\/div>\n<div class=\"ws-line\">Mid-market manufacturing company, headquartered in Manchester. Roughly 1,200 employees. Family-owned for three generations; recent professionalisation of management under a new CFO.<\/div>\n<div class=\"ws-heading\">Relationship history<\/div>\n<div class=\"ws-bullet\">2024-Q3: First contract signed. 5 seats for the Sales team.<\/div>\n<div class=\"ws-bullet\">2025-Q1: Renewal, small expansion (5 to 8 seats).<\/div>\n<div class=\"ws-bullet\">2026-Q2: Casey signals interest in extending to Operations team. Renewal conversation opens with Jamie (Head of Procurement).<\/div>\n<div class=\"ws-heading\">Current commercial position<\/div>\n<div class=\"ws-bullet\">Contract: 8 seats, annual, expires 2026-09-30.<\/div>\n<div class=\"ws-bullet\">They want: multi-year discount on a 12-seat upgrade.<\/div>\n<div class=\"ws-bullet\">We want: signed multi-year before Q3 end, ideally with Operations seats included.<\/div>\n<div class=\"ws-heading\">Key people<\/div>\n<div class=\"ws-bullet\"><strong>Jamie Rivera<\/strong> -- Head of Procurement. Decision authority on the contract.<\/div>\n<div class=\"ws-bullet\"><strong>Casey Wong<\/strong> -- Head of Sales Operations. Our champion; influencer on the renewal.<\/div>\n<div class=\"ws-bullet\"><strong>Pat Singh<\/strong> -- CFO. Sign-off required above a threshold value.<\/div>"}], "contextMore": 0}, {"name": "Q3 Renewal", "path": "scopes/acme/scopes/q3-renewal/", "type": "scope", "parent": "Acme", "version": "v0.3", "purpose": "Track and close the Acme Q3 2026 contract renewal and expansion", "folderTypes": {"context": "data", "todo": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">The active deal to renew and expand Acme&#x27;s contract before September 2026.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Deal brief and background for the Q3 renewal.<\/div>"}, {"title": "Deal brief", "html": "<div class=\"ws-heading\">Q3 Renewal deal brief<\/div>\n<div class=\"ws-heading\">The deal<\/div>\n<div class=\"ws-line\">Renew Acme&#x27;s annual contract (8 seats, expires 2026-09-30) and expand to 12 seats with a multi-year commitment. Target close: before Q3 end.<\/div>\n<div class=\"ws-heading\">What&#x27;s happened<\/div>\n<div class=\"ws-bullet\">Jamie (Procurement) is leading from their side. New to the role; methodical, wants clear pricing.<\/div>\n<div class=\"ws-bullet\">Casey (our champion) is supportive but doesn&#x27;t sign.<\/div>\n<div class=\"ws-bullet\">CFO (Pat) needs to approve anything above the threshold. We haven&#x27;t met Pat directly.<\/div>\n<div class=\"ws-bullet\">Acme wants predictable pricing. They don&#x27;t care about new features; they want stability and responsive support.<\/div>\n<div class=\"ws-heading\">Next steps<\/div>\n<div class=\"ws-bullet\">Send the multi-year pricing proposal to Jamie.<\/div>\n<div class=\"ws-bullet\">Schedule a call with Jamie and Casey to walk through the terms.<\/div>\n<div class=\"ws-bullet\">Prepare a one-pager for Pat (via Casey) covering ROI of the expansion.<\/div>\n<div class=\"ws-heading\">Risk<\/div>\n<div class=\"ws-line\">Jamie is new and cautious. If the proposal has any ambiguity, it will slow down. Keep everything clean and specific.<\/div>"}], "contextMore": 0}, {"name": "Side Project", "path": "scopes/side-project/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Weekend experiment with a recipe recommendation engine", "folderTypes": {"context": "data", "scheduled": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">A personal side project. Low priority, no deadlines.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background for the recipe recommendation side project. Just getting started; nothing here yet.<\/div>"}, {"title": "Project brief", "html": "<div class=\"ws-heading\">Recipe engine -- project brief<\/div>\n<div class=\"ws-line\">A weekend experiment: a small recommendation engine that suggests recipes from<\/div>\n<div class=\"ws-line\">what&#x27;s already in the fridge. Stack is Python plus a local embedding model.<\/div>\n<div class=\"ws-line\">Success looks like a working prototype that my partner actually uses twice in<\/div>\n<div class=\"ws-line\">one week. No deadlines, no stakeholders, fun first.<\/div>"}, {"title": "Trends notes", "html": "<div class=\"ws-heading\">Trends notes<\/div>\n<div class=\"ws-line\">Appended weekly by the weekly-trends-scan agent. Newest at the top.<\/div>\n<div class=\"ws-heading\">2026-06-10<\/div>\n<div class=\"ws-bullet\">Open Recipe Format 0.4 released, adds ingredient quantity normalisation -- https://example.org/orf<\/div>\n<div class=\"ws-bullet\">Blog post on embedding ingredient lists with small local models -- https://example.org/embed-pantry<\/div>\n<div class=\"ws-bullet\">A fridge-photo-to-ingredients demo got traction on HN -- https://example.org/fridge-vision<\/div>"}], "contextMore": 0}], "agents": [{"name": "nightly-index", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "inbox-triage", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "dashboard-generator", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "weekly-trends-scan", "kind": "agent", "cadence": "weekly", "description": "", "scope": "Side Project", "origin": "user", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}], "root": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example", "workspace": {"todos": [{"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example/user/todo", "rel": "user/todo/", "title": "Managed in ClickUp", "pointer": "Tasks are tracked in ClickUp, not stored locally", "meta": "the folder points at your existing tool", "html": "", "kind": "pointer"}, {"scope": "Acme", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example/scopes/acme/todo", "rel": "scopes/acme/todo/", "title": "Managed in ClickUp", "pointer": "Tasks are tracked in ClickUp, not stored locally", "meta": "the folder points at your existing tool", "html": "", "kind": "pointer"}, {"scope": "Q3 Renewal", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example/scopes/acme/scopes/q3-renewal/todo", "rel": "scopes/acme/scopes/q3-renewal/todo/", "title": "Confirm renewal pricing with finance", "done": false, "meta": "open", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>Confirm renewal pricing with finance<\/span><\/div>", "kind": "task"}, {"scope": "Q3 Renewal", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/crazy-gagarin-33bc21/plugin/example/scopes/acme/scopes/q3-renewal/todo", "rel": "scopes/acme/scopes/q3-renewal/todo/", "title": "Draft the renewal proposal deck", "done": false, "meta": "open", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>Draft the renewal proposal deck<\/span><\/div>", "kind": "task"}], "reminders": [], "inbox": []}};</script>
+  <script>window.EXFU_DATA = {"scopes": [{"name": "Alastair", "path": "user/", "type": "user", "parent": null, "version": null, "purpose": "Personal workspace and global defaults", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer", "reminders": "data", "inbox": "empty"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">Personal context, preferences, and defaults that apply across everything I work on.<\/div>", "context": [{"title": "About me", "html": "<div class=\"ws-heading\">About Alastair<\/div>\n<div class=\"ws-line\">Alastair Brayne. Founder of WhaleyBear Ltd, which trades as ExFu (the AI collaborator install service this substrate supports). Based in the UK. Twenty-plus years in product and engineering leadership; the last few years going deep on agentic AI as the next platform shift.<\/div>\n<div class=\"ws-heading\">What I do<\/div>\n<div class=\"ws-line\">1. <strong>ExFu.<\/strong> Designing and shipping the installable substrate that turns Claude into a real working collaborator. Plugin development, install conversations, planning, the website at exfu.ai, and paid installs with founders and small teams.<\/div>\n<div class=\"ws-line\">2. <strong>Lope (lope.works).<\/strong> Bespoke skill engineering, agentic workflow development, and internal training for teams that want deeper engagement than ExFu&#x27;s install model.<\/div>\n<div class=\"ws-heading\">How I work<\/div>\n<div class=\"ws-line\">I think visually. I dictate a lot. I want concise responses, not preambles. I prefer prose over bullets for explanations, bullets for actual lists of things. I will tell you when I want detail; default to short.<\/div>\n<div class=\"ws-line\">I plan deliberately using golden-circle (Why, How, What) and tiered planning (T1, T2, T3). I expect the same of agents that work with me.<\/div>\n<div class=\"ws-line\">I don&#x27;t use em-dashes. Ever. Use commas, semicolons, or full stops instead.<\/div>\n<div class=\"ws-line\">I don&#x27;t want unilateral action on commits, merges, colour changes, or anything visual. Ask first.<\/div>"}], "contextMore": 0, "ontologyDocs": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Ontology<\/div>\n<div class=\"ws-line\">Personal definitions and ways of working.<\/div>"}, {"title": "Ways of working", "html": "<div class=\"ws-heading\">Ways of working<\/div>\n<div class=\"ws-line\">Personal definitions that apply across all my scopes.<\/div>\n<div class=\"ws-heading\">What &quot;done&quot; means<\/div>\n<div class=\"ws-line\">A task is done when its acceptance criteria are met, verified, and committed. Not when the code is written. Not when tests pass. When it&#x27;s merged and live.<\/div>\n<div class=\"ws-heading\">How I plan<\/div>\n<div class=\"ws-line\">Three tiers: T1 (overview), T2 (domain plans), T3 (implementation specs). Every plan uses the golden circle: Why it exists, How it works, What it delivers. Milestones (Mn) sequence the work across tiers.<\/div>\n<div class=\"ws-heading\">Communication preferences<\/div>\n<div class=\"ws-bullet\">Short by default. Detailed when I ask for it.<\/div>\n<div class=\"ws-bullet\">Prose for explanations. Bullets for lists.<\/div>\n<div class=\"ws-bullet\">No em-dashes. Commas, semicolons, or full stops.<\/div>\n<div class=\"ws-bullet\">No preambles or disclaimers.<\/div>"}]}, {"name": "Acme", "path": "scopes/acme/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Client relationship and commercial engagement with Acme Corp", "folderTypes": {"ontology": "data", "context": "data", "todo": "pointer"}, "group": "", "children": ["Q3 Renewal"], "aboutHtml": "<div class=\"ws-line\">Everything related to the Acme Corp account: relationship history, deal context, project scopes, and task tracking.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background on Acme Corp, relationship history, and key contacts.<\/div>"}, {"title": "Account overview", "html": "<div class=\"ws-heading\">Acme Corp<\/div>\n<div class=\"ws-line\">Mid-market manufacturing company, headquartered in Manchester. Roughly 1,200 employees. Family-owned for three generations; recent professionalisation of management under a new CFO.<\/div>\n<div class=\"ws-heading\">Relationship history<\/div>\n<div class=\"ws-bullet\">2024-Q3: First contract signed. 5 seats for the Sales team.<\/div>\n<div class=\"ws-bullet\">2025-Q1: Renewal, small expansion (5 to 8 seats).<\/div>\n<div class=\"ws-bullet\">2026-Q2: Casey signals interest in extending to Operations team. Renewal conversation opens with Jamie (Head of Procurement).<\/div>\n<div class=\"ws-heading\">Current commercial position<\/div>\n<div class=\"ws-bullet\">Contract: 8 seats, annual, expires 2026-09-30.<\/div>\n<div class=\"ws-bullet\">They want: multi-year discount on a 12-seat upgrade.<\/div>\n<div class=\"ws-bullet\">We want: signed multi-year before Q3 end, ideally with Operations seats included.<\/div>\n<div class=\"ws-heading\">Key people<\/div>\n<div class=\"ws-bullet\"><strong>Jamie Rivera<\/strong> -- Head of Procurement. Decision authority on the contract.<\/div>\n<div class=\"ws-bullet\"><strong>Casey Wong<\/strong> -- Head of Sales Operations. Our champion; influencer on the renewal.<\/div>\n<div class=\"ws-bullet\"><strong>Pat Singh<\/strong> -- CFO. Sign-off required above a threshold value.<\/div>"}], "contextMore": 0, "ontologyDocs": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Ontology<\/div>\n<div class=\"ws-line\">Terminology and definitions specific to the Acme engagement.<\/div>"}, {"title": "Terminology", "html": "<div class=\"ws-heading\">Acme terminology<\/div>\n<div class=\"ws-line\">Terms specific to the Acme engagement.<\/div>\n<div class=\"ws-bullet\"><strong>Champion:<\/strong> Casey Wong, Head of Sales Operations. Our original contact and internal advocate.<\/div>\n<div class=\"ws-bullet\"><strong>Decision-maker:<\/strong> Jamie Rivera, Head of Procurement. Signs the renewal contract.<\/div>\n<div class=\"ws-bullet\"><strong>Seats:<\/strong> licensed user count on the current contract. Currently 8, expansion target is 12.<\/div>\n<div class=\"ws-bullet\"><strong>Multi-year:<\/strong> Acme wants a discount for committing beyond the annual cycle. Our target is signed before Q3 end.<\/div>"}]}, {"name": "Q3 Renewal", "path": "scopes/acme/scopes/q3-renewal/", "type": "scope", "parent": "Acme", "version": "v0.3", "purpose": "Track and close the Acme Q3 2026 contract renewal and expansion", "folderTypes": {"context": "data", "todo": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">The active deal to renew and expand Acme&#x27;s contract before September 2026.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Deal brief and background for the Q3 renewal.<\/div>"}, {"title": "Deal brief", "html": "<div class=\"ws-heading\">Q3 Renewal deal brief<\/div>\n<div class=\"ws-heading\">The deal<\/div>\n<div class=\"ws-line\">Renew Acme&#x27;s annual contract (8 seats, expires 2026-09-30) and expand to 12 seats with a multi-year commitment. Target close: before Q3 end.<\/div>\n<div class=\"ws-heading\">What&#x27;s happened<\/div>\n<div class=\"ws-bullet\">Jamie (Procurement) is leading from their side. New to the role; methodical, wants clear pricing.<\/div>\n<div class=\"ws-bullet\">Casey (our champion) is supportive but doesn&#x27;t sign.<\/div>\n<div class=\"ws-bullet\">CFO (Pat) needs to approve anything above the threshold. We haven&#x27;t met Pat directly.<\/div>\n<div class=\"ws-bullet\">Acme wants predictable pricing. They don&#x27;t care about new features; they want stability and responsive support.<\/div>\n<div class=\"ws-heading\">Next steps<\/div>\n<div class=\"ws-bullet\">Send the multi-year pricing proposal to Jamie.<\/div>\n<div class=\"ws-bullet\">Schedule a call with Jamie and Casey to walk through the terms.<\/div>\n<div class=\"ws-bullet\">Prepare a one-pager for Pat (via Casey) covering ROI of the expansion.<\/div>\n<div class=\"ws-heading\">Risk<\/div>\n<div class=\"ws-line\">Jamie is new and cautious. If the proposal has any ambiguity, it will slow down. Keep everything clean and specific.<\/div>"}], "contextMore": 0, "ontologyDocs": []}, {"name": "Side Project", "path": "scopes/side-project/", "type": "scope", "parent": "root", "version": "v0.3", "purpose": "Weekend experiment with a recipe recommendation engine", "folderTypes": {"context": "data", "scheduled": "data"}, "group": "", "children": [], "aboutHtml": "<div class=\"ws-line\">A personal side project. Low priority, no deadlines.<\/div>", "context": [{"title": "About this folder", "html": "<div class=\"ws-heading\">Context<\/div>\n<div class=\"ws-line\">Background for the recipe recommendation side project. Just getting started; nothing here yet.<\/div>"}, {"title": "Project brief", "html": "<div class=\"ws-heading\">Recipe engine -- project brief<\/div>\n<div class=\"ws-line\">A weekend experiment: a small recommendation engine that suggests recipes from<\/div>\n<div class=\"ws-line\">what&#x27;s already in the fridge. Stack is Python plus a local embedding model.<\/div>\n<div class=\"ws-line\">Success looks like a working prototype that my partner actually uses twice in<\/div>\n<div class=\"ws-line\">one week. No deadlines, no stakeholders, fun first.<\/div>"}, {"title": "Trends notes", "html": "<div class=\"ws-heading\">Trends notes<\/div>\n<div class=\"ws-line\">Appended weekly by the weekly-trends-scan agent. Newest at the top.<\/div>\n<div class=\"ws-heading\">2026-06-10<\/div>\n<div class=\"ws-bullet\">Open Recipe Format 0.4 released, adds ingredient quantity normalisation -- https://example.org/orf<\/div>\n<div class=\"ws-bullet\">Blog post on embedding ingredient lists with small local models -- https://example.org/embed-pantry<\/div>\n<div class=\"ws-bullet\">A fridge-photo-to-ingredients demo got traction on HN -- https://example.org/fridge-vision<\/div>"}], "contextMore": 0, "ontologyDocs": []}], "agents": [{"name": "nightly-index", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "inbox-triage", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "dashboard-generator", "kind": "librarian", "cadence": "nightly", "description": "", "scope": "", "origin": "exfu", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}, {"name": "weekly-trends-scan", "kind": "agent", "cadence": "weekly", "description": "", "scope": "Side Project", "origin": "user", "status": "healthy", "lastRun": "2026-06-10T12:25:53Z", "registered": true}], "root": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example", "workspace": {"todos": [{"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/user/todo", "rel": "user/todo/", "title": "Managed in ClickUp", "pointer": "Tasks are tracked in ClickUp, not stored locally", "pointerUrl": "https://app.clickup.com/2461358/v/b/alastairs-workspace", "meta": "the folder points at your existing tool", "html": "", "kind": "pointer"}, {"scope": "Acme", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/scopes/acme/todo", "rel": "scopes/acme/todo/", "title": "Managed in ClickUp", "pointer": "Tasks are tracked in ClickUp, not stored locally", "pointerUrl": null, "meta": "the folder points at your existing tool", "html": "", "kind": "pointer"}, {"scope": "Q3 Renewal", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/scopes/acme/scopes/q3-renewal/todo", "rel": "scopes/acme/scopes/q3-renewal/todo/", "title": "Confirm renewal pricing with finance", "done": false, "file": "agent.md", "meta": "open", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>Confirm renewal pricing with finance<\/span><\/div>", "kind": "task"}, {"scope": "Q3 Renewal", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/scopes/acme/scopes/q3-renewal/todo", "rel": "scopes/acme/scopes/q3-renewal/todo/", "title": "Draft the renewal proposal deck", "done": false, "file": "agent.md", "meta": "open", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>Draft the renewal proposal deck<\/span><\/div>", "kind": "task"}], "reminders": [{"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/user/reminders", "rel": "user/reminders/", "title": "Chase the Acme security questionnaire if it still has not come back.", "file": "reminders.md", "date": "2026-07-01", "dateGroup": "overdue", "meta": "Reminders", "snippet": "2026-07-01", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>2026-07-01 -- Chase the Acme security questionnaire if it still has not come back.<\/span><\/div>", "kind": "reminder"}, {"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/user/reminders", "rel": "user/reminders/", "title": "Ask me whether the renewal pricing confirmation went to finance.", "file": "reminders.md", "date": "2026-07-23", "dateGroup": "soon", "meta": "Reminders", "snippet": "2026-07-23", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>2026-07-23 -- Ask me whether the renewal pricing confirmation went to finance.<\/span><\/div>", "kind": "reminder"}, {"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/user/reminders", "rel": "user/reminders/", "title": "Start planning the January review of scopes and agents.", "file": "reminders.md", "date": "2026-12-01", "dateGroup": "later", "meta": "Reminders", "snippet": "2026-12-01", "html": "<div class=\"ws-task\"><span class=\"ws-box\"><\/span><span>2026-12-01 -- Start planning the January review of scopes and agents.<\/span><\/div>", "kind": "reminder"}], "inbox": [{"scope": "Alastair", "path": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/exfu-dashboard-improvements-094c2e/plugin/example/user/inbox", "rel": "user/inbox/", "title": "Meetup lightning talk idea", "file": "2026-07-18-meetup-lightning-talk-idea.md", "meta": "today -- waiting on you", "snippet": "Heard about a small-business AI meetup in Bristol. Might be worth a", "html": "<div class=\"ws-line\">Heard about a small-business AI meetup in Bristol. Might be worth a<\/div>\n<div class=\"ws-line\">lightning talk on how the library setup works day to day. Decide whether<\/div>\n<div class=\"ws-line\">to apply before the end of the month.<\/div>", "kind": "capture"}]}, "generatedAt": "2026-07-22T12:09:00Z"};</script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var tabs = document.querySelectorAll('.tab');
@@ -856,6 +1276,389 @@
       });
     });
     </script>
+  <script>
+(function () {
+  var D = window.EXFU_DATA || {};
+  var LS_KEY = 'exfu-basket:' + (D.root || 'default');
+  var state = load();
+  var drawer = null, pill = null;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.items) return parsed;
+      }
+    } catch (e) {}
+    return { items: [] };
+  }
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function uid() { return 'b' + Math.random().toString(36).slice(2, 10); }
+
+  function itemFor(ref) {
+    if (!ref) return null;
+    var parts = ref.split(':');
+    var list = (D.workspace || {})[parts[0]] || [];
+    var it = list[parseInt(parts[1], 10)];
+    return it ? { kind: parts[0], it: it } : null;
+  }
+  function keyFor(kind, it) {
+    return kind + ':' + (it.rel || '') + (it.file || '') + ':' + (it.title || '');
+  }
+  function locFor(it) { return (it.rel || '') + (it.file || ''); }
+
+  function toggleInstruction(kind, it) {
+    if (it.done) {
+      return 'In ' + locFor(it) + ', mark the task "' + it.title +
+        '" as not done again (untick it).';
+    }
+    return 'In ' + locFor(it) + ', mark the task "' + it.title +
+      '" as done. Follow the folder conventions (tick it, or move it to ' +
+      'done.md if that is the pattern there).';
+  }
+  function deleteInstruction(kind, it) {
+    if (kind === 'inbox') {
+      return 'Delete the inbox item "' + it.title + '" (' + locFor(it) +
+        '). I have decided it is not needed.';
+    }
+    if (kind === 'reminders') {
+      return 'Remove the reminder "' + it.title + '" from ' + locFor(it) + '.';
+    }
+    return 'Remove the task "' + it.title + '" from ' + locFor(it) + '.';
+  }
+
+  function add(text, source, key, verb) {
+    if (!text) return;
+    if (key && verb) {
+      // clicking the same control again is a change of mind: unqueue it
+      for (var i = 0; i < state.items.length; i++) {
+        if (state.items[i].key === key && state.items[i].verb === verb) {
+          state.items.splice(i, 1);
+          save(); renderAll(false);
+          return;
+        }
+      }
+    }
+    state.items.push({
+      id: uid(), text: text, source: source || '', key: key || '',
+      verb: verb || '', snapshotAt: D.generatedAt || ''
+    });
+    save(); renderAll(true);
+  }
+  function removeById(id) {
+    for (var i = 0; i < state.items.length; i++) {
+      if (state.items[i].id === id) { state.items.splice(i, 1); break; }
+    }
+    save(); renderAll(false);
+  }
+  function moveById(id, delta) {
+    for (var i = 0; i < state.items.length; i++) {
+      if (state.items[i].id === id) {
+        var j = i + delta;
+        if (j < 0 || j >= state.items.length) return;
+        var tmp = state.items[i];
+        state.items[i] = state.items[j];
+        state.items[j] = tmp;
+        break;
+      }
+    }
+    save(); renderAll(false);
+  }
+
+  function buildPrompt() {
+    var lines = [];
+    lines.push('Open my Agent Library: load my wow skill (or the ' +
+      'exfu-library skill) first.');
+    lines.push('');
+    lines.push('Below are changes I queued from my library dashboard ' +
+      '(snapshot: ' + (D.generatedAt || 'unknown') + '). Paths are relative ' +
+      'to my library root. Apply each one following the library ' +
+      'conventions, and check with me if anything is ambiguous.');
+    lines.push('');
+    for (var i = 0; i < state.items.length; i++) {
+      lines.push((i + 1) + '. ' + state.items[i].text);
+    }
+    lines.push('');
+    lines.push('When done, re-run the library index and regenerate the ' +
+      'dashboard so it reflects reality.');
+    return lines.join('\n');
+  }
+
+  function applyOverlays() {
+    var byKey = {};
+    state.items.forEach(function (b) {
+      if (b.key) (byKey[b.key] = byKey[b.key] || []).push(b);
+    });
+    var nodes = document.querySelectorAll('[data-bk-key]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      el.classList.remove('pending-tick', 'pending-delete');
+      var old = el.querySelector('.pending-chip');
+      if (old) old.parentNode.removeChild(old);
+      var list = byKey[el.getAttribute('data-bk-key')] || [];
+      if (!list.length) continue;
+      var verbs = list.map(function (b) { return b.verb; });
+      if (verbs.indexOf('delete') !== -1) el.classList.add('pending-delete');
+      else if (verbs.indexOf('toggle') !== -1) el.classList.add('pending-tick');
+      var chip = document.createElement('span');
+      chip.className = 'pending-chip';
+      chip.textContent = 'queued';
+      (el.querySelector('.item-title') || el).appendChild(chip);
+    }
+  }
+
+  function renderList() {
+    var list = drawer.querySelector('.bk-list');
+    if (!state.items.length) {
+      list.innerHTML = '<div class="bk-empty">Nothing queued yet. Tick a ' +
+        'task, mark something for deletion, or use a + button anywhere on ' +
+        'the page.</div>';
+      return;
+    }
+    var h = '';
+    state.items.forEach(function (b) {
+      var stale = b.snapshotAt && D.generatedAt && b.snapshotAt !== D.generatedAt;
+      h += '<div class="bk-item" data-bk-id="' + b.id + '">' +
+        '<div style="flex:1;min-width:0">' +
+        '<div class="bk-item-text" contenteditable="true" spellcheck="false">' +
+        esc(b.text) + '</div>' +
+        '<span class="bk-item-src">' + esc(b.source || 'instruction') +
+        (stale ? ' <span class="bk-item-stale">from an older snapshot</span>' : '') +
+        '</span></div>' +
+        '<div class="bk-item-btns">' +
+        '<button data-bk-mv="-1" title="Move up">&#9650;</button>' +
+        '<button data-bk-mv="1" title="Move down">&#9660;</button>' +
+        '<button data-bk-rm="1" title="Remove">&#215;</button>' +
+        '</div></div>';
+    });
+    list.innerHTML = h;
+  }
+
+  function renderAll(pulse) {
+    if (!drawer) return;
+    renderList();
+    var count = pill.querySelector('.bk-count');
+    count.textContent = String(state.items.length);
+    if (pulse) {
+      pill.classList.remove('bk-pulse');
+      void pill.offsetWidth;
+      pill.classList.add('bk-pulse');
+    }
+    var link = drawer.querySelector('#bk-open');
+    var note = drawer.querySelector('#bk-note');
+    var prompt = buildPrompt();
+    var encoded = 'claude://cowork/new?q=' + encodeURIComponent(prompt);
+    if (!state.items.length) {
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('href', '#');
+      note.textContent = '';
+    } else if (encoded.length > 13000) {
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('href', '#');
+      note.textContent = 'Too long for one click now; use Copy prompt and ' +
+        'paste it into your AI.';
+    } else {
+      link.removeAttribute('aria-disabled');
+      link.setAttribute('href', encoded);
+      note.textContent = 'Copy pastes anywhere; Open in Claude prefills a ' +
+        'Cowork session (you still press send).';
+    }
+    applyOverlays();
+  }
+
+  function copyText(t, btn, label) {
+    function done() {
+      var was = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(function () { btn.textContent = was; }, 1500);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
+  }
+
+  function buildUi() {
+    pill = document.createElement('button');
+    pill.id = 'bk-pill';
+    pill.setAttribute('title', 'Your queued instructions');
+    pill.innerHTML = 'Basket <span class="bk-count">0</span>';
+    drawer = document.createElement('div');
+    drawer.id = 'bk-drawer';
+    drawer.innerHTML =
+      '<div class="bk-head"><h3>Instructions for your AI</h3>' +
+      '<div class="bk-sub">Changes queue here; hand the list to your AI in ' +
+      'one go. Nothing in your library changes until it does the work.</div>' +
+      '</div>' +
+      '<div class="bk-list"></div>' +
+      '<div class="bk-addrow"><input class="bk-input" id="bk-free" ' +
+      'maxlength="500" placeholder="Add your own instruction">' +
+      '<button class="bk-btn" id="bk-addbtn">Add</button></div>' +
+      '<div class="bk-foot">' +
+      '<button class="bk-btn bk-btn-primary" id="bk-copy">Copy prompt</button>' +
+      '<a class="bk-btn" id="bk-open" href="#" aria-disabled="true">' +
+      'Open in Claude</a>' +
+      '<button class="bk-btn" id="bk-clear">Clear</button>' +
+      '<span class="bk-foot-note" id="bk-note"></span></div>';
+    document.body.appendChild(pill);
+    document.body.appendChild(drawer);
+
+    pill.addEventListener('click', function () {
+      drawer.classList.toggle('open');
+    });
+    drawer.querySelector('#bk-copy').addEventListener('click', function (ev) {
+      if (state.items.length) copyText(buildPrompt(), ev.currentTarget);
+    });
+    drawer.querySelector('#bk-clear').addEventListener('click', function () {
+      if (!state.items.length) return;
+      if (window.confirm('Clear all queued instructions?')) {
+        state.items = [];
+        save(); renderAll(false);
+      }
+    });
+    drawer.querySelector('#bk-addbtn').addEventListener('click', function () {
+      var inp = drawer.querySelector('#bk-free');
+      if (inp.value.trim()) {
+        add(inp.value.trim(), 'written by you', '', 'note');
+        inp.value = '';
+      }
+    });
+    drawer.querySelector('#bk-free').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        drawer.querySelector('#bk-addbtn').click();
+      }
+    });
+    drawer.addEventListener('click', function (ev) {
+      var row = ev.target.closest ? ev.target.closest('.bk-item') : null;
+      if (!row) return;
+      var id = row.getAttribute('data-bk-id');
+      if (ev.target.hasAttribute('data-bk-rm')) removeById(id);
+      else if (ev.target.hasAttribute('data-bk-mv')) {
+        moveById(id, parseInt(ev.target.getAttribute('data-bk-mv'), 10));
+      }
+    });
+    drawer.addEventListener('focusout', function (ev) {
+      if (!ev.target.classList || !ev.target.classList.contains('bk-item-text')) return;
+      var row = ev.target.closest('.bk-item');
+      if (!row) return;
+      var id = row.getAttribute('data-bk-id');
+      for (var i = 0; i < state.items.length; i++) {
+        if (state.items[i].id === id) {
+          var t = ev.target.textContent.replace(/\s+/g, ' ').trim();
+          if (t) state.items[i].text = t;
+          break;
+        }
+      }
+      save(); renderAll(false);
+    });
+  }
+
+  function onDocClick(ev) {
+    var sg = ev.target.closest ? ev.target.closest('.bk-suggest') : null;
+    if (sg) {
+      add(sg.getAttribute('data-bk-suggest') || '', 'suggested', '', 'note');
+      return;
+    }
+    var go = ev.target.closest ? ev.target.closest('[data-ask-go]') : null;
+    if (go) {
+      var wrap = go.parentNode;
+      var inp = wrap.querySelector('input');
+      if (!inp || !inp.value.trim()) return;
+      var about = inp.getAttribute('data-ask-about') || '';
+      add((about ? 'About ' + about + ': ' : '') + inp.value.trim(),
+          'about an item', '', 'note');
+      inp.value = '';
+      return;
+    }
+    var b = ev.target.closest ? ev.target.closest('.bk-act') : null;
+    if (!b) return;
+    var found = itemFor(b.getAttribute('data-bk-item'));
+    if (!found) return;
+    var verb = b.getAttribute('data-bk-verb');
+    var key = keyFor(found.kind, found.it);
+    if (verb === 'toggle') {
+      add(toggleInstruction(found.kind, found.it), found.it.scope || '', key, 'toggle');
+    } else if (verb === 'delete') {
+      add(deleteInstruction(found.kind, found.it), found.it.scope || '', key, 'delete');
+    }
+  }
+
+  function onFormSubmit(ev) {
+    var f = ev.target.closest ? ev.target.closest('form[data-bk-form]') : null;
+    if (!f) return;
+    ev.preventDefault();
+    var kind = f.getAttribute('data-bk-form');
+    var v = {};
+    var names = ['text', 'scope', 'date', 'title', 'note', 'name',
+                 'purpose', 'parent'];
+    for (var i = 0; i < names.length; i++) {
+      var el = f.querySelector('[name="' + names[i] + '"]');
+      if (el) v[names[i]] = el.value.trim();
+    }
+    var text = '', src = '';
+    if (kind === 'create-task') {
+      text = 'Add a task to the ' + v.scope + ' scope\u2019s todo: "' +
+        v.text + '". Create the todo folder first if it does not exist yet.';
+      src = 'new task';
+    } else if (kind === 'create-reminder') {
+      text = 'Add a reminder in the ' + v.scope + ' scope' +
+        (v.date ? ' for ' + v.date : '') + ': "' + v.text +
+        '". Create the reminders folder first if needed.';
+      src = 'new reminder';
+    } else if (kind === 'create-capture') {
+      text = 'Capture to the ' + v.scope + ' scope\u2019s inbox: "' +
+        v.title + '"' + (v.note ? '. The note: ' + v.note : '') +
+        '. Create the inbox folder first if needed.';
+      src = 'inbox capture';
+    } else if (kind === 'create-scope') {
+      text = 'Create a new scope named "' + v.name + '"' +
+        (v.parent && v.parent !== 'top level'
+          ? ' inside the ' + v.parent + ' scope' : ' at the top level') +
+        (v.purpose ? ', purpose: "' + v.purpose + '"' : '') +
+        '. Use the scope-setup flow.';
+      src = 'new scope';
+    }
+    if (text) {
+      add(text, src, '', 'create');
+      f.reset();
+      var det = f.closest ? f.closest('details') : null;
+      if (det) det.removeAttribute('open');
+    }
+  }
+
+  function init() {
+    buildUi();
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('submit', onFormSubmit);
+    renderAll(false);
+  }
+
+  window.EXFU_BASKET = { add: add, itemKey: keyFor };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
   <script>
 (function () {
   var D = window.EXFU_DATA || { scopes: [], agents: [], workspace: {} };
@@ -966,7 +1769,7 @@
       if (a.origin === 'exfu') { if (!showExfu) return; }
       else if (a.kind === 'librarian' && !showLib) return;
       else if (a.kind === 'agent' && !showBiz) return;
-      var hub = a.origin === 'exfu' ? 'ExFu' : (a.scope || 'Your substrate');
+      var hub = a.origin === 'exfu' ? 'ExFu' : (a.scope || 'Your library');
       (hubs[hub] = hubs[hub] || []).push(a);
     });
     var names = Object.keys(hubs), n = names.length || 1;
@@ -1310,6 +2113,18 @@
              (sc.contextMore === 1 ? '' : 's') + ' -- open the folder to browse</div>';
       }
     }
+    var ont = sc.ontologyDocs || [];
+    if (ont.length) {
+      h += '<div class="panel-section">Ontology</div>';
+      ont.forEach(function (c) {
+        h += '<details class="panel-doc"><summary>' + esc(c.title) +
+             '</summary><div class="panel-prose">' + c.html + '</div></details>';
+      });
+    }
+    h += '<div class="panel-ask"><input class="bk-input" maxlength="400" ' +
+         'data-ask-about="the ' + esc(sc.name) + ' scope" ' +
+         'placeholder="Queue a question or change for this scope">' +
+         '<button class="bk-btn" data-ask-go="1">Queue</button></div>';
     h += '<div class="panel-guidance">Ask your AI about this scope by name -- it knows where everything lives.</div>';
     openPanel(h);
   }
@@ -1325,9 +2140,19 @@
     if (a.cadence) h += '<div class="panel-section">Cadence</div><div>' + esc(a.cadence) + '</div>';
     if (a.scope) h += '<div class="panel-section">Scope</div><div>' + esc(a.scope) + '</div>';
     if (a.lastRun) h += '<div class="panel-section">Last run</div><div>' + esc(a.lastRun) + '</div>';
+    var install = 'Register the staged agent &quot;' + esc(a.name) +
+      '&quot; so it starts running on its cadence.';
+    var investigate = 'Investigate why the agent &quot;' + esc(a.name) +
+      '&quot; is failing, fix what you can, and report back.';
     h += '<div class="panel-guidance">' + (a.registered
-      ? 'To change or pause it, just tell your AI.'
-      : 'Staged, not yet running. Tell your AI "install ' + esc(a.name) + '" to switch it on.') + '</div>';
+      ? 'To change or pause it, just tell your AI. '
+      : 'Staged, not yet running. ');
+    if (!a.registered) {
+      h += '<button class="bk-suggest" data-bk-suggest="' + install + '">queue install</button>';
+    } else if (a.status === 'failing' || a.status === 'warning') {
+      h += '<button class="bk-suggest" data-bk-suggest="' + investigate + '">queue an investigation</button>';
+    }
+    h += '</div>';
     openPanel(h);
   }
 
@@ -1355,13 +2180,30 @@
     if (it.html) h += '<div class="panel-section">Detail</div><div class="panel-prose">' + it.html + '</div>';
     if (it.pointer) {
       h += '<div class="panel-section">Where it lives</div><div class="panel-prose">' + esc(it.pointer) + '</div>';
+      if (it.pointerUrl) {
+        h += '<div class="panel-act-row"><a class="bk-btn" target="_blank" rel="noopener" href="' +
+             esc(it.pointerUrl) + '">Open in your tool &#8599;</a></div>';
+      }
     }
     if (it.path) {
       h += '<div class="panel-section">Folder</div>' + pathRow(it.path, it.rel || it.path);
     }
+    if (it.kind !== 'pointer') {
+      h += '<div class="panel-act-row">';
+      if (it.kind === 'task') {
+        h += '<button class="bk-btn bk-act" data-bk-verb="toggle" data-bk-item="' +
+             kind + ':' + idx + '">' + (it.done ? 'Untick' : 'Tick off') + '</button>';
+      }
+      h += '<button class="bk-btn bk-act" data-bk-verb="delete" data-bk-item="' +
+           kind + ':' + idx + '">Mark for deletion</button></div>';
+      h += '<div class="panel-ask"><input class="bk-input" maxlength="400" ' +
+           'data-ask-about="&quot;' + esc(it.title) + '&quot; (' + esc((it.rel || '') + (it.file || '')) + ')" ' +
+           'placeholder="Queue a question or change about this">' +
+           '<button class="bk-btn" data-ask-go="1">Queue</button></div>';
+    }
     h += '<div class="panel-guidance">' + (kind === 'inbox'
       ? 'To file it, tell your AI where it belongs -- or let the nightly sweep suggest a home.'
-      : 'Mention this to your AI by name to update or complete it.') + '</div>';
+      : 'Buttons here queue instructions in your basket; your AI makes the actual change.') + '</div>';
     openPanel(h);
   }
 
