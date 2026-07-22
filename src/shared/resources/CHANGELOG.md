@@ -23,6 +23,7 @@ The dashboard learns to take instructions. Interactions queue prompts instead of
 
 **Fixed**
 - Removed two stray duplicate definitions of `grouping_label`/`hint` in dashboard-generator.py left behind by an earlier editing pass, and synced the example's dashboard-generator librarian definition to the v0.3.1 gallery placement it had missed.
+- `skill-packaging` delivery is now surface-aware. The `computer:///` link + Save Skill flow only works in Cowork chat; in Claude Code (the CLI, or the Claude Code view inside Claude Desktop) file links render but do nothing, so the skill now says: open the containing folder for the user and point them at Settings -> Capabilities -> Skills -> Upload skill (or a Cowork session). Packages are written to a space-free path (spaces broke link handling). Its bedrock-skill list also caught up with the 0.4 vocabulary: exfu-library etc., with the setup-generated per-user skills delivered like custom skills.
 
 ---
 
