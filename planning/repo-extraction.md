@@ -1,6 +1,7 @@
 # repo-extraction -- standalone exfu_plugin repo and marketplace
 
-**Status:** Adopted (approved by Al in plan mode, 2026-07-22). In progress.
+**Status:** Adopted (approved by Al in plan mode, 2026-07-22). Repo-side landed
+(genesis + marketplace commits); website-side removal branch merge-gated on Al.
 
 Anchor for the extraction of the plugin sub-project out of `exfu_website` into
 this standalone repo. Full plan reviewed and approved in-session; this document

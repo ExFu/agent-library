@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 # =============================================================================
 # ExFu plugin build script
-# Composes plugin/src/shared/ + plugin/src/<variant>/ into distributable
-# plugin directories under plugin/build/output/<variant>/
+# Composes src/shared/ + src/<variant>/ into installable plugin directories
+# under plugins/<variant>/ — the committed sources of the repo's Claude
+# plugin marketplace (.claude-plugin/marketplace.json). Also syncs the
+# marketplace entries' version/description from the plugin manifests.
 #
 # Usage:
-#   ./plugin/build/build.sh solo
-#   ./plugin/build/build.sh team
-#   ./plugin/build/build.sh team-admin
-#   ./plugin/build/build.sh all
+#   ./build/build.sh solo
+#   ./build/build.sh team
+#   ./build/build.sh team-admin
+#   ./build/build.sh all
 #
 # Flags:
-#   --dist    Also produce a versioned .zip in public/downloads/ (publishable)
+#   --dist    Also produce a versioned .zip in dist/ (for publishing to the
+#             exfu_website download page; dist/ is gitignored)
 # =============================================================================
 set -euo pipefail
 
@@ -33,10 +36,10 @@ info() { echo "       $*"; }
 # invoked from any working directory.
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-SRC_ROOT="${REPO_ROOT}/plugin/src"
-OUTPUT_ROOT="${SCRIPT_DIR}/output"
-DIST_DIR="${REPO_ROOT}/public/downloads"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SRC_ROOT="${REPO_ROOT}/src"
+OUTPUT_ROOT="${REPO_ROOT}/plugins"
+DIST_DIR="${REPO_ROOT}/dist"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -395,7 +398,7 @@ build_variant() {
   fi
 
   # ------------------------------------------------------------------
-  # 5. Optional: produce versioned .zip archive in public/downloads/
+  # 5. Optional: produce versioned .zip archive in dist/
   # ------------------------------------------------------------------
   if [[ "$WANT_DIST" == true ]]; then
     mkdir -p "$DIST_DIR"
@@ -455,3 +458,39 @@ else
   exit 1
 fi
 echo "============================================================"
+
+# ---------------------------------------------------------------------------
+# Marketplace manifest sync — keep .claude-plugin/marketplace.json entries
+# (version, description) aligned with the built plugin manifests. The
+# marketplace sources point at plugins/<variant>, so a drifted entry would
+# advertise the wrong version for the very directory it installs.
+# ---------------------------------------------------------------------------
+MARKETPLACE_JSON="${REPO_ROOT}/.claude-plugin/marketplace.json"
+if [[ -f "$MARKETPLACE_JSON" ]]; then
+  python3 - "$MARKETPLACE_JSON" "$SRC_ROOT" <<'PYEOF'
+import json, os, sys
+mp_path, src_root = sys.argv[1], sys.argv[2]
+mp = json.load(open(mp_path))
+changed = []
+for entry in mp.get("plugins", []):
+    variant = os.path.basename(str(entry.get("source", "")).rstrip("/"))
+    manifest_path = os.path.join(src_root, variant, ".claude-plugin", "plugin.json")
+    if not os.path.exists(manifest_path):
+        continue
+    m = json.load(open(manifest_path))
+    for k in ("version", "description"):
+        if k in m and entry.get(k) != m[k]:
+            entry[k] = m[k]
+            changed.append(f"{entry.get('name', variant)}.{k}")
+if changed:
+    with open(mp_path, "w") as f:
+        json.dump(mp, f, indent=2)
+        f.write("\n")
+    print("       marketplace.json synced: " + ", ".join(changed))
+else:
+    print("       marketplace.json already in sync with plugin manifests")
+PYEOF
+  ok "Marketplace manifest checked"
+else
+  warn "No .claude-plugin/marketplace.json at repo root — marketplace sync skipped"
+fi

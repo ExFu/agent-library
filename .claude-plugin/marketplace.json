@@ -1,0 +1,79 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "exfu",
+  "description": "ExFu: your Agent Library. Claude as a real working collaborator, with Agent Librarians keeping your stuff organised so you can find it when you need it. Solo, team, and library-champion editions.",
+  "owner": {
+    "name": "Alastair Brayne",
+    "email": "al@exfu.ai",
+    "url": "https://exfu.ai"
+  },
+  "plugins": [
+    {
+      "name": "exfu-solo",
+      "description": "ExFu: your Agent Library. Claude as a real working collaborator, with Agent Librarians keeping your stuff organised so you can find it when you need it. Solo edition for individuals.",
+      "version": "0.5.0",
+      "author": {
+        "name": "Alastair Brayne",
+        "email": "al@exfu.ai",
+        "url": "https://exfu.ai"
+      },
+      "source": "./plugins/solo",
+      "homepage": "https://exfu.ai/install",
+      "license": "Proprietary",
+      "keywords": [
+        "exfu",
+        "agent-library",
+        "librarians",
+        "substrate",
+        "knowledge-base",
+        "cowork",
+        "personal-claude"
+      ]
+    },
+    {
+      "name": "exfu-team",
+      "description": "ExFu: join your team's shared Agent Library and build your personal layer on top. Joiner edition.",
+      "version": "0.5.0",
+      "author": {
+        "name": "Alastair Brayne",
+        "email": "al@exfu.ai",
+        "url": "https://exfu.ai"
+      },
+      "source": "./plugins/team",
+      "homepage": "https://exfu.ai/install",
+      "license": "Proprietary",
+      "keywords": [
+        "exfu",
+        "agent-library",
+        "librarians",
+        "substrate",
+        "knowledge-base",
+        "cowork",
+        "team-claude"
+      ]
+    },
+    {
+      "name": "exfu-team-admin",
+      "description": "ExFu: library-champion edition. Provision your team's shared Agent Library, author shared skills, brief IT, onboard members.",
+      "version": "0.5.0",
+      "author": {
+        "name": "Alastair Brayne",
+        "email": "al@exfu.ai",
+        "url": "https://exfu.ai"
+      },
+      "source": "./plugins/team-admin",
+      "homepage": "https://exfu.ai/install",
+      "license": "Proprietary",
+      "keywords": [
+        "exfu",
+        "agent-library",
+        "librarians",
+        "substrate",
+        "knowledge-base",
+        "cowork",
+        "team-claude",
+        "admin"
+      ]
+    }
+  ]
+}

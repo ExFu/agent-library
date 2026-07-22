@@ -1,0 +1,22 @@
+{
+  "agents": [
+    {
+      "name": "nightly-index",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": [],
+      "enabled": true,
+      "source": "exfu/v0.3/librarians/nightly-index.md",
+      "installed": null,
+      "last_run": null,
+      "last_status": null,
+      "consecutive_failures": 0
+    }
+  ],
+  "cadences": {
+    "nightly": {
+      "scheduled_task": "nightly-agents",
+      "last_run": null
+    }
+  }
+}

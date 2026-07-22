@@ -1,0 +1,201 @@
+# ExFu plugins changelog
+
+This file tracks substantive changes to the ExFu plugin suite. Future Claude sessions can read it at `${CLAUDE_PLUGIN_ROOT}/resources/CHANGELOG.md` to understand what behaviour has shipped, when, and why. Useful for orientation when a skill's behaviour seems different from how it's described in older notes, or when reconstructing why a convention exists.
+
+Versions match the plugin manifests. Patch bumps cover bug fixes and small behaviour changes; minor bumps add features; major bumps make breaking changes.
+
+---
+
+## v0.5.0 -- 2026-07-22
+
+The dashboard learns to take instructions. Interactions queue prompts instead of touching files: the Action Basket. Plus an ontology reference view, linked pointer chips, date-aware reminders, a staleness banner, and a visualisations gallery.
+
+**Added**
+- **The Action Basket.** The dashboard stays read-only about the library's files, but its controls now queue editable instructions: tick a task checkbox, mark an item for deletion, use the + New task / scope / reminder / capture forms, type into the sidebar's ask-about inputs, or press a suggest button on a guidance line. Instructions collect in a drawer (inline edit, reorder, remove; persisted in the browser per library root) and export two ways: **Copy prompt** (a complete, path-annotated prompt for any session) or **Open in Claude** (a `claude://cowork/new` deep link that prefills a Cowork session; the user still presses send; over ~13k characters the link disables and points at Copy). Queued changes render optimistically with a dashed amber "queued" style; instructions written against an older page snapshot are flagged. Nothing on disk changes until the user's AI does the work -- the basket is a prompt under construction, which is also how it teaches the conversational model.
+- **How it works view.** The core ontology rendered as a visual reference: the folder-type catalogue as a card grid, every section of `ontology.md` readable in collapsibles. The sidebar now also surfaces each scope's own `ontology/` files alongside `context/`.
+- **Gallery.** Your scopes now ends with every visualisation bundle across scopes (with or without a `viz.md` manifest), linked to open; `view: true` bundles still mount as top-level tabs.
+- **Staleness banner.** When the index behind the page is older than 36 hours, a banner says so and offers to queue a refresh instruction.
+
+**Changed**
+- Pointer chips ("Managed in ClickUp") become real links when the folder's own agent.md names a URL -- never fabricated. The sidebar detail gains an "Open in your tool" button.
+- Reminders group by urgency: Overdue (red), Coming up within 7 days (amber), then the rest as written. ISO dates are parsed best-effort; entries without one render exactly as before. Bullet-entry titles shed their checkbox markers and leading dates.
+- The example library now demonstrates the new surfaces out of the box: dated reminders, an inbox capture with triage status, and a ClickUp board URL on the pointer todo.
+
+**Fixed**
+- Removed two stray duplicate definitions of `grouping_label`/`hint` in dashboard-generator.py left behind by an earlier editing pass, and synced the example's dashboard-generator librarian definition to the v0.3.1 gallery placement it had missed.
+- `skill-packaging` delivery is now surface-aware. The `computer:///` link + Save Skill flow only works in Cowork chat; in Claude Code (the CLI, or the Claude Code view inside Claude Desktop) file links render but do nothing, so the skill now says: open the containing folder for the user and point them at Settings -> Capabilities -> Skills -> Upload skill (or a Cowork session). Packages are written to a space-free path (spaces broke link handling). Its bedrock-skill list also caught up with the 0.4 vocabulary: exfu-library etc., with the setup-generated per-user skills delivered like custom skills.
+
+---
+
+## v0.4.0 -- 2026-07-20
+
+The Agent Library release: the pitch is renamed, the plumbing is not; and storage moves from Box to Dropbox.
+
+**Changed**
+- **Two-register vocabulary.** User-facing, the product is now **ExFu's Agent Library**, kept organised by **Agent Librarians** (always plural -- an ecosystem the user appeals to, never a single all-knowing character; a scope may be taught as a "shelf", an analogy, not a rename). "Substrate" is retained as the internal register: the implementation vocabulary agents use in files and with each other. Defined once in `ontology.md#vocabulary`; carried through the primers, the guide, the install conversations, plugin manifests, and the dashboard ("<name>'s library"). No structural renames: folders, anchors, resource filenames, and scope.md machinery are unchanged.
+- **Boot skill renamed `substrate` -> `exfu-library`.** The front-door skill name was the worst cross-plugin collision risk; the `exfu-` prefix is the naming convention for new and replaced skills from 0.4 onward. The CLAUDE.md guard's canonical text now names `exfu-library` and describes the folder as an Agent Library root. All references updated (wow template, install skills, templates, guides).
+- **Dropbox replaces Box as the solo storage default and the team cloud-folder path.** The Dropbox connector supports delete, move, and copy natively by path, with per-file revision history -- so the entire Box workaround layer is deleted rather than ported. New shared skill `exfu-dropbox-storage` (access modes, conflicted-copy handling, hydration and symlink caveats); `team-box-folder-provisioning` becomes `team-dropbox-folder-provisioning`; the compliance briefing's storage sections now describe Dropbox; the exfu-library skill detects Dropbox-backed roots and treats Box-backed roots as legacy pending migration.
+- Substrate guide bumped to v8: two-register note, Dropbox access modes, corrected dashboard path (`exfu/visualisations/dashboard/`), fixed a stale version header. The human primer (`the-substrate-primer.md`, now titled "The Agent Library Primer") sheds its outdated v0.2 PII-layer and orgs/teams passages.
+
+**Added**
+- **`exfu-migrate-to-dropbox`** -- the 0.4 upgrade path: verifies the user's Dropbox copy against the Box original (which becomes a read-only fallback, never modified), refreshes the deployed convention base, rewrites the guard, retires `_trash/`/`_DELETED_`/box-cleanup artefacts, updates the wow's paths and glosses, records the storage change, and emits the account-side checklist (Global Instructions path, connectors, scheduled-task prompts, personal skills).
+
+**Removed**
+- `box-filesystem-management`, `team-box-folders`, and the solo `box-cleanup` scheduled task (with its `_trash/` + `_DELETED_` + 60-day purge machinery). Deletes are real deletes now, with Dropbox's own trash and revision history as the safety net.
+
+---
+
+## v0.3.4 -- 2026-06-12
+
+The dashboard's big interface release: the Grounded Editorial design system, a split-pane reading layout, item-level workspace views, and second-brain style graphs.
+
+**Added**
+- **View registry with pluggable scope views.** Tabs generate from a registry: Your scopes, Agents, and Todos / Reminders / Inbox as their own top-level views. Any scope's `visualisations/<name>/` bundle with a `viz.md` manifest declaring `view: true` mounts automatically as a tab (relative iframe). The example substrate demonstrates it ("Trend snapshot" from the side-project scope).
+- **Everything is a card with a story.** Tasks, reminders (split per entry from their files: headings first, then bullets, then whole-file), and inbox captures render as individual cards; clicking any card, agent, or graph node opens its detail in the reading panel.
+- **Split-pane layout.** The detail panel is always open on the right (default half the window), resizable by dragging its edge (width remembered). It greets with the personal scope.
+- **Second-brain graphs.** The scope and agent maps follow the conventions of tools like Obsidian: small dots sized by connections, thin straight edges, hover highlights the node's neighbourhood and dims the rest, wheel zoom, background pan, a gently continuous force layout, and draggable nodes that spring back when released. Honours `prefers-reduced-motion`.
+- Filesystem links open in a new tab; nothing truncates for good (overflow folds into expanders).
+
+**Changed**
+- Full design pass applying the website's Grounded Editorial language: Source Serif 4 display (embedded; the woff2 ships with the plugin -- no network fetches) over a humanist text stack, the site's paper/ink/rust palette, an editorial left-aligned header ("<name>'s substrate"), scope cards in a responsive grid with the personal scope as hero, grouping folders as labelled container boxes, paper grain, staggered entrances.
+- Dashboard copy says "your AI" (Claude only in explicitly-Claude examples) -- carried through all new views.
+
+---
+
+## v0.3.3 -- 2026-06-10
+
+**Changed**
+- Install conversations get a pacing and consent model ("How to begin", replacing "start moving"). The previous instruction read "their go is implicit... begin immediately, then continue through the steps in order" -- which licensed silent multi-step execution and writing into the user's folders before any dialogue. Now: the first message answers what the user actually asked, sketches the shape of the install, and proposes the first move; reading is free, the first write needs an explicit yes, the user's own content is propose-then-do, and a direct question is always answered before tools fire. One step at a time, narrated. Matching must-never constraint ("Don't execute silently") in all three variants.
+
+---
+
+## v0.3.2 -- 2026-06-10
+
+**Changed**
+- Install conversations now carry a "How to talk to the user" contract, applied from the first message: golden circle with the outcome first, internal vocabulary earned one term at a time (the brand terms "substrate" and "wow" are used freely but glossed in layman language on first use), a say-this-not-that translation table, and no plan-dump openings. Compact versions in exfu-start, scope-setup, and the substrate skill.
+- Routing for kept content stated positively everywhere: reference documents (PDFs, spreadsheets, transcripts, exports) are context with a file extension and live in `context/`; repeating records live in `databases/`. A shipped librarian definition and several resources that still suggested pre-v0.3 destinations were corrected.
+- `team-repo-provisioning` and `team-box-folder-provisioning` no longer seed structure: they end where content begins (repo or folder created, access configured, clone verified), and the install conversation seeds the substrate against the current conventions.
+
+**Fixed**
+- Marketplace upload validation: SKILL.md frontmatter that failed YAML parsing (unquoted ": " in descriptions) and a description over the 1024-character server limit. build.sh now enforces YAML parseability, the length cap, and the no-XML rule locally.
+
+**Removed**
+- `pii-layer-guidance.md` (a v0.2 resource superseded by the v0.3 secrets-only data rule).
+
+---
+
+## v0.3.1 -- 2026-06-10
+
+**Added**
+- Substrate dashboard v2–v4, generated by the dashboard-generator librarian into `exfu/visualisations/dashboard/index.html`: List/Map view toggles on the scopes and agents tabs; dependency-free radial map (the user at the centre, scopes radiating out; agents hub-and-spoke off their scopes) with node-type filters; click-to-open sidebar on every node and list card showing purpose, About (scope.md body), capped `context/` excerpts (the folder's readme.md first), folder-type dots, agents, children, and a `file://` path link with a copy button; grouping folders as container boxes in the list view; agents tab split into the user's agents (grouped by scope, collapsible) and ExFu's own (collapsed, at the bottom); "Found, not installed" section surfacing staged definitions; guidance lines and "?" hints explaining scopes, agents, and grouping folders in place.
+
+**Changed**
+- Dashboard output moved from `exfu/derived/dashboard/` to the visualisations gallery (`exfu/visualisations/dashboard/`); `ontology.md` and the librarian definition updated to match. The generator reads `agent-registry.json`/`agent-log.json` and falls back to the pre-rename `librarian-*` filenames for substrates that predate the scheduled-agent vocabulary.
+- Dashboard copy refers to "your AI" rather than Claude, except where something is genuinely Claude-specific (e.g. Claude Cowork Scheduled tasks as an example).
+
+---
+
+## v0.3.0 -- 2026-06-09
+
+Recorded retrospectively; the v0.3.0 zips shipped without a changelog entry.
+
+**Changed**
+- M2 substrate redesign: scope-based model (scope.md boundary markers, nesting via `scopes/`, grouping folders), versioned convention base at `exfu/v0.3/` with a single-file anchor-addressed core ontology (`ontology.md`), materialise-on-demand folder-types (kept documents live in `context/`), and the scheduled-agent framework -- librarians (substrate remit, `librarians/`) plus business agents (domain remit, `scheduled/`), one registry (`exfu/derived/agent-registry.json`), one run log, helper scripts under `scheduled-tasks/scheduled-agents/`.
+- All three install skills rewritten for the v0.3 model; sane-default templates added for todo, reminders, and inbox.
+
+---
+
+## v0.2.8 -- 2026-05-07
+
+**Changed**
+- Substrate skill Step 1: when the substrate isn't accessible in the current session, the skill now invokes the working-folder picker (`request_cowork_directory`) directly rather than asking the user in text to add it. Hard constraint #6 added: never proceed without substrate access; no fallback to inference, guessed structure, or working from memory of prior sessions.
+- The `inbox`, `reminders`, and `writing-styles` skills have been split. The plugin now ships `setup-inbox`, `setup-reminders`, and `setup-writing-styles` -- setup skills that capture user preferences and generate a per-user skill (`<username>-inbox`, `<username>-reminders`, `<username>-writing-styles`) that handles ongoing operations. The operational content lives in templates at `${CLAUDE_PLUGIN_ROOT}/templates/<name>-template.md`. Pattern parallel to how `exfu-create-wow` produces the `wow` skill. The substrate skill (Step 10) now delegates to whatever `*-reminders` or `*-inbox` skill is loaded in the session, rather than looking for the old generic names.
+
+**Added**
+- This CHANGELOG.md, for future-agent reference.
+
+---
+
+## v0.2.6 -- 2026-05-07
+
+**Added**
+- New `substrate-index` scheduled task (`shared/scheduled-tasks/substrate-index/`). Stdlib-only Python script walks every folder (skipping system folders, `_trash/`, `_meta/`), extracts Purpose + Contents from each README, writes `_meta/substrate-index.md`. Folder-only output, no allowlist; novel folders surfaced honestly. Caps fields at 120 chars, total at 50 KB.
+- `exfu-create-wow` skill: substrate-index registration is now a baseline part of every wow generation. Skill runs the indexer once on the spot for an immediate first index, creates the recurring scheduled task, hands it to the user for install. Not a buffet item.
+
+**Changed**
+- Substrate skill Step 4 now requires reading `_meta/substrate-index.md` on every load. Flags absence to the user with a clear remedy (register the scheduled task, or run the script manually).
+- `wow-template` gets a brief note: editorial layer (curated pointers) versus comprehensive layer (machine-walked nightly index).
+
+---
+
+## v0.2.5 -- 2026-05-07
+
+**Added**
+- `_meta/storage-backend.md` handshake: install skills write a canonical record of the chosen storage backend (`git`, `box`, or `local`) at the substrate root. Substrate skill reads it on every session start to decide which verb vocabulary and storage-skill delegation to use.
+
+**Changed**
+- Substrate skill Step 1.5 detects storage backend from the handshake file (with inference fallback from `.git/` presence or Box-mount path heuristics).
+- Substrate skill Step 7 generalised with explicit subsections for git-backed, Box-backed, and local-only substrates. Each backend gets backend-appropriate verb vocabulary; the git-specific verb table is preserved but scoped clearly.
+- Substrate skill ongoing-behaviour: storage-skill delegation rule per backend (`git-substrate-sync` for git, `box-filesystem-management` plus `team-box-folders` for Box, direct filesystem for local-only).
+- All 3 install skills now write `_meta/storage-backend.md` after capturing the storage choice. Records also land in the wow navigation map for human-readable context.
+
+---
+
+## v0.2.4 -- 2026-05-07
+
+**Added**
+- New `team-box-folders` skill (in `shared/skills/`, excluded from solo via build script). For team members and admins to organically create scope folders, share with colleagues, manage access. Covers the multi-folder reality of Box team substrates (per-org, per-team, per-scope sharing groups).
+
+**Changed**
+- `team-box-folder-provisioning`: removed the "if these dealbreakers, consider git" trade-off section. Decontamination principle: Box-using teams shouldn't see git referenced in their storage skills, and vice versa. Install entrypoints still mention all options because that's where the choice is made.
+- `box-filesystem-management` moved from `solo/skills/` to `shared/skills/`. Now ships in all 3 plugins so Box is a real option for team contexts.
+- Install-team Step 5 and install-team-admin Step 6 now offer three storage paths: git, Box shared folder, local-only.
+- `cross-cut-storage-architecture.md` (planning) rewritten for the 3-option model with trade-off table and multi-folder Box explanation.
+- `compliance-briefing.md` augmented with backend-specific commentary throughout: data flow, controls, ISO 27001 table notes, audit trail, backup, and access control all now cover git, Box, and local-only.
+
+---
+
+## v0.2.1 -- 2026-05-05
+
+**Changed**
+- Plugin distribution format switched from `.tar.gz` to `.zip`. Build script writes versioned archives directly to `public/downloads/`.
+- `install.astro` page: archive section populated with v0.2.0 entries.
+
+---
+
+## v0.2.0 -- 2026-05-05
+
+**Added** (initial v0.2.0 release; substantive substrate model revision)
+- Three-plugin split: `exfu-solo`, `exfu-team`, `exfu-team-admin`. Hard separation at plugin boundary; team-admin is a strict capability superset of team but installed separately so capability doesn't leak.
+- `substrate-guide.md` v5: top-level `orgs/` and `teams/` siblings, top-level `scopes/`, hard `context/` convention, two-layer model (substrate proper plus PII layer), CLAUDE.md guard at substrate root, permission-aware verb surfacing, non-techie verb vocabulary.
+- New `the-substrate-primer.md`: human-facing pre-install reading. Covers the four ingredients, discoverability asymmetry, build-by-doing, chief-of-staff framing.
+- New `exfu-primer.md`: human-facing intro to what ExFu is.
+- New `pii-layer-guidance.md`: framework-agnostic guidance for the two-layer model. Contract shape only; implementations are wrapping-plugin territory.
+- New `ecosystem-references.md`: catalogue of Anthropic and community resources, plus deep-research-as-a-move pattern.
+- New `teaching-artefacts.md`: catalogue of diagrams that ship with the plugins.
+- New `cross-cut-extension-and-wrapping.md` (planning): meta-principle that ExFu provides patterns; wrapping plugins (one per org, typically) or the installing Claude resolve org-specific decisions.
+- New `compliance-briefing.md` (team-admin only): material the substrate champion can hand to IT or security teams.
+- `exfu-start` orchestrator: first-run detection. New users get the install entrypoint loaded immediately, no triage menu.
+- 3 install entrypoints (one per variant) with multi-org/team question and CLAUDE.md guard creation.
+- New admin-only skills in team-admin: `team-repo-provisioning`, `team-shared-skills-authoring`, `team-onboard-member`, `exfu-upgrade-from-team-to-admin`.
+- New `git-substrate-sync` skill (shared, excluded from solo): wraps git operations safely for substrate use.
+- New `exfu-migrate-from-fetch-model` skill: handles the upgrade path from the previous fetch-from-URL install model.
+
+**Changed**
+- All 18 SKILL.md files: descriptions rewritten with thicker context (a Claude reading them cold has enough grounding) and real-user-language triggers (verbs and substance, not insider vocabulary). Bodies that lacked Why got a Why sentence added.
+- Substrate skill rewritten (98 → 265 lines): boot reads new v5 layout, creates CLAUDE.md guard at substrate root, multi-org/team aware, expects optional permission lookup and PII connector from wrapping plugin or install.
+- Author field corrected to `Alastair Brayne` across all manifests and references (was `Whaley`, derived incorrectly from the company name `WhaleyBear Ltd`).
+
+---
+
+## v0.1.0 -- 2026-05-02
+
+Initial 3-plugin release. Replaces the previous fetch-from-URL install model with a self-contained Claude Code plugin install model.
+
+**Added**
+- exfu-solo: 11 skills including `box-filesystem-management` for solo storage.
+- exfu-team: 11 skills, `git-substrate-sync` as the team storage skill.
+- exfu-team-admin: 15 skills, including `team-repo-provisioning` and other admin-only skills.
+- Skills, resources, and templates ported from the previous fetch-from-URL install model.
+- Build pipeline (`plugin/build/build.sh`) with shared-plus-variant composition and `--dist` zip generation.
+- `install.astro` page with 3-plugin decision helper.
