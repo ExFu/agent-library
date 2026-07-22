@@ -1,0 +1,17 @@
+# agent-plan-visualiser local per-checkout state — never tracked
+.apv/.last-capture
+# agent-plan-visualiser local per-checkout state — never tracked
+.apv/.pending-extract
+# agent-plan-visualiser local per-checkout state — never tracked
+.apv/.toolchain-home
+
+# exfu_plugin local/session state — never tracked
+.omc/
+# build zips
+dist/
+# macOS
+.DS_Store
+# agent-plan-visualiser derived artefacts — rebuilt, never tracked
+.apv/cache.sqlite
+.apv/projection.json
+.apv/summary.md

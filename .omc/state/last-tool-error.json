@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"R=/Users/al/Library/CloudStorage/Box-Box/claude-exfu-0.3\\nfind \\\"$R\\\" -type d -name docs 2>/dev/null\\necho \\\"=== contents ===\\\"\\nfind \\\"$R\\\" -path '*docs*' -type f 2>/dev/null | head -15\\n...",
-  "error": "Exit code 1\n=== contents ===\n=== top-level shape ===",
-  "timestamp": "2026-06-10T13:54:25.769Z",
-  "retry_count": 1
-}

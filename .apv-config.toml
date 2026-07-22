@@ -1,0 +1,30 @@
+# .apv-config.toml — committed project configuration for agent-plan-visualiser.
+# Lives at the repo root (it names the data dir, so it cannot live inside it).
+# Unknown keys are tolerated by design — this file accrues future config.
+
+[gate]
+# Check ids the integrity composite (gate-composite.py) enforces.
+# blocking = corruption of the record (exit 1); warn = advisory, printed,
+# never failing. Moving an id between the lists changes enforcement
+# without code edits.
+blocking = ["schema", "referential", "sealed-tail", "implementation-on-draft", "resurrection-without-reopen", "fulcrum-without-decision"]
+warn = ["drift", "orphans", "stalled", "long-blockers"]
+
+[storage]
+# APV_DATA_DIR env var overrides this; default is .apv/ when neither is set.
+data_dir = ".apv"
+# Where the plan documents live, relative to the repo root. Uncomment when
+# the tracked project sits in a sub-folder of the repo (monorepo case) —
+# the data dir stays at the repo root; only the plan corpus moves.
+# planning_dir = "planning"
+
+# Multiple sub-projects in one repo (T3-multi-project): register each
+# project's planning root. Commits and the event log stay repo-wide (one
+# record); entities derive project membership from which root owns their
+# plan file (explicit attributes.project overrides). The [storage] root
+# above is the implicit project "main"; unmatched entities show as
+# "unassigned". Uncomment and adapt:
+# [projects.website]
+# planning_dir = "site/planning"
+# [projects.plugin]
+# planning_dir = "plugin/planning"
