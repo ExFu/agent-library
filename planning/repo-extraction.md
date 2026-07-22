@@ -12,8 +12,7 @@ records the operative decisions so the repo self-orients.
 The plugin ecosystem outgrew its sub-project status: it versions independently
 of the website, its planning corpus dominates the shared APV log's plugin
 strand, and distribution wants to be a proper Claude plugin marketplace rather
-than hand-published zips. A standalone repo also dogfoods APV project
-attachment on a fresh repo.
+than hand-published zips.
 
 ## How (the four decisions, Al's rulings 2026-07-22)
 
@@ -26,7 +25,10 @@ attachment on a fresh repo.
    attributes naming the source repo and log. Historic plugin events remain in
    the website log. The website log gets a closing decision recording the split.
 3. **Distribution: proper Claude marketplace.** Root
-   `.claude-plugin/marketplace.json` (name `exfu`), composed plugin dirs
+   `.claude-plugin/marketplace.json` (name `exfu-library`, "ExFu Library";
+   renamed from plain `exfu` later the same day -- Al: more than one
+   exfu-authored plugin exists, the distributable must name the product),
+   composed plugin dirs
    committed under `plugins/`, installable by directory path now and by repo
    slug once a remote exists. `build.sh --dist` keeps producing zips (now into
    gitignored `dist/`) for the website download flow.

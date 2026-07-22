@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "exfu",
+  "name": "exfu-library",
   "description": "ExFu: your Agent Library. Claude as a real working collaborator, with Agent Librarians keeping your stuff organised so you can find it when you need it. Solo, team, and library-champion editions.",
   "owner": {
     "name": "Alastair Brayne",

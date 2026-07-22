@@ -18,8 +18,11 @@ archive; this repo's planning state was carried forward into a fresh APV log
   - `src/solo/`, `src/team/`, `src/team-admin/` -- variant-specific content and `.claude-plugin/plugin.json` manifests
 - `build/build.sh` -- composes `src/shared/` + `src/<variant>/` into installable plugin dirs
 - `plugins/` -- the composed, committed build output; these are the marketplace's plugin sources
-- `.claude-plugin/marketplace.json` -- marketplace manifest (name `exfu`); install via
-  `/plugin marketplace add <this repo path or slug>` then `/plugin install exfu-solo@exfu`
+- `.claude-plugin/marketplace.json` -- marketplace manifest (name `exfu-library`, display
+  "ExFu Library" -- renamed from plain `exfu` 2026-07-22, Al's ruling: more than one
+  exfu-authored plugin exists, so the distributable identity must name the product);
+  install via `/plugin marketplace add <this repo path or slug>` then
+  `/plugin install exfu-solo@exfu-library`
 - `dist/` -- gitignored versioned zips (`build.sh --dist`) for the website download flow
 - `example/` -- a worked example Agent Library used by docs and the dashboard generator
 - `planning/` -- the planning corpus (APV-tracked; plain markdown, entity id = filename stem)

@@ -10,7 +10,7 @@ Source and Claude Code plugin marketplace for the ExFu plugins:
 
 ```
 /plugin marketplace add /Users/al/Studio/projects/exfu_plugin
-/plugin install exfu-solo@exfu
+/plugin install exfu-solo@exfu-library
 ```
 
 (Once this repo has a public remote, the path becomes the repo slug.)
