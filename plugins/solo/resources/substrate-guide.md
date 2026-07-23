@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 8
+version: 9
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -121,8 +121,8 @@ Not a scope itself (no `scope.md`). This is the convention base and generated-ou
 
 ```
 exfu/
-  latest.txt              # single line: the current convention version (e.g. "v0.3")
-  v0.3/                   # convention base for v0.3 -- deliberately flat and small
+  latest.txt              # single line: the current convention version (e.g. "20260723-1446")
+  20260723-1446/          # a convention base version -- deliberately flat and small
     readme.md             # orientation map for this directory
     ontology.md           # the complete core ontology, ONE file (scope model,
                           #   folder-types, scheduled agents, authoring rules)
@@ -140,7 +140,7 @@ exfu/
 
 The convention base is one complete ontology file rather than a folder of fragments because agents ingest a single read far more reliably -- the same file-economy principle that governs everything written into the substrate.
 
-**Versioning is side-by-side.** When a new convention version ships (e.g. v0.6), it appears as `exfu/v0.6/` alongside `exfu/v0.3/`. Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
+**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260723-1446`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260723-1446/` next to a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
 ### The user/ scope
 
@@ -229,7 +229,7 @@ Format:
 name: Acme
 purpose: Client relationship and commercial engagement with Acme Corp
 parent: root
-exfu: v0.3
+exfu: 20260723-1446
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
@@ -304,7 +304,7 @@ A folder with no deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/v0.3/ontology.md#context
+Follows: exfu/20260723-1446/ontology.md#context
 ```
 
 That's it. One line plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
@@ -315,7 +315,7 @@ A folder with deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/v0.3/ontology.md#todo
+Follows: exfu/20260723-1446/ontology.md#todo
 
 Local deviations:
 - Tasks are tracked in ClickUp, not stored locally
@@ -600,6 +600,7 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
+- 2026-07-23 v9: Conventions versioning moved to timestamp identifiers (plugin 0.6.0). Convention base versions are now named by their release moment as shortened UTC timestamps (YYYYMMDD-HHMM, e.g. 20260723-1446) instead of v0.x labels; identifiers no longer share a naming surface with plugin release numbers, lexicographic order is chronological, and every release mints a fresh identifier so a version's contents never change under a stable name. v0.x is now the legacy scheme: any timestamp identifier is newer than any v0.x one. First timestamped base minted as 20260723-1446 (contents of the former shipped v0.3). Side-by-side model and per-scope pins unchanged.
 - 2026-07-20 v8: Agent Library re-pitch (plugin 0.4.0). Added the two-register note: user-facing Agent Library / Agent Librarians vs internal substrate vocabulary, defined in ontology.md#vocabulary. Guard file and boot-skill references renamed substrate -> exfu-library. Connector access section rewritten for Dropbox (native delete/move, path addressing, revision history), replacing the Box workarounds; retired the _DELETED_ naming convention. Corrected the dashboard path to exfu/visualisations/dashboard/ and fixed the stale version header (previous edit logged v7 in the changelog but left the header at 6).
 - 2026-06-10 v7: Convention base flattened to file-economy form: the core ontology is now ONE file (exfu/v0.3/ontology.md, anchor-addressed by Follows: lines) instead of fragmented ontology/ subfolders; shipped librarian definitions moved to exfu/v0.3/librarians/ (instances, not ontology); wow template ships at exfu/v0.3/skills/wow-template.md. Added scheduled/ folder-type and the ScheduledAgents concept: librarians and business agents share mechanics (definition format, registry, cadence sessions) and differ in remit; registry renamed to exfu/derived/agent-registry.json with kind field, log to agent-log.json, task to nightly-agents. Added materialise-on-demand rule (no empty folder scaffolding), the no-state rule for descriptors (agent.md/readme.md/scope.md), and the file-economy authoring principle (fewer, complete files; flat ontologies).
 - 2026-06-09 v6: Rewritten for v0.3.0. Replaced orgs/, teams/, and personal-default layout with uniform scope model -- everything is a scope. Replaced _meta/ with exfu/ (convention base at exfu/v0.3/, generated output at exfu/derived/). Removed _trash/ and scratch/. Introduced 10 standard folder-types with store-or-point principle. Added scope.md format (YAML frontmatter with name, parent, exfu version pin). Replaced README.md convention with agent.md reference+delta pattern (Follows: line + local deviations). Added protective headers for scope.md and agent.md. Added librarians (autonomous maintenance agents with cadence-based scheduling). Added global index (exfu/derived/index.json) for whole-substrate discovery. Added versioning model (side-by-side convention versions, per-scope pins). Added user/ as a special unversioned scope. Replaced PII two-layer model with secrets-only ban. Added ontology resolution (parent-chain walk). Added substrate dashboard (exfu/derived/dashboard/).

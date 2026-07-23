@@ -3530,7 +3530,7 @@ def render_gallery_section(viz_list):
 
 def find_convention_dir(root):
     """The convention base the library follows: exfu/<latest.txt>, falling
-    back to the newest v* directory that carries an ontology.md."""
+    back to the newest version directory that carries an ontology.md."""
     latest = read_file_text(root / "exfu" / "latest.txt", max_bytes=64).strip()
     if latest and (root / "exfu" / latest / "ontology.md").exists():
         return root / "exfu" / latest, latest
@@ -3538,10 +3538,13 @@ def find_convention_dir(root):
     if not exfu_dir.is_dir():
         return None, None
     try:
+        # Timestamp identifiers (YYYYMMDD-HHMM) outrank legacy v-prefixed ones;
+        # within an era, lexicographic order is newest-last
         candidates = sorted(
-            d for d in exfu_dir.iterdir()
-            if d.is_dir() and d.name.startswith("v")
-            and (d / "ontology.md").exists()
+            (d for d in exfu_dir.iterdir()
+             if d.is_dir() and re.match(r"v\d|\d{8}-\d{4}$", d.name)
+             and (d / "ontology.md").exists()),
+            key=lambda d: (not d.name.startswith("v"), d.name),
         )
     except OSError:
         candidates = []

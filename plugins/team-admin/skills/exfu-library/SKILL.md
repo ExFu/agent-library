@@ -96,15 +96,15 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 ### Step 6 -- Resolve the current exfu version
 
-Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `v0.3`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260723-1446`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
-The convention base lives at `exfu/<version>/` (e.g. `exfu/v0.3/`). It is deliberately flat and small:
+The convention base lives at `exfu/<version>/` (e.g. `exfu/20260723-1446/`). It is deliberately flat and small:
 - `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
 - `principles.md` -- the design principles behind the conventions, plus tool recommendations.
 - `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
-Scopes pin their version in scope.md's `exfu` field. A scope pinned to `v0.3` follows the conventions in `exfu/v0.3/`. The `user/` scope is unversioned and always follows latest.
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260723-1446` follows the conventions in `exfu/20260723-1446/`. The `user/` scope is unversioned and always follows latest.
 
 ### Step 7 -- Load the user's personal context
 
@@ -284,7 +284,7 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    v0.3/                   # versioned conventions -- deliberately flat and small
+    20260723-1446/        # versioned conventions -- deliberately flat and small
       readme.md             # orientation map for this directory
       ontology.md           # the complete core ontology, one file
       principles.md         # design principles + recommendations
@@ -295,7 +295,7 @@ substrate-root/
       agent-registry.json   # registered scheduled agents and their health
       agent-log.json        # run history
       dashboard/            # generated HTML dashboard
-    latest.txt              # points to current version (e.g. "v0.3")
+    latest.txt              # points to current version (e.g. "20260723-1446")
   user/                     # personal scope (unversioned, always follows latest)
     scope.md
     context/                # personal background (about-me, preferences)
@@ -326,7 +326,7 @@ substrate-root/
 ---
 name: <human-readable name>
 parent: <parent scope name, or "root" for top-level>
-exfu: v0.3
+exfu: 20260723-1446
 ---
 ```
 
@@ -365,7 +365,7 @@ Every materialised folder-type directory contains an `agent.md` with this struct
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
 2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
-   `Follows: exfu/v0.3/ontology.md#todo`
+   `Follows: exfu/20260723-1446/ontology.md#todo`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 

@@ -240,7 +240,7 @@ With the storage in place, seed the shared substrate. Walk the champion through 
 
 **1. Convention base.** Deploy into the shared root, in order:
 - Create `exfu/` at the shared substrate root.
-- Copy the shipped convention files from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `v0.3`) into `exfu/<that version>/`.
+- Copy the shipped convention files from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `20260723-1446`) into `exfu/<that version>/`.
 - Create `exfu/latest.txt` containing exactly the shipped version name. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
 - Create `exfu/derived/` directory.
 

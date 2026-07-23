@@ -63,7 +63,7 @@ The 10 standard folder-types are the vocabulary of "where things go" inside a sc
 | `databases/` | Where do structured, repeating records live? |
 | `visualisations/` | Where do agent-created visual outputs live? |
 
-The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/v0.3/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
+The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260723-1446/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
 
 Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Folder-types section)
 
@@ -71,7 +71,7 @@ Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (
 
 The convention base lives at `exfu/<version>/` inside the substrate (`exfu/latest.txt` names the current version). It contains the default definitions for all folder-types, the scope model docs, and the librarian definitions. It is the single canonical source for "how does this folder-type behave by default?"
 
-Scopes reference the convention base via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/v0.3/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The convention base itself ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/` and gets installed into the user's substrate. It is deliberately flat and small (one ontology file, one principles file, shipped librarians, the wow template) so it can be ingested in a handful of reads.
+Scopes reference the convention base via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260723-1446/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The convention base itself ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/` and gets installed into the user's substrate. It is deliberately flat and small (one ontology file, one principles file, shipped librarians, the wow template) so it can be ingested in a handful of reads.
 
 ### 4. Store-or-point
 
@@ -98,7 +98,9 @@ Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (
 
 ### 6. Versioning
 
-Convention base versions sit side-by-side: `exfu/v0.3/`, `exfu/v0.6/`, etc. Each scope pins to a version via the `exfu:` field in its `scope.md`. New scopes default to whatever `exfu/latest.txt` points to. Existing scopes keep their pin until explicitly migrated.
+Convention base versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `exfu/20260723-1446/`). No seconds, no timezone suffix, no ISO punctuation. Identifiers deliberately share no naming surface with plugin release numbers, every release mints a fresh identifier (contents never change under a stable name), and lexicographic order is chronological order. Early releases used the legacy `v0.x` scheme (`exfu/v0.3/`); any timestamp identifier is newer than any `v0.x` one.
+
+Versions sit side-by-side under `exfu/`. Each scope pins to a version via the `exfu:` field in its `scope.md`. New scopes default to whatever `exfu/latest.txt` points to. Existing scopes keep their pin until explicitly migrated.
 
 Migration is per-scope, not all-at-once. A substrate can have scopes on different versions simultaneously. The global index tracks which version each scope uses.
 

@@ -30,7 +30,7 @@ Look for any of these substrate signals. **Any one match means "returning user":
 1. A `CLAUDE.md` guard file at the user's substrate root (whatever folder they point at, or anywhere obvious in their workspace).
 2. A `user/context/about-me.md` file in a folder the user might be using as a substrate.
 3. A user-installed `wow` skill (a personal skill they've installed for themselves, separate from this plugin's bundled skills).
-4. An `exfu/` directory at the substrate root that contains version directories inside (e.g. `exfu/v0.3/`).
+4. An `exfu/` directory at the substrate root that contains version directories inside (timestamp-named like `exfu/20260723-1446/`, or legacy `exfu/v0.3/`).
 5. A `scope.md` file in the `user/` directory at the substrate root.
 6. The user's first message explicitly says they have an existing setup ("I already have a substrate", "picking up where I left off", "I want to add to my existing wow", etc.).
 

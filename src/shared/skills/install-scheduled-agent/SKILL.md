@@ -39,7 +39,7 @@ The registry file is `exfu/derived/agent-registry.json` at the substrate root.
       "cadence": "nightly",
       "depends_on": [],
       "enabled": true,
-      "source": "exfu/v0.3/librarians/nightly-index.md",
+      "source": "exfu/20260723-1446/librarians/nightly-index.md",
       "installed": "2026-06-10T14:00:00Z",
       "last_run": null,
       "last_status": null,

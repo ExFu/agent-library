@@ -42,8 +42,9 @@ Compare the Dropbox copy against the Box original before touching anything:
 
 The `exfu/<version>/` directories are plugin-owned. Deploy the plugin's shipped version -- the single directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` -- into the new root:
 
-- If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions.
+- If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions. (Under the timestamp scheme the same identifier means identical canonical content, so this is a repair, not a change.)
 - If the plugin ships a newer version, install it alongside the existing one(s) and update `exfu/latest.txt` to name it. Leave older version directories in place -- scopes may still pin them (side-by-side model).
+- **Deciding "newer":** version identifiers are shortened UTC timestamps (`YYYYMMDD-HHMM`), so lexicographic order is chronological order. The one exception is the legacy `v0.x` scheme: any timestamp identifier is newer than any `v0.x` one -- never decide by raw string sort across the two schemes (digits sort before `v`, which gets it backwards).
 - Leave `exfu/derived/` and `exfu/visualisations/` alone -- they are the user's generated state.
 
 ## Step 3 -- Rewrite the CLAUDE.md guard

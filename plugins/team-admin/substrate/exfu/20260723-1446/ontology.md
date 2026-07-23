@@ -1,8 +1,8 @@
-# ExFu core ontology -- v0.3
+# ExFu core ontology -- 20260723-1446
 
 This is the complete structural vocabulary of an ExFu substrate, in one file. Read it top to bottom once and you know how everything here is organised: what a scope is, what each folder-type means, how scheduled agents and librarians work, and the authoring rules that keep the substrate ingestible.
 
-It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/v0.3/ontology.md#todo`.
+It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/20260723-1446/ontology.md#todo`.
 
 ---
 
@@ -26,8 +26,8 @@ Top-level layout:
 substrate-root/
   CLAUDE.md          # guard file: warns sessions that haven't loaded the conventions
   exfu/              # convention base (plugin-owned; agents and users don't edit it)
-    v0.3/            # this version's conventions, templates, shipped definitions
-    latest.txt       # current version name, e.g. "v0.3"
+    20260723-1446/   # this version's conventions, templates, shipped definitions
+    latest.txt       # current version name, e.g. "20260723-1446"
     derived/         # generated cache: index, registries. Never hand-edited.
     visualisations/  # ExFu-shipped visual outputs, e.g. the dashboard
   user/              # the personal scope (special: unversioned, parent: none)
@@ -53,7 +53,7 @@ Minimal by design. The rich picture lives in the global index, not here.
 name: <human-readable name>
 purpose: <one-line purpose>
 parent: <parent scope name, or "root" for top-level scopes>
-exfu: v0.3
+exfu: 20260723-1446
 ---
 ```
 
@@ -95,7 +95,9 @@ Without the `scopes/` boundary, an agent couldn't tell folder-types (known conve
 
 - Every pinned scope reads its conventions from `exfu/<pin>/`.
 - The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because sync layers don't handle symlinks reliably).
-- Convention versions install side by side (`exfu/v0.3/`, `exfu/v0.6/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
+- Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260723-1446`). No seconds, no timezone suffix (always UTC), no ISO punctuation. Every release mints a fresh identifier, so a version directory's contents never change under a stable name -- and plain lexicographic order is chronological order. Version identifiers deliberately share no naming surface with plugin release numbers.
+- Early releases used `v0.x` identifiers (`v0.2`, `v0.3`) -- the legacy scheme. Any timestamp identifier is newer than any `v0.x` identifier; never compare the two schemes by raw string sort (digits sort before `v`, which gets the order backwards).
+- Convention versions install side by side (`exfu/v0.3/`, `exfu/20260723-1446/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
 - `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log. It is a cache: never hand-edited, safe to delete and regenerate. (The dashboard itself lives in `exfu/visualisations/dashboard/`; only its data sources live here.)
 
 ---
@@ -282,7 +284,7 @@ Every materialised folder-type directory contains an `agent.md`:
 
 2. **`Follows:` line** naming the convention it implements, by versioned anchor into this file:
 
-   `Follows: exfu/v0.3/ontology.md#todo`
+   `Follows: exfu/20260723-1446/ontology.md#todo`
 
 3. **`Local deviations:`** -- a bullet list of only what differs from the convention (e.g. "Tasks are tracked in ClickUp, folder 901514259169"). Omit the section entirely when nothing differs.
 

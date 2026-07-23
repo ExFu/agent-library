@@ -1,4 +1,4 @@
-# ExFu convention base -- v0.3
+# ExFu convention base -- 20260723-1446
 
 The definitions everything else in this substrate builds on. To its user this whole installation is their Agent Library; "substrate" is the internal register for how the library is implemented. This directory is owned by the ExFu plugin: agents and users read it, they don't edit it. It is deliberately flat and small so it can be ingested in a handful of reads.
 

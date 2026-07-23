@@ -217,9 +217,9 @@ def discover_versions(exfu_dir):
     if not exfu_dir.exists():
         return versions
 
-    # Find version directories (match v followed by digits)
+    # Find version directories: timestamp-named (YYYYMMDD-HHMM) or legacy v-prefixed
     for entry in sorted(exfu_dir.iterdir()):
-        if entry.is_dir() and re.match(r"v\d", entry.name):
+        if entry.is_dir() and re.match(r"v\d|\d{8}-\d{4}$", entry.name):
             versions[entry.name] = {"is_latest": False, "scopes_using": []}
 
     # Determine latest
@@ -239,8 +239,9 @@ def discover_versions(exfu_dir):
     if latest and latest in versions:
         versions[latest]["is_latest"] = True
     elif versions:
-        # Default to highest version
-        highest = sorted(versions.keys())[-1]
+        # Default to newest: timestamp identifiers outrank legacy v-prefixed ones;
+        # within an era, lexicographic order is newest-last
+        highest = max(versions, key=lambda n: (not n.startswith("v"), n))
         versions[highest]["is_latest"] = True
 
     return versions

@@ -174,7 +174,7 @@ Once the storage folder is identified, deploy the shipped convention base. This 
 Do the following in order:
 
 1. **Create `exfu/` at the substrate root.** This is the convention base directory.
-2. **Copy the shipped convention files** from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `v0.3`) into `exfu/<that version>/` at the substrate root. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
+2. **Copy the shipped convention files** from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `20260723-1446`) into `exfu/<that version>/` at the substrate root. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
 3. **Create `exfu/latest.txt`** containing exactly the shipped version name. This tells agents which convention version is current.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
 
