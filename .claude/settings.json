@@ -1,6 +1,6 @@
 {
   "enabledPlugins": {
-    "agent-plan-visualiser@apv": true,
+    "exfu-agent-plan-visualiser@exfu": true,
     "exfu-agent-planning-and-delegating@exfu": true
   },
   "hooks": {

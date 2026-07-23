@@ -58,10 +58,22 @@ not assumed. Naming `events.jsonl` explicitly alongside the directory is what
 makes a delegate touching the record an unambiguous integrity violation under
 the core's snapshot comparison.
 
-**The stale `agent-plan-visualiser@apv` enablement key was left alone.** It
-names a marketplace that no longer exists; the plugin now installs as
-`exfu-agent-plan-visualiser@exfu`. The updater merges only its own keys, and
-removing someone else's is not this work's business. Raised for Al, untouched.
+**The stale `agent-plan-visualiser@apv` enablement key was initially left
+alone, then repointed on Al's instruction.** It named a marketplace that no
+longer exists (`apv` is absent from the configured marketplace list) and a
+plugin id that resolves to nothing installed. The wiring pass deliberately left
+it, on the grounds that the updater merges only its own keys and removing
+someone else's is not that work's business; Al then directed the fix, so the
+entity was reopened and the key repointed to `exfu-agent-plan-visualiser@exfu`.
+
+Repointed rather than deleted. Deletion was the alternative -- the plugin is
+enabled at user scope, so nothing is currently broken by its absence -- but a
+project-scope enablement is what makes the plugin load on surfaces where the
+user-scope enable does not propagate, which is the worktree-checkout case this
+repo's own CLAUDE.md warns about. It also keeps the declaration symmetric with
+`exfu-agent-planning-and-delegating@exfu` beside it and with the
+`[requires]` block in `.apv-config.toml`, so the repo states its APV dependency
+in-repo rather than relying on the machine it happens to be cloned onto.
 
 ## Consequences
 
