@@ -65,3 +65,27 @@ session did not load the plugin (typical in worktree checkouts that lack
 `.claude/settings.json`) — read the skill source directly and follow it:
 the newest `~/.claude/plugins/cache/*/agent-plan-visualiser/*/skills/apv-capture/SKILL.md`
 (same pattern for apv-merge and using-agent-plan-visualiser).
+
+<!-- exfu-agent-planning-and-delegating:orientation -->
+## exfu-agent-planning-and-delegating (ExFu Agent Planning & Delegating)
+
+This project depends on the **exfu-agent-planning-and-delegating** plugin: the ExFu Planning
+Methodology and grounded multi-model delegation. Its skills — `exfu-delegate`
+(hand well-specified work to a subscription-billed CLI delegate under enforced
+contracts), `exfu-grounding` (compose handoff grounding from the tiered plan
+corpus), and `exfu-planning-methodology` (the tiered-planning doctrine) — manage
+planning and delegation here. Provider wiring lives in `.exfu/providers.toml`.
+
+Confirm at session start that these skills are available (they may be
+plugin-namespaced, e.g. `exfu-agent-planning-and-delegating:exfu-delegate`). If NONE are available,
+this session did not load the plugin (typical in worktree checkouts lacking
+`.claude/settings.json`, or a surface where the global enable did not
+propagate) — resolve the skill source directly, in order:
+
+1. Prefer the enabled install path reported by `claude plugin list --json`.
+2. Else read the highest-version match under
+   `${CLAUDE_CONFIG_DIR:-~/.claude}/plugins/cache/*/exfu-agent-planning-and-delegating/*/skills/<name>/SKILL.md`.
+3. Else the plugin is not installed —
+   `claude plugin marketplace add https://github.com/ExFu/claude-marketplace.git`
+   then `claude plugin install exfu-agent-planning-and-delegating@exfu`.
+<!-- /exfu-agent-planning-and-delegating:orientation -->

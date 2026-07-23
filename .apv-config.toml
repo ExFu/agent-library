@@ -28,3 +28,8 @@ data_dir = ".apv"
 # planning_dir = "site/planning"
 # [projects.plugin]
 # planning_dir = "plugin/planning"
+
+[requires]
+# The plugin this project depends on (T3-cross-client-install).
+apv_min_version = "0.7.1"
+skills = ["apv-capture", "apv-merge", "using-agent-plan-visualiser"]

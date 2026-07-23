@@ -1,5 +1,19 @@
 {
   "enabledPlugins": {
-    "agent-plan-visualiser@apv": true
+    "agent-plan-visualiser@apv": true,
+    "exfu-agent-planning-and-delegating@exfu": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/exfu-agent-planning-and-delegating-orient.sh\""
+          }
+        ]
+      }
+    ]
   }
 }
