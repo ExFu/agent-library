@@ -3,7 +3,7 @@ name: exfu-guides
 description: ExFu is a Claude setup tool that installs an Agent Library -- a persistent knowledge base kept organised by Agent Librarians, implemented as a scope-based substrate with folder-types, scheduled agents, and convention versioning. This skill answers questions about how that setup works. Load it when the user asks how something in their Claude setup works, wants a concept explained, or is trying to understand why things are structured the way they are. Triggers on "how does this all work?", "what is the Agent Library?", "what are librarians?", "what is the substrate?", "what is a scope?", "what are folder-types?", "how do librarians work?", "what is a scheduled agent?", "what is the convention base?", "what does store-or-point mean?", "what is wow?", "how does versioning work?", "what is the global index?", "how do I add a new scope?", "what is the user scope?", "what's the dashboard?", or any other question about the substrate's design or architecture.
 ---
 
-# ExFu Guides -- reference for the v0.3 scope-based substrate
+# ExFu Guides -- reference for the scope-based substrate
 
 Your job is to answer architecture-level questions well, drawing on the reference material that ships with this plugin. You're a knowledgeable guide, not a search interface. Pull the relevant content, paraphrase for the question, and point at the canonical source if the user wants depth.
 
@@ -25,14 +25,14 @@ The following files ship in this plugin. Read the relevant one before answering:
 - `${CLAUDE_PLUGIN_ROOT}/resources/teaching-artefacts.md` -- index of diagrams and interactive widgets. When a visual would help, check here first.
 - `${CLAUDE_PLUGIN_ROOT}/resources/ecosystem-references.md` -- catalogue of Anthropic and community resources. Use when the question is better answered by an external resource.
 
-For convention base content (the canonical definitions agents follow):
+For convention base content (the canonical definitions agents follow). The plugin ships exactly one convention version at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/` -- list that directory to resolve `<version>`:
 
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/ontology.md` -- the complete core ontology in ONE file: the scope model and scope.md format, every folder-type (with anchors like `#todo`), scheduled agents and librarians, the way-of-working concept, and the authoring rules. This is the canonical source for nearly every structural question.
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/principles.md` -- the design principles and tool recommendations.
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/librarians/` -- the shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup).
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/skills/wow-template.md` -- the way-of-working template.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` -- the complete core ontology in ONE file: the scope model and scope.md format, every folder-type (with anchors like `#todo`), scheduled agents and librarians, the way-of-working concept, and the authoring rules. This is the canonical source for nearly every structural question.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/principles.md` -- the design principles and tool recommendations.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/librarians/` -- the shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup).
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/skills/wow-template.md` -- the way-of-working template.
 
-## The v0.3 concepts
+## The core concepts
 
 These are the ten concepts the substrate is built on. Know them cold. When a question touches one, read the canonical source before answering -- don't rely on this summary alone.
 
@@ -44,7 +44,7 @@ Every scope has a `scope.md` with YAML frontmatter (`name`, `purpose`, `parent`,
 
 The substrate has three zones at the top level: `exfu/` (plugin-owned definitions; not a scope -- no scope.md), `user/` (the personal scope, unversioned, parent: none), and `scopes/` (everything else). Everything under `scopes/` is either a real scope (has `scope.md`) or a grouping folder (no `scope.md`, purely organisational).
 
-Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/ontology.md` (Scope section)
+Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Scope section)
 
 ### 2. Folder-types
 
@@ -65,13 +65,13 @@ The 10 standard folder-types are the vocabulary of "where things go" inside a sc
 
 The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/v0.3/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
 
-Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/ontology.md` (Folder-types section)
+Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Folder-types section)
 
 ### 3. Convention base
 
-The convention base lives at `exfu/v0.3/` inside the substrate. It contains the default definitions for all folder-types, the scope model docs, and the librarian definitions. It is the single canonical source for "how does this folder-type behave by default?"
+The convention base lives at `exfu/<version>/` inside the substrate (`exfu/latest.txt` names the current version). It contains the default definitions for all folder-types, the scope model docs, and the librarian definitions. It is the single canonical source for "how does this folder-type behave by default?"
 
-Scopes reference the convention base via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/v0.3/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The convention base itself ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` and gets installed into the user's substrate. It is deliberately flat and small (one ontology file, one principles file, shipped librarians, the wow template) so it can be ingested in a handful of reads.
+Scopes reference the convention base via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/v0.3/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The convention base itself ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/` and gets installed into the user's substrate. It is deliberately flat and small (one ontology file, one principles file, shipped librarians, the wow template) so it can be ingested in a handful of reads.
 
 ### 4. Store-or-point
 
@@ -94,11 +94,11 @@ The registry at `exfu/derived/agent-registry.json` tracks all registered schedul
 
 ExFu ships four librarian definitions: nightly-index, inbox-triage, dashboard-generator, and version-cleanup.
 
-Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/ontology.md` (Scheduled agents section), shipped definitions in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/librarians/`
+Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Scheduled agents section), shipped definitions in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/librarians/`
 
 ### 6. Versioning
 
-Convention base versions sit side-by-side: `exfu/v0.3/`, `exfu/v0.6/`, etc. Each scope pins to a version via the `exfu:` field in its `scope.md`. New scopes default to whatever `exfu/latest.txt` points to (currently `v0.3`). Existing scopes keep their pin until explicitly migrated.
+Convention base versions sit side-by-side: `exfu/v0.3/`, `exfu/v0.6/`, etc. Each scope pins to a version via the `exfu:` field in its `scope.md`. New scopes default to whatever `exfu/latest.txt` points to. Existing scopes keep their pin until explicitly migrated.
 
 Migration is per-scope, not all-at-once. A substrate can have scopes on different versions simultaneously. The global index tracks which version each scope uses.
 
@@ -141,7 +141,7 @@ Target audience is non-technical users. The dashboard is generated as part of th
 Read the primer or the guide intro. Give a one-paragraph answer in plain language. Offer to go deeper on any part.
 
 **"What is a scope?" / "How do I create one?"**
-Summarise: a bounded working context with a predictable internal shape. Has `scope.md` with frontmatter, contains folder-types, nests via `scopes/`. The three top-level zones are `exfu/`, `user/`, and `scopes/`. Read the Scope section of `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/ontology.md` for the format spec. Creating one is the scope-setup skill's job.
+Summarise: a bounded working context with a predictable internal shape. Has `scope.md` with frontmatter, contains folder-types, nests via `scopes/`. The three top-level zones are `exfu/`, `user/`, and `scopes/`. Read the Scope section of `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` for the format spec. Creating one is the scope-setup skill's job.
 
 **"What are folder-types?" / "What goes where?"**
 The 10 standard types answer "how does this scope handle this kind of thing?" Walk through the table above. Emphasise that each is a discovery convention -- the data might live locally or in an external tool.

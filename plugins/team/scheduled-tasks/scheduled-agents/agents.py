@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Scheduled-agent helper (v0.3.0)
+Scheduled-agent helper
 
 Scheduled agents are agent instructions: markdown definitions that Claude
 reads and carries out inside a scheduled session. They come in two kinds

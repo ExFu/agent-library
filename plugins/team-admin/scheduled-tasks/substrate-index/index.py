@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Substrate Index (v0.3.0)
+Substrate Index
 
 Walks the substrate directory tree, discovers scopes via scope.md files,
 and produces a global JSON index at exfu/derived/index.json.
@@ -45,7 +45,7 @@ POINTER_PHRASES = [
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Generate substrate index (v0.3)")
+    parser = argparse.ArgumentParser(description="Generate substrate index")
     parser.add_argument("root", help="Path to the substrate root folder")
     return parser.parse_args()
 

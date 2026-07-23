@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team-admin
-description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate -- the substrate champion. That person decides where the shared knowledge base lives (git repo, Dropbox shared folder, or local-only), provisions the team's shared storage, seeds the shared substrate to v0.3 conventions, authors the team's conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
+description: Runs the full team-admin install for the person responsible for setting up their team's shared Claude substrate -- the substrate champion. That person decides where the shared knowledge base lives (git repo, Dropbox shared folder, or local-only), provisions the team's shared storage, seeds the shared substrate to the current ExFu conventions, authors the team's conventions, briefs IT, and onboards colleagues. This install covers all of that, on top of their own personal setup. Typically invoked by exfu-start on first run. Also triggers when a user says "I'm supposed to set up the team's shared AI setup", "I'm the one responsible for our team's Claude configuration", "I need to get my team set up with Claude", or similar language from someone taking on the admin role for their team.
 ---
 
 # ExFu Install -- Team Admin (Champion)
@@ -41,7 +41,7 @@ First contact is the highest-risk moment of the install. The user just installed
 | Say | Never lead with |
 |---|---|
 | your substrate folder | substrate root |
-| the folder structure and ground rules | convention base, exfu/v0.3/, ontology, latest.txt, derived/ |
+| the folder structure and ground rules | convention base, exfu/<version>/, ontology, latest.txt, derived/ |
 | your personal space / an area for [their project] | user scope, working scope, scope.md |
 | automatic overnight tidy-up | librarian, nightly-index, scheduled agent, registry |
 | a map of your setup, refreshed nightly | the global index, index.json |
@@ -53,7 +53,7 @@ First contact is the highest-risk moment of the install. The user just installed
 
 A real first-contact failure, and its fix:
 
-> Bad: "Convention base -- I deploy exfu/v0.3/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
+> Bad: "Convention base -- I deploy exfu/<version>/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
 >
 > Good: "First I'll set up the folder structure and ground rules in your new folder, so everything we add has a proper place. Takes a minute; nothing you need to decide."
 
@@ -232,7 +232,7 @@ Make sure the champion understands: if they want colleagues to share context, th
 
 ---
 
-Record the storage choice for later: it goes in the champion's user scope context (Step 8), the wow navigation map and the onboarding pack (Step 13). There is no `_meta/storage-backend.md` in v0.3.
+Record the storage choice for later: it goes in the champion's user scope context (Step 8), the wow navigation map and the onboarding pack (Step 13). There is no `_meta/storage-backend.md` in the current layout.
 
 ### Step 6 -- Shared-substrate seeding
 
@@ -240,8 +240,8 @@ With the storage in place, seed the shared substrate. Walk the champion through 
 
 **1. Convention base.** Deploy into the shared root, in order:
 - Create `exfu/` at the shared substrate root.
-- Copy the v0.3 convention files from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/`.
-- Create `exfu/latest.txt` containing exactly `v0.3`. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
+- Copy the shipped convention files from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `v0.3`) into `exfu/<that version>/`.
+- Create `exfu/latest.txt` containing exactly the shipped version name. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
 - Create `exfu/derived/` directory.
 
 Brief framing for the champion: *"This is the shared vocabulary -- the definitions every team member's Claude will read so they all work the same way. It's versioned, so the team can upgrade deliberately later."*
@@ -274,7 +274,7 @@ Set up the champion's personal substrate, separate from the shared one -- never 
 
 *"Now your own setup. Where would you like your personal library to live? Dropbox is the recommended default -- it syncs across devices and works with the connector for mobile access."* Use `request_cowork_directory` for the folder picker. If Dropbox, surface the hydration caveat ("Make Available Offline") for this folder too.
 
-Deploy the convention base into the personal root, same recipe as Step 6.1: `exfu/v0.3/` copied from the plugin, `exfu/latest.txt`, `exfu/derived/`.
+Deploy the convention base into the personal root, same recipe as Step 6.1: the shipped `exfu/<version>/` copied from the plugin, `exfu/latest.txt` naming it, `exfu/derived/`.
 
 ### Step 8 -- User scope creation (delegate to scope-setup)
 
@@ -421,7 +421,7 @@ All pre-installed via the plugin. No URL fetching needed.
 - Storage backend chosen (git, Dropbox, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
 - For git: repo provisioned or connected, remote URL confirmed, seeded structure committed and pushed, champion understands the git rhythm.
 - For Dropbox: folders created and shared, access set for the team, `exfu-dropbox-storage` operational, champion understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
-- Shared substrate seeded to v0.3: convention base at its `exfu/v0.3/` with `latest.txt`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
+- Shared substrate seeded: convention base at its `exfu/<version>/` with `latest.txt` naming it, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
 - Champion's personal substrate established in a separate folder: convention base deployed, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
 - Agent registry at the personal root with nightly-index registered; `nightly-agents` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
 - First index generated at the personal root's `exfu/derived/index.json`.

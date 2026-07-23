@@ -39,7 +39,7 @@ First contact is the highest-risk moment of the install. The user just installed
 | Say | Never lead with |
 |---|---|
 | your library folder | substrate root |
-| the folder structure and ground rules | convention base, exfu/v0.3/, ontology, latest.txt, derived/ |
+| the folder structure and ground rules | convention base, exfu/<version>/, ontology, latest.txt, derived/ |
 | your personal space / an area (or "shelf") for [their project] | user scope, working scope, scope.md |
 | your librarians' overnight rounds | nightly-index, scheduled agent, registry |
 | a map of your library, refreshed nightly | the global index, index.json |
@@ -51,7 +51,7 @@ First contact is the highest-risk moment of the install. The user just installed
 
 A real first-contact failure, and its fix:
 
-> Bad: "Convention base -- I deploy exfu/v0.3/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
+> Bad: "Convention base -- I deploy exfu/<version>/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
 >
 > Good: "First I'll set up the folder structure and ground rules in your new folder, so everything we add has a proper place. Takes a minute; nothing you need to decide."
 
@@ -169,13 +169,13 @@ Use `request_cowork_directory` for the folder picker to identify the knowledge b
 
 ### Step 4 -- Convention base deployment
 
-Once the storage folder is identified, deploy the v0.3 convention base. This is the structural foundation that all scopes reference.
+Once the storage folder is identified, deploy the shipped convention base. This is the structural foundation that all scopes reference.
 
 Do the following in order:
 
 1. **Create `exfu/` at the substrate root.** This is the convention base directory.
-2. **Copy the v0.3 convention files** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/` at the substrate root. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
-3. **Create `exfu/latest.txt`** containing exactly `v0.3`. This tells agents which convention version is current.
+2. **Copy the shipped convention files** from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `v0.3`) into `exfu/<that version>/` at the substrate root. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
+3. **Create `exfu/latest.txt`** containing exactly the shipped version name. This tells agents which convention version is current.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
 
 Don't explain the convention base in detail to the user. A brief: *"I'm laying down the base definitions that everything else builds on. Think of it as the shared vocabulary -- so every part of your setup speaks the same language."*
@@ -319,7 +319,7 @@ A checklist, not a script:
 
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
 - Dropbox account, Dropbox folder locally synced, Dropbox MCP connector connected (or alternative storage confirmed). Library folder identified via the folder picker. Hydration caveat ("Make Available Offline") surfaced and actioned.
-- Convention base deployed at `exfu/v0.3/` with `exfu/latest.txt` pointing to `v0.3`.
+- Convention base deployed at `exfu/<version>/` with `exfu/latest.txt` naming it.
 - User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the substrate root.

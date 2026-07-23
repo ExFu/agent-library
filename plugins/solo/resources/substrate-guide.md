@@ -4,7 +4,7 @@ version: 8
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
-A note on registers: to the user, this whole installation is their **Agent Library**, kept in order by their **Agent Librarians**. "Substrate" is the internal register: the implementation vocabulary this guide is written in. Speak library language with users; use substrate terms only when they ask how it works underneath. (The vocabulary is defined in `exfu/v0.3/ontology.md#vocabulary`.)
+A note on registers: to the user, this whole installation is their **Agent Library**, kept in order by their **Agent Librarians**. "Substrate" is the internal register: the implementation vocabulary this guide is written in. Speak library language with users; use substrate terms only when they ask how it works underneath. (The vocabulary is defined in `exfu/<version>/ontology.md#vocabulary`.)
 
 ---
 
@@ -257,7 +257,7 @@ Optional 2-3 sentence elaboration of purpose. Not required.
 
 Inside any scope, the folder-types are the standard vocabulary of "where things go." Each is a discovery convention first, a storage location second. Its job is to tell an agent *how the user handles this kind of thing for this scope* -- whether the data lives here, or somewhere else entirely.
 
-The base catalogue (defined canonically in `exfu/v0.3/ontology.md`, one anchored section per type):
+The base catalogue (defined canonically in `exfu/<version>/ontology.md`, one anchored section per type):
 
 | Folder | What it answers | Analogy |
 |---|---|---|
@@ -323,7 +323,7 @@ Local deviations:
 - Tag all tasks with scope name "acme-sales"
 ```
 
-The canonical behaviour of each folder-type lives once, in `exfu/v0.3/ontology.md`. This keeps the substrate lean and prevents convention drift across scopes.
+The canonical behaviour of each folder-type lives once, in `exfu/<version>/ontology.md`. This keeps the substrate lean and prevents convention drift across scopes.
 
 ### readme.md (for humans)
 
@@ -358,7 +358,7 @@ A collection of definitions -- "here is what this concept means in this scope." 
 
 Ontology holds *concepts*, not instances. A definition of what something means belongs here; a thing of a known kind goes where that kind prescribes (a librarian definition in `librarians/`, records in `databases/`, documents in `context/`).
 
-- `exfu/v0.3/ontology.md` defines the structural vocabulary the entire substrate runs on, in one file: what a scope is, what a scheduled agent is, the difference between a todo and a reminder, what each folder-type means.
+- `exfu/<version>/ontology.md` defines the structural vocabulary the entire substrate runs on, in one file: what a scope is, what a scheduled agent is, the difference between a todo and a reminder, what each folder-type means.
 - `user/ontology/` adds the user's personal definitions and ways of working that apply across all their scopes.
 - Any scope's `ontology/` adds definitions local to that scope ("we call them specialists, not reps"; "a lead in this context means...").
 
@@ -467,7 +467,7 @@ A scheduled agent is recurring work defined as *agent instructions*: a markdown 
 
 Two kinds share identical mechanics and differ only in remit:
 
-- **Librarians** keep the substrate itself tidy so the user doesn't have to. Their definitions live in `librarians/` folders (the convention base ships its own at `exfu/v0.3/librarians/`).
+- **Librarians** keep the substrate itself tidy so the user doesn't have to. Their definitions live in `librarians/` folders (the convention base ships its own at `exfu/<version>/librarians/`).
 - **Business agents** do the user's recurring domain work -- the standing jobs they'd brief an assistant on. Their definitions live in `scheduled/` folders.
 
 ### By example
@@ -487,7 +487,7 @@ What a definition does is scope-dependent -- it reads that scope's ontology, the
 
 ### Definitions, registration, execution
 
-Definitions are markdown files with YAML frontmatter (`name`, `cadence`, `description`, plus optional `scripts`, `reads`, `writes`, `depends_on`) and natural-language instructions -- rich enough for a scheduled agent to read cold and know what to do, but not so procedural that they become brittle scripts. The canonical format lives in `exfu/v0.3/ontology.md` (Scheduled agents section).
+Definitions are markdown files with YAML frontmatter (`name`, `cadence`, `description`, plus optional `scripts`, `reads`, `writes`, `depends_on`) and natural-language instructions -- rich enough for a scheduled agent to read cold and know what to do, but not so procedural that they become brittle scripts. The canonical format lives in `exfu/<version>/ontology.md` (Scheduled agents section).
 
 A definition does nothing until *registered* (the install-scheduled-agent skill handles this, always with user confirmation). The registry of all registered scheduled agents lives at `exfu/derived/agent-registry.json`; run history is logged at `exfu/derived/agent-log.json`. One scheduled task per cadence (e.g. `nightly-agents`) executes everything registered for that cadence: librarians first, so the substrate is tidy and the index fresh before business agents consume them, then dependency order.
 

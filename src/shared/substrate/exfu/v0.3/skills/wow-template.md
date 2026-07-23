@@ -48,8 +48,8 @@ Where things live in this user's substrate, especially where it differs from the
 
 ### Substrate shape
 
-- The substrate follows the v0.3 scope-based layout: three top-level entries at the root.
-  - `exfu/` -- plugin-owned scope: convention base at `exfu/v0.3/`, derived data at `exfu/derived/`, version pointer at `exfu/latest.txt`.
+- The substrate follows the ExFu scope-based layout: three top-level entries at the root.
+  - `exfu/` -- plugin-owned scope: convention base at `exfu/<version>/`, derived data at `exfu/derived/`, version pointer at `exfu/latest.txt` (names the current `<version>`).
   - `user/` -- the user's personal scope: context, ontology, skills, reminders, inbox, and any other personal folder-types.
   - `scopes/` -- the tree of working scopes, each with a `scope.md` marker. Scopes can nest via their own `scopes/` subdirectory. Folders without `scope.md` are grouping folders (organisational only).
 - *(Note any deviations or additions here as they emerge -- e.g. "scopes are organised under `scopes/clients/<client-name>/`", or "user has added a non-standard folder-type `references/` to `user/`".)*

@@ -15,3 +15,5 @@ dist/
 .apv/cache.sqlite
 .apv/projection.json
 .apv/summary.md
+# python bytecode -- never tracked
+__pycache__/

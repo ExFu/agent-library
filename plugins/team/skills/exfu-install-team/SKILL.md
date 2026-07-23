@@ -1,6 +1,6 @@
 ---
 name: exfu-install-team
-description: Runs the full team-joiner install -- connecting to the team's shared substrate (git repo, Dropbox shared folder, or local-only depending on what the champion set up), building a personal v0.3 substrate alongside it, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run -- not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
+description: Runs the full team-joiner install -- connecting to the team's shared substrate (git repo, Dropbox shared folder, or local-only depending on what the champion set up), building a personal ExFu substrate alongside it, and calibrating on what's personal versus what's shared. The user is a new joiner, not the team's substrate champion. This skill is typically invoked by exfu-start on first run -- not directly by users. Triggers when exfu-start routes a first-run team-plugin user here, or when a user says "I was told to set this up", "my colleague said I need to install something", "I have a plugin link, what do I do?", "I'm new to this, where do I start?", or similar first-session language from someone joining an existing team setup.
 ---
 
 # ExFu Install -- Team (Joiner)
@@ -41,7 +41,7 @@ First contact is the highest-risk moment of the install. The user just installed
 | Say | Never lead with |
 |---|---|
 | your substrate folder | substrate root |
-| the folder structure and ground rules | convention base, exfu/v0.3/, ontology, latest.txt, derived/ |
+| the folder structure and ground rules | convention base, exfu/<version>/, ontology, latest.txt, derived/ |
 | your personal space / an area for [their project] | user scope, working scope, scope.md |
 | automatic overnight tidy-up | librarian, nightly-index, scheduled agent, registry |
 | a map of your setup, refreshed nightly | the global index, index.json |
@@ -53,7 +53,7 @@ First contact is the highest-risk moment of the install. The user just installed
 
 A real first-contact failure, and its fix:
 
-> Bad: "Convention base -- I deploy exfu/v0.3/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
+> Bad: "Convention base -- I deploy exfu/<version>/ (ontology, principles, librarian definitions, wow template), exfu/latest.txt, and exfu/derived/ at the root. Mechanical, no decisions."
 >
 > Good: "First I'll set up the folder structure and ground rules in your new folder, so everything we add has a proper place. Takes a minute; nothing you need to decide."
 
@@ -88,8 +88,8 @@ Things you **must never** do:
 
 A joiner install sets someone up with two things working together:
 
-- **Their personal substrate** -- private, theirs alone. A full v0.3 substrate: convention base, user scope, working scopes. Holds their about-me, personal scopes, personal databases. Not in the team's shared storage.
-- **The team's shared substrate** -- set up by the champion, shared with colleagues. Also a v0.3 substrate: its own convention base, shared scopes (the team scope with its conventions, client scopes, project scopes), its own guard file.
+- **Their personal substrate** -- private, theirs alone. A full ExFu substrate: convention base, user scope, working scopes. Holds their about-me, personal scopes, personal databases. Not in the team's shared storage.
+- **The team's shared substrate** -- set up by the champion, shared with colleagues. Also a full ExFu substrate: its own convention base, shared scopes (the team scope with its conventions, client scopes, project scopes), its own guard file.
 
 Their `wow` skill points at both. Claude reads from whichever is relevant for the current conversation.
 
@@ -219,7 +219,7 @@ The team is managing sharing manually (emailing updates, a shared drive without 
 
 **Orient inside the shared substrate (all paths).** Once connected, read the shared substrate's `exfu/latest.txt` to learn its pinned convention version, then read its index at `exfu/derived/index.json` if present. Find the team scope (usually `scopes/<team-name>/`) and read its `ontology/ways-of-working.md` and `context/` files. Show the joiner one or two concrete things their Claude now knows about the team. This is the first small win.
 
-Record the storage choice for later: it goes in the user scope's context during Step 6 and in the wow navigation map. There is no `_meta/storage-backend.md` in v0.3.
+Record the storage choice for later: it goes in the user scope's context during Step 6 and in the wow navigation map. There is no `_meta/storage-backend.md` in the current layout.
 
 ### Step 5 -- Personal substrate: location and convention base
 
@@ -229,11 +229,11 @@ Now set up the joiner's personal substrate as a separate folder, never inside th
 
 Use `request_cowork_directory` for the folder picker. If the joiner picks Dropbox, surface the hydration caveat (same as Path B above) for this folder too.
 
-Then deploy the v0.3 convention base into the personal root, in order:
+Then deploy the shipped convention base into the personal root, in order:
 
 1. **Create `exfu/` at the personal substrate root.**
-2. **Copy the v0.3 convention files** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` into `exfu/v0.3/`. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
-3. **Create `exfu/latest.txt`** containing exactly `v0.3`.
+2. **Copy the shipped convention files** from the version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` (the plugin ships exactly one, e.g. `v0.3`) into `exfu/<that version>/`. This is a small, flat set: the complete core ontology in one file (`ontology.md` -- the scope model, every folder-type, scheduled agents), the principles, the shipped librarian definitions, and the wow template.
+3. **Create `exfu/latest.txt`** containing exactly the shipped version name.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
 
 Don't explain the convention base in detail. A brief: *"I'm laying down the base definitions your personal setup builds on -- the same vocabulary your team's shared setup already uses."*
@@ -394,7 +394,7 @@ A checklist, not a script:
 - For git: remote URL confirmed, repo cloned, `git-substrate-sync` operational. Joiner understands pull-before-write and commit hygiene.
 - For Dropbox: shared folder located, `exfu-dropbox-storage` operational. Joiner understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
 - Personal substrate established in a separate folder, identified via the folder picker.
-- Convention base deployed at the personal root: `exfu/v0.3/` with `exfu/latest.txt` pointing to `v0.3`.
+- Convention base deployed at the personal root: `exfu/<version>/` with `exfu/latest.txt` naming it.
 - User scope created at `user/` with `scope.md`, `context/about-me.md` (including role capture and the team-connection record), and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the personal substrate root.

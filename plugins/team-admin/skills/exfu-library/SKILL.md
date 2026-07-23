@@ -3,7 +3,7 @@ name: exfu-library
 description: ExFu's Agent Library is the persistent system of files, skills, connectors, and scheduled agents that gives Claude memory and working context across sessions -- a library of who the user is, what they're working on, and how they operate, kept organised by their Agent Librarians. This skill bootstraps any session with that context -- it finds the library, reads the global index, resolves the conventions version, loads the user's personal context and ways of working, detects the storage backend, checks librarian health, and surfaces anything the overnight runs left. Load it at the start of any library-aware conversation, or when the user's personal wow skill delegates to it. Triggers on "do you know who I am?", "can you pull up the Acme deal?", "where is my stuff?", "what do I have on this week?", "what's in my notes on Y?", "check my library", "save this", "check for updates", or any other conversation where the user expects Claude to have standing context about them or their work.
 ---
 
-# exfu-library skill -- the Agent Library boot sequence (v0.4.0)
+# exfu-library skill -- the Agent Library boot sequence
 
 Vocabulary note before anything else: with the user, this is "your library", kept in order by "your librarians". "Substrate" is the internal register this skill is written in -- the implementation vocabulary. The two registers are defined in `exfu/<version>/ontology.md#vocabulary`.
 

@@ -3,7 +3,7 @@ name: install-scheduled-agent
 description: Manages the lifecycle of scheduled agents -- recurring jobs defined as agent instructions that run in scheduled sessions. Covers both kinds -- librarians (substrate maintenance, e.g. the nightly index) and business agents (the user's recurring domain work, e.g. a listings scanner or weekly digest). Handles registering, unregistering, enabling, disabling, listing, scanning for available definitions, and reporting health. Triggers on "install a librarian", "register a scheduled agent", "set up that scanner to run nightly", "register a maintenance task", "what librarians are available", "what's running on a schedule", "agent health", "check librarian status", "scan for scheduled agents", "disable the version cleanup librarian", or any intent to manage the substrate's scheduled automation layer.
 ---
 
-# Install Scheduled Agent -- v0.3.0
+# Install Scheduled Agent
 
 Manages the lifecycle of scheduled agents in the substrate. A scheduled agent is recurring work defined as *agent instructions* -- a markdown file (with YAML frontmatter) that an agent reads and carries out in a scheduled session, calling scripts as tools where the definition says to. There are two kinds with identical mechanics and different remits:
 

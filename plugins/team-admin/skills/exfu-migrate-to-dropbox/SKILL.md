@@ -40,10 +40,10 @@ Compare the Dropbox copy against the Box original before touching anything:
 
 ## Step 2 -- Refresh the convention base
 
-The `exfu/<version>/` directory is plugin-owned. Replace the Dropbox copy's `exfu/v0.3/` with the current plugin's version:
+The `exfu/<version>/` directories are plugin-owned. Deploy the plugin's shipped version -- the single directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` -- into the new root:
 
-- Copy `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/` over `exfu/v0.3/` at the new root.
-- Leave `exfu/latest.txt` as is (it should say `v0.3`; the conventions version has not changed in 0.4).
+- If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions.
+- If the plugin ships a newer version, install it alongside the existing one(s) and update `exfu/latest.txt` to name it. Leave older version directories in place -- scopes may still pin them (side-by-side model).
 - Leave `exfu/derived/` and `exfu/visualisations/` alone -- they are the user's generated state.
 
 ## Step 3 -- Rewrite the CLAUDE.md guard

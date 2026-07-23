@@ -20,7 +20,7 @@ Generates the user's personal `wow` skill from the template. Invoked by install 
 
 Gather these before you start:
 
-1. **`exfu/<version>/skills/wow-template.md`** in the substrate (resolve `<version>` via `exfu/latest.txt`) -- the canonical template. This is the structure you're filling in. The way-of-working concept it implements is defined in `exfu/<version>/ontology.md#wow`. If the convention base hasn't been deployed yet, fall back to `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/v0.3/skills/wow-template.md`.
+1. **`exfu/<version>/skills/wow-template.md`** in the substrate (resolve `<version>` via `exfu/latest.txt`) -- the canonical template. This is the structure you're filling in. The way-of-working concept it implements is defined in `exfu/<version>/ontology.md#wow`. If the convention base hasn't been deployed yet, fall back to the plugin's copy at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/skills/wow-template.md` (the plugin ships exactly one version directory -- list `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` to resolve it).
 2. **The user's existing `wow`** -- if there is one, read it. You're merging, not replacing. Preserve anything specific the user has already built in: navigation map entries they've added, always-on kernel items, scope pointers.
 3. **`user/context/about-me.md`** -- the user's about-me content. Informs the always-on kernel and gives you the starting shape of the substrate.
 4. **Other `user/context/` files** if they exist: role, tools, writing-style. These feed the navigation map (high-traffic file pointers) and the always-on kernel (formatting preferences, communication style).
@@ -34,7 +34,7 @@ If files are missing -- no existing wow, no `user/context/` yet -- work with wha
 
 Customise these sections with what you've read:
 
-- **Navigation map -- Substrate shape**: note any structural deviations from the standard v0.3 layout (`exfu/`, `user/`, `scopes/`). If the user has grouping folders under `scopes/` (e.g. `scopes/clients/`), note that. If they've added non-standard folder-types to a scope, note that.
+- **Navigation map -- Substrate shape**: note any structural deviations from the standard ExFu layout (`exfu/`, `user/`, `scopes/`). If the user has grouping folders under `scopes/` (e.g. `scopes/clients/`), note that. If they've added non-standard folder-types to a scope, note that.
 - **Navigation map -- Active scopes**: list scope names, paths, and parent relationships from `exfu/derived/index.json`. Include folder-type status for each (which types are present, which are pointer-only).
 - **Navigation map -- High-traffic files**: add pointers to files that actually exist. The baseline set: `user/context/about-me.md`, `user/ontology/ways-of-working.md`, `exfu/derived/index.json`. Add any other `user/context/` files that exist. Don't add stubs for files that haven't been created yet.
 - **Always-on kernel -- Communication style**: if the user expressed communication preferences during the install (short sentences, no preambles, direct responses), capture them. If not, leave the stubs.

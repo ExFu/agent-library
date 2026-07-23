@@ -6,6 +6,22 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.5.1 -- 2026-07-23
+
+Version-churn-proofing. The overarching skills stop naming the convention version, so they survive a base bump without a rewrite. Prompted by a real failure: a generated wow skill hardcoded `exfu/v0.3/` paths and broke during a substrate migration.
+
+**Changed**
+- Skills, guides, and templates that *prescribe* behaviour now say `exfu/<version>/` and resolve the concrete version at read time: `exfu/latest.txt` inside a substrate, or the single version directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` inside the plugin. Genuinely version-dependent content is untouched -- scope pins, `Follows:` lines, the convention base's self-description, v0.2 migration detection, and examples that depict real file contents.
+- The wow template's navigation map no longer bakes the convention version into generated wow skills.
+- Install skills (solo, team, team-admin) deploy whatever convention version the plugin ships instead of hardcoding v0.3; completion checklists match.
+- exfu-migrate-to-dropbox's convention-base refresh is version-aware: same version overwrites in place; a newer shipped version installs alongside and updates `latest.txt`, leaving pinned older versions in place (side-by-side model).
+- Dropped drifting version labels from skill headings and script docstrings (the exfu-library heading still said v0.4.0 under the 0.5.0 plugin; the three Python helpers disagreed with each other).
+
+**Fixed**
+- The example library's wow-template copy had missed the 0.4 vocabulary rename (it still auto-loaded `substrate` instead of `exfu-library`). Synced from the shipped template.
+
+---
+
 ## v0.5.0 -- 2026-07-22
 
 The dashboard learns to take instructions. Interactions queue prompts instead of touching files: the Action Basket. Plus an ontology reference view, linked pointer chips, date-aware reminders, a staleness banner, and a visualisations gallery.

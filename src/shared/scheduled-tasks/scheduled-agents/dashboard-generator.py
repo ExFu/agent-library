@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dashboard Generator (v0.5.0)
+Dashboard Generator
 
 Reads the substrate index, the scheduled-agent registry, and the run log,
 plus workspace content from individual scopes, and generates a
@@ -35,7 +35,7 @@ from pathlib import Path
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate the ExFu substrate dashboard (v0.3)"
+        description="Generate the ExFu substrate dashboard"
     )
     parser.add_argument("root", help="Path to the substrate root folder")
     return parser.parse_args()
