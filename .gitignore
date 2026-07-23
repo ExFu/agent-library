@@ -17,3 +17,5 @@ dist/
 .apv/summary.md
 # python bytecode -- never tracked
 __pycache__/
+
+.idea
