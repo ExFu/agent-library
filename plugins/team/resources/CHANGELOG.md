@@ -6,6 +6,12 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.6.2 -- 2026-07-23
+
+Dashboard path correction, found by the agent applying a live library migration. Two skill texts still placed the dashboard at `exfu/derived/dashboard/` (the pre-0.4 location): the exfu-library substrate-layout depiction and the exfu-guides dashboard section. Both now say `exfu/visualisations/dashboard/`, matching the shipped convention base, the dashboard-generator librarian, and dashboard-generator.py. No behaviour changes.
+
+---
+
 ## v0.6.1 -- 2026-07-23
 
 Record correction, no behaviour changes. The 0.6.0 notes and the decision record carried an over-stated enactment claim about how installed legacy `v0.3/` bases are handled during migration; withdrawn -- that is decided in the migration session itself, on the user's instruction. The no-backwards-compatibility-machinery ruling stands.

@@ -133,7 +133,7 @@ It's a living document. Small updates happen directly; substantial changes (new 
 
 ### 10. The dashboard
 
-When available, a static HTML page at `exfu/derived/dashboard/` that renders the global index into a visual substrate map. Shows the scope tree, folder-type status, ontology chains, and librarian health. Read from the index, not by walking the filesystem live -- so it's fast and works offline.
+When available, a static HTML page at `exfu/visualisations/dashboard/` that renders the global index into a visual substrate map. Shows the scope tree, folder-type status, ontology chains, and librarian health. Read from the index, not by walking the filesystem live -- so it's fast and works offline.
 
 Target audience is non-technical users. The dashboard is generated as part of the nightly index run or on-demand.
 

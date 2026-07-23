@@ -294,6 +294,7 @@ substrate-root/
       index.json            # the global index -- the primary navigation tool
       agent-registry.json   # registered scheduled agents and their health
       agent-log.json        # run history
+    visualisations/         # exfu-shipped visual outputs
       dashboard/            # generated HTML dashboard
     latest.txt              # points to current version (e.g. "20260723-1446")
   user/                     # personal scope (unversioned, always follows latest)
