@@ -18,12 +18,9 @@ From the public **exfu-library** marketplace (works in both Claude Code and Cowo
 
 Swap `exfu-solo` for `exfu-team` or `exfu-team-admin` as needed.
 
-For local development you can add this repo as its own marketplace instead:
-
-```
-/plugin marketplace add /Users/al/Studio/projects/exfu_plugin
-/plugin install exfu-solo@exfu-library
-```
+This repo is the plugin **source**; it no longer carries its own marketplace
+manifest. The marketplace lives in the `ExFu/claude-marketplace` repo, whose
+entries point back at the `plugins/` built here.
 
 ## Build
 

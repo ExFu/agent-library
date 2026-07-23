@@ -20,14 +20,13 @@ archive; this repo's planning state was carried forward into a fresh APV log
   - `src/solo/`, `src/team/`, `src/team-admin/` -- variant-specific content and `.claude-plugin/plugin.json` manifests
 - `build/build.sh` -- composes `src/shared/` + `src/<variant>/` into installable plugin dirs
 - `plugins/` -- the composed, committed build output; these are the marketplace's plugin sources
-- `.claude-plugin/marketplace.json` -- this repo's own marketplace manifest (name `exfu-library`,
-  display "ExFu Library" -- renamed from plain `exfu` 2026-07-22, Al's ruling: more than one
-  exfu-authored plugin exists, so the distributable identity must name the product);
-  used for local-dev installs via `/plugin marketplace add <this repo path>` then
-  `/plugin install exfu-solo@exfu-library`
 - Public distribution runs through the separate **`ExFu/claude-marketplace`** repo
-  (marketplace name `exfu-library`), the primary channel for both Claude Code and Cowork:
-  `/plugin marketplace add ExFu/claude-marketplace` then `/plugin install exfu-solo@exfu-library`
+  (marketplace name `exfu-library`), which carries the marketplace manifest and points its
+  entries at this repo's `plugins/`. It is the primary install channel for both Claude Code
+  and Cowork: `/plugin marketplace add ExFu/claude-marketplace` then
+  `/plugin install exfu-solo@exfu-library`. This repo no longer ships its own
+  `.claude-plugin/marketplace.json` -- removed 2026-07-23 when distribution moved to the
+  dedicated marketplace repo; `build.sh` tolerates its absence and skips the manifest-sync step.
 - `dist/` -- gitignored versioned zips (`build.sh --dist`) for the website download flow
 - `example/` -- a worked example Agent Library used by docs and the dashboard generator
 - `planning/` -- the planning corpus (APV-tracked; plain markdown, entity id = filename stem)
@@ -36,9 +35,9 @@ archive; this repo's planning state was carried forward into a fresh APV log
 
 - Edit `src/`, never `plugins/` -- `plugins/` is generated. After changing `src/`,
   run `./build/build.sh all` and commit the regenerated `plugins/` alongside.
-- Version bumps touch: the three `src/*/.claude-plugin/plugin.json` manifests,
-  `.claude-plugin/marketplace.json` entries (build.sh syncs these), and
-  `src/shared/resources/CHANGELOG.md`.
+- Version bumps touch: the three `src/*/.claude-plugin/plugin.json` manifests and
+  `src/shared/resources/CHANGELOG.md`. The marketplace entries live in the separate
+  `ExFu/claude-marketplace` repo and are bumped there.
 - Sticky-note / product copy: inner monologue tone, never feature specs; no em-dashes.
 
 ## Relationship to exfu_website
