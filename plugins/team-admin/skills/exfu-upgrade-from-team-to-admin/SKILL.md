@@ -7,7 +7,7 @@ description: Handles the in-place upgrade for a team member who is becoming thei
 
 A team member becoming their team's substrate champion needs capabilities the team plugin doesn't include: the ability to provision or reconfigure the team's git repo, author skills for the whole team, generate onboarding packs for new joiners, and surface the compliance briefing for IT review. The upgrade path exists so they don't lose what they've built — their personal substrate, their wow skill, their git connection — while gaining the admin layer on top.
 
-You are handling an in-place upgrade: the user has the exfu-team plugin installed and is now installing exfu-team-admin. This skill replaces the team plugin's bundled skills with the admin plugin's, preserving everything else the user has built.
+You are handling an in-place upgrade: the user has the exfu-agent-library-team plugin installed and is now installing exfu-agent-library-team-admin. This skill replaces the team plugin's bundled skills with the admin plugin's, preserving everything else the user has built.
 
 **Hard constraints:**
 - NEVER proceed without explicit user confirmation. State clearly what will change and what will be preserved.
@@ -33,7 +33,7 @@ If none of these signals are present, this upgrade is not needed. Return to `ins
 
 Tell the user:
 
-"It looks like you have the exfu-team plugin installed. Team-admin is a strict superset of the team plugin — it includes everything the team plugin does, plus the admin-only skills for provisioning the team repo, authoring shared skills, onboarding members, and briefing IT.
+"It looks like you have the exfu-agent-library-team plugin installed. Team-admin is a strict superset of the team plugin — it includes everything the team plugin does, plus the admin-only skills for provisioning the team repo, authoring shared skills, onboarding members, and briefing IT.
 
 The recommended path is to replace the team plugin with team-admin in place. Here is what changes and what stays the same:
 
@@ -63,7 +63,7 @@ The team plugin's bundled skills are the ones it installed into this Claude envi
 - `git-substrate-sync` (will be reinstalled by team-admin immediately after)
 - Any team-plugin-specific onboarding skills
 
-To identify them precisely: look for skills whose source path or description references the exfu-team plugin. Do not remove skills that were authored by the user or the team — only plugin-bundled ones.
+To identify them precisely: look for skills whose source path or description references the exfu-agent-library-team plugin. Do not remove skills that were authored by the user or the team — only plugin-bundled ones.
 
 Ask Claude Desktop (or the user, if you cannot inspect installed skills directly) to confirm which skills are currently installed. Remove only the team-plugin bundled set.
 

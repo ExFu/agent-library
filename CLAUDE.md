@@ -1,4 +1,4 @@
-# ExFu Plugin -- source for the ExFu plugins, published via the public exfu marketplace
+# ExFu Agent Library -- source for the ExFu Agent Library plugins, published via the public exfu marketplace
 
 ## Why this repo exists
 
@@ -8,7 +8,7 @@ sub-project inside the `exfu_website` repo. On 2026-07-22 it was extracted into
 this standalone repo (git subtree split, plugin-only history preserved) so it
 can evolve, version, and distribute independently. Public distribution runs
 through a dedicated marketplace repo, `ExFu/claude-marketplace` (marketplace
-name `exfu-library`); this repo (`ExFu/library`) is the plugin source it
+name `exfu-agent-library`); this repo (`ExFu/agent-library`) is the plugin source it
 publishes. The website repo keeps the full interleaved history as
 archive; this repo's planning state was carried forward into a fresh APV log
 (see the APV section below and `planning/repo-extraction.md`).
@@ -21,12 +21,12 @@ archive; this repo's planning state was carried forward into a fresh APV log
 - `build/build.sh` -- composes `src/shared/` + `src/<variant>/` into installable plugin dirs
 - `plugins/` -- the composed, committed build output; these are the marketplace's plugin sources
 - Public distribution runs through the separate **`ExFu/claude-marketplace`** repo
-  (marketplace name `exfu-library`), which carries the marketplace manifest and points its
+  (marketplace name `exfu-agent-library`), which carries the marketplace manifest and points its
   entries at this repo's `plugins/`. It is the primary install channel for both Claude Code
   and Cowork: `/plugin marketplace add ExFu/claude-marketplace` then
-  `/plugin install exfu-solo@exfu-library`. This repo no longer ships its own
-  `.claude-plugin/marketplace.json` -- removed 2026-07-23 when distribution moved to the
-  dedicated marketplace repo; `build.sh` tolerates its absence and skips the manifest-sync step.
+  `/plugin install exfu-agent-library-solo@exfu-agent-library`. This repo does not ship or
+  expose a marketplace manifest of its own; distribution is entirely the dedicated
+  marketplace repo's concern, and `build.sh` performs no marketplace sync.
 - `dist/` -- gitignored versioned zips (`build.sh --dist`) for the website download flow
 - `example/` -- a worked example Agent Library used by docs and the dashboard generator
 - `planning/` -- the planning corpus (APV-tracked; plain markdown, entity id = filename stem)

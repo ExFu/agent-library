@@ -2,9 +2,9 @@
 # =============================================================================
 # ExFu plugin build script
 # Composes src/shared/ + src/<variant>/ into installable plugin directories
-# under plugins/<variant>/ — the committed sources of the repo's Claude
-# plugin marketplace (.claude-plugin/marketplace.json). Also syncs the
-# marketplace entries' version/description from the plugin manifests.
+# under plugins/<variant>/ — the committed plugin sources this repo publishes.
+# Distribution (the marketplace manifest) lives in the separate
+# ExFu/claude-marketplace repo; this repo neither ships nor syncs a marketplace.
 #
 # Usage:
 #   ./build/build.sh solo
@@ -460,37 +460,7 @@ fi
 echo "============================================================"
 
 # ---------------------------------------------------------------------------
-# Marketplace manifest sync — keep .claude-plugin/marketplace.json entries
-# (version, description) aligned with the built plugin manifests. The
-# marketplace sources point at plugins/<variant>, so a drifted entry would
-# advertise the wrong version for the very directory it installs.
+# No marketplace sync. This repo does not ship or expose a marketplace
+# manifest; distribution is handled entirely by the separate
+# ExFu/claude-marketplace repo, whose entries are maintained there.
 # ---------------------------------------------------------------------------
-MARKETPLACE_JSON="${REPO_ROOT}/.claude-plugin/marketplace.json"
-if [[ -f "$MARKETPLACE_JSON" ]]; then
-  python3 - "$MARKETPLACE_JSON" "$SRC_ROOT" <<'PYEOF'
-import json, os, sys
-mp_path, src_root = sys.argv[1], sys.argv[2]
-mp = json.load(open(mp_path))
-changed = []
-for entry in mp.get("plugins", []):
-    variant = os.path.basename(str(entry.get("source", "")).rstrip("/"))
-    manifest_path = os.path.join(src_root, variant, ".claude-plugin", "plugin.json")
-    if not os.path.exists(manifest_path):
-        continue
-    m = json.load(open(manifest_path))
-    for k in ("version", "description"):
-        if k in m and entry.get(k) != m[k]:
-            entry[k] = m[k]
-            changed.append(f"{entry.get('name', variant)}.{k}")
-if changed:
-    with open(mp_path, "w") as f:
-        json.dump(mp, f, indent=2)
-        f.write("\n")
-    print("       marketplace.json synced: " + ", ".join(changed))
-else:
-    print("       marketplace.json already in sync with plugin manifests")
-PYEOF
-  ok "Marketplace manifest checked"
-else
-  warn "No .claude-plugin/marketplace.json at repo root — marketplace sync skipped"
-fi

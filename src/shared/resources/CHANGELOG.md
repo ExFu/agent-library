@@ -6,6 +6,18 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.7.0 -- 2026-07-23
+
+Project identity rename to **ExFu Agent Library**. The user-facing product label is now "ExFu Agent Library" (dropping the possessive "ExFu's"), and the three plugins are renamed to carry it:
+
+- `exfu-solo` -> `exfu-agent-library-solo`
+- `exfu-team` -> `exfu-agent-library-team`
+- `exfu-team-admin` -> `exfu-agent-library-team-admin`
+
+Renaming published plugin names is a breaking change: existing installs reference the old names, and the entries in the separate `ExFu/claude-marketplace` repo must be updated in lockstep (marketplace name `exfu-library` -> `exfu-agent-library`; install becomes `/plugin install exfu-agent-library-solo@exfu-agent-library`). The source repo is renamed `ExFu/library` -> `ExFu/agent-library`. This repo no longer carries any marketplace-sync machinery -- distribution is entirely the marketplace repo's concern. Historical changelog and planning entries keep the old names as an accurate record; only forward-facing identity was changed. No behaviour changes to the skills themselves.
+
+---
+
 ## v0.6.2 -- 2026-07-23
 
 Dashboard path correction, found by the agent applying a live library migration. Two skill texts still placed the dashboard at `exfu/derived/dashboard/` (the pre-0.4 location): the exfu-library substrate-layout depiction and the exfu-guides dashboard section. Both now say `exfu/visualisations/dashboard/`, matching the shipped convention base, the dashboard-generator librarian, and dashboard-generator.py. No behaviour changes.

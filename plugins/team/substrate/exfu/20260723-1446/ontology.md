@@ -10,7 +10,7 @@ It is one file by design. Agents ingest a single complete read far more reliably
 
 The same system has two vocabularies, used deliberately.
 
-**User-facing: the Agent Library.** To its user, this whole installation is their library -- ExFu's Agent Library: the place their AI's knowledge, skills, and working files live. The scheduled agents that keep it organised are their **Agent Librarians** -- always plural. Not a single all-knowing character: an ecosystem. The library is an edifice; the user appeals to the librarians to fetch things and to do things on their behalf. When teaching new users, a scope may be introduced as a "shelf" -- an analogy, never a rename.
+**User-facing: the Agent Library.** To its user, this whole installation is their library -- ExFu Agent Library: the place their AI's knowledge, skills, and working files live. The scheduled agents that keep it organised are their **Agent Librarians** -- always plural. Not a single all-knowing character: an ecosystem. The library is an edifice; the user appeals to the librarians to fetch things and to do things on their behalf. When teaching new users, a scope may be introduced as a "shelf" -- an analogy, never a rename.
 
 **Internal: the substrate.** Everything below this line is the substrate register: how the library is actually implemented -- scopes, folder-types, the index, the conventions. Agents use this vocabulary with each other and in files. With users they speak library language, and reach for substrate terms only when the user asks how it works underneath.
 

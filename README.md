@@ -1,22 +1,22 @@
-# ExFu Plugin
+# ExFu Agent Library
 
-Plugin source for the ExFu plugins, distributed through the public **exfu-library**
+Plugin source for the ExFu Agent Library, distributed through the public **ExFu Agent Library**
 marketplace at https://github.com/ExFu/claude-marketplace:
 
-- **exfu-solo** -- personal Agent Library for individuals
-- **exfu-team** -- personal layer on top of a team's shared substrate
-- **exfu-team-admin** -- tools for the substrate champion running a team install
+- **exfu-agent-library-solo** -- personal Agent Library for individuals
+- **exfu-agent-library-team** -- personal layer on top of a team's shared substrate
+- **exfu-agent-library-team-admin** -- tools for the substrate champion running a team install
 
 ## Install
 
-From the public **exfu-library** marketplace (works in both Claude Code and Cowork):
+From the public **ExFu Agent Library** marketplace (works in both Claude Code and Cowork):
 
 ```
 /plugin marketplace add ExFu/claude-marketplace
-/plugin install exfu-solo@exfu-library
+/plugin install exfu-agent-library-solo@exfu-agent-library
 ```
 
-Swap `exfu-solo` for `exfu-team` or `exfu-team-admin` as needed.
+Swap `exfu-agent-library-solo` for `exfu-agent-library-team` or `exfu-agent-library-team-admin` as needed.
 
 This repo is the plugin **source**; it no longer carries its own marketplace
 manifest. The marketplace lives in the `ExFu/claude-marketplace` repo, whose
