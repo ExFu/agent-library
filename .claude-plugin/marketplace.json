@@ -11,7 +11,7 @@
     {
       "name": "exfu-solo",
       "description": "ExFu: your Agent Library. Claude as a real working collaborator, with Agent Librarians keeping your stuff organised so you can find it when you need it. Solo edition for individuals.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "author": {
         "name": "Alastair Brayne",
         "email": "al@exfu.ai",
@@ -33,7 +33,7 @@
     {
       "name": "exfu-team",
       "description": "ExFu: join your team's shared Agent Library and build your personal layer on top. Joiner edition.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "author": {
         "name": "Alastair Brayne",
         "email": "al@exfu.ai",
@@ -55,7 +55,7 @@
     {
       "name": "exfu-team-admin",
       "description": "ExFu: library-champion edition. Provision your team's shared Agent Library, author shared skills, brief IT, onboard members.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "author": {
         "name": "Alastair Brayne",
         "email": "al@exfu.ai",

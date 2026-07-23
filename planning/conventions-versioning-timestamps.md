@@ -29,9 +29,8 @@ minute, shortened**: `YYYYMMDD-HHMM`, e.g. `exfu/20260723-1446/`.
 
 ## Enactment
 
-Nothing renames in user substrates. An installed `exfu/v0.3/` keeps its
-name and lives out its life under the side-by-side model. Scope frontmatter
-(`exfu: v0.3`) adopts the new identifier as each scope migrates.
+Scope frontmatter (`exfu: v0.3`) adopts the new identifier as each scope
+migrates.
 
 No backwards-compatibility machinery: Al is the only plugin user at the
 moment and will tell the migrating agent to take the scheme change into

@@ -6,12 +6,18 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.6.1 -- 2026-07-23
+
+Record correction, no behaviour changes. The 0.6.0 notes and the decision record carried an over-stated enactment claim about how installed legacy `v0.3/` bases are handled during migration; withdrawn -- that is decided in the migration session itself, on the user's instruction. The no-backwards-compatibility-machinery ruling stands.
+
+---
+
 ## v0.6.0 -- 2026-07-23
 
 Conventions versioning moves to timestamp identifiers. Convention-base versions are now named by their release moment -- a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` -- instead of `v0.x` labels. The two version surfaces (plugin releases, conventions releases) no longer share a naming scheme, and because every conventions release mints a fresh identifier, a version directory's contents can never again change under a stable name (the shipped `v0.3/` had been patched in place across 0.4.0, 0.5.0, and 0.5.1). Decision record: `planning/conventions-versioning-timestamps.md`.
 
 **Changed**
-- The shipped convention base is minted as `20260723-1446/` -- the first timestamped release, carrying the former shipped v0.3 contents. The ontology's versioning section now documents the scheme: lexicographic order is chronological order; `v0.x` is the legacy scheme and any timestamp identifier is newer than any `v0.x` one (never compare the two schemes by raw string sort). Installed `v0.3/` directories in user libraries keep their name and live out their life side-by-side.
+- The shipped convention base is minted as `20260723-1446/` -- the first timestamped release, carrying the former shipped v0.3 contents. The ontology's versioning section now documents the scheme: lexicographic order is chronological order; `v0.x` is the legacy scheme and any timestamp identifier is newer than any `v0.x` one (never compare the two schemes by raw string sort).
 - Template pins (`scope.md` frontmatter, all `Follows:` stubs, the agent-registry template) bumped to the new identifier.
 - exfu-migrate-to-dropbox's convention-base refresh states how "newer" is decided across both identifier schemes.
 - `index.py` version discovery and `dashboard-generator.py` convention-dir fallback recognise both identifier shapes, and their newest-version fallbacks prefer the timestamp era over legacy `v0.x`.
