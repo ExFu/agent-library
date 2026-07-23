@@ -1,6 +1,7 @@
 # ExFu Plugin
 
-Source and Claude Code plugin marketplace for the ExFu plugins:
+Plugin source for the ExFu plugins, distributed through the public **exfu-library**
+marketplace at https://github.com/ExFu/claude-marketplace:
 
 - **exfu-solo** -- personal Agent Library for individuals
 - **exfu-team** -- personal layer on top of a team's shared substrate
@@ -8,12 +9,21 @@ Source and Claude Code plugin marketplace for the ExFu plugins:
 
 ## Install
 
+From the public **exfu-library** marketplace (works in both Claude Code and Cowork):
+
+```
+/plugin marketplace add ExFu/claude-marketplace
+/plugin install exfu-solo@exfu-library
+```
+
+Swap `exfu-solo` for `exfu-team` or `exfu-team-admin` as needed.
+
+For local development you can add this repo as its own marketplace instead:
+
 ```
 /plugin marketplace add /Users/al/Studio/projects/exfu_plugin
 /plugin install exfu-solo@exfu-library
 ```
-
-(Once this repo has a public remote, the path becomes the repo slug.)
 
 ## Build
 
