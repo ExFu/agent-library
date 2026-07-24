@@ -12,13 +12,13 @@ description: Identifies convention base versions no longer referenced by any sco
 
 # Version cleanup librarian
 
-Keeps the exfu/ directory tidy by identifying convention versions that no scope references any more. When a user migrates their scopes from v0.3 to a later version, the old convention base still sits in `exfu/` -- dead weight that should be surfaced, never silently deleted.
+Keeps the exfu/ directory tidy by identifying convention versions that no scope references any more. When a user migrates their scopes from an older version to a later one, the old convention base still sits in `exfu/` -- dead weight that should be surfaced, never silently deleted.
 
 ## Instructions
 
 1. Read `exfu/derived/index.json` and collect every exfu version pin in use across all scopes.
 
-2. List the version directories that actually exist under `exfu/` (e.g. `v0.3`, `v0.6`), and read `exfu/latest.txt` if present.
+2. List the version directories that actually exist under `exfu/` -- timestamp-named (e.g. `20260724-1749`) and legacy `v0.x`-named (e.g. `v0.3`) alike -- and read `exfu/latest.txt` if present.
 
 3. Compare. A version directory is unreferenced if:
    - No scope's `exfu:` pin points at it, and

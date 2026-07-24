@@ -2099,6 +2099,12 @@ def render_graph_js():
     p.querySelector('.panel-body').innerHTML = html;
     p.scrollTop = 0;
   }
+  /* the payload carries root-relative paths only -- the one absolute value
+     lives in D.root, joined back on at render time so the generated file
+     stays identical wherever the library happens to sit on disk */
+  function absFor(rel) {
+    return (D.root || '') + '/' + (rel || '');
+  }
   function pathRow(absPath, shown) {
     return '<div class="panel-mono">' +
       '<a class="path-link" target="_blank" rel="noopener" title="Open the folder" href="file://' +
@@ -2114,7 +2120,7 @@ def render_graph_js():
     if (sc.aboutHtml) {
       h += '<div class="panel-section">About</div><div class="panel-prose">' + sc.aboutHtml + '</div>';
     }
-    h += '<div class="panel-section">Where</div>' + pathRow((D.root || '') + '/' + (sc.path || ''), sc.path || '');
+    h += '<div class="panel-section">Where</div>' + pathRow(absFor(sc.path), sc.path || '');
     if (sc.version) h += '<div class="panel-section">Conventions</div><div>ExFu ' + esc(sc.version) + '</div>';
     var fts = sc.folderTypes || {};
     var keys = Object.keys(fts).sort();
@@ -2228,8 +2234,10 @@ def render_graph_js():
              esc(it.pointerUrl) + '">Open in your tool &#8599;</a></div>';
       }
     }
-    if (it.path) {
-      h += '<div class="panel-section">Folder</div>' + pathRow(it.path, it.rel || it.path);
+    if (it.rel) {
+      var itAbs = absFor(it.rel);
+      if (itAbs.charAt(itAbs.length - 1) === '/') itAbs = itAbs.slice(0, -1);
+      h += '<div class="panel-section">Folder</div>' + pathRow(itAbs, it.rel);
     }
     if (it.kind !== 'pointer') {
       h += '<div class="panel-act-row">';
@@ -3206,13 +3214,14 @@ def build_workspace_items(root, index_data):
         for it in collect_workspace_items(root, scopes, folder):
             scope_name = it.get("scope_name", "")
             rel_folder = f'{it.get("scope_path", "")}{folder}/'
-            abs_folder = str(root / it.get("scope_path", "") / folder)
             pointer = it.get("pointer_target")
             content_files = [
                 cf for cf in it.get("content_files", [])
                 if cf["filename"] not in ("done.md", "archive.md")
             ]
-            base = {"scope": scope_name, "path": abs_folder, "rel": rel_folder}
+            # root-relative only: the client joins D.root back on at render
+            # time, so the generated HTML is location-independent
+            base = {"scope": scope_name, "rel": rel_folder}
 
             if pointer:
                 tool = pointer_tool_name(pointer)

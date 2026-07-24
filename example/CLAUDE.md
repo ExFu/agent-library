@@ -14,4 +14,4 @@ This protects the substrate from being treated as a generic working folder.
 
 ---
 
-**Note for human readers of this example:** this is an *illustrative* substrate at `plugin/example/`, not a live one. The guard text above is the canonical content that v0.3.0 writes to every real substrate root. See `README.md` in this folder for what the example demonstrates.
+**Note for human readers of this example:** this is an *illustrative* substrate at `example/`, not a live one. The guard text above is the canonical content the install writes to every real substrate root. See `README.md` in this folder for what the example demonstrates.

@@ -1,27 +1,28 @@
-# ExFu core ontology -- v0.3
+# ExFu core ontology -- 20260724-1749
 
 This is the complete structural vocabulary of an ExFu substrate, in one file. Read it top to bottom once and you know how everything here is organised: what a scope is, what each folder-type means, how scheduled agents and librarians work, and the authoring rules that keep the substrate ingestible.
 
-It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/v0.3/ontology.md#todo`.
+It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/20260724-1749/ontology.md#todo`.
+
+**This file is the whole of the versioned contract.** A version directory contains this file and nothing else: a file belongs here if and only if a `Follows:` line can anchor into it. Everything else the plugin ships -- the orientation readme, the principles, the shipped librarian definitions, the skill templates -- lives unversioned at `exfu/` and moves with plugin releases. That boundary is what lets conventions stay frozen while everything around them evolves.
+
+---
+
+## Two registers: library and substrate {#vocabulary}
+
+The same system has two vocabularies, used deliberately.
+
+**User-facing: the Agent Library.** To its user, this whole installation is their library -- ExFu Agent Library: the place their AI's knowledge, skills, and working files live. The scheduled agents that keep it organised are their **Agent Librarians** -- always plural. Not a single all-knowing character: an ecosystem. The library is an edifice; the user appeals to the librarians to fetch things and to do things on their behalf. When teaching new users, a scope may be introduced as a "shelf" -- an analogy, never a rename.
+
+**Internal: the substrate.** Everything below this line is the substrate register: how the library is actually implemented -- scopes, folder-types, the index, the conventions. Agents use this vocabulary with each other and in files. With users they speak library language, and reach for substrate terms only when the user asks how it works underneath.
 
 ---
 
 ## The substrate
 
-A substrate is the persistent system that gives an AI collaborator memory and working context across sessions: a knowledge base of files (this folder tree), plus skills, connectors, and scheduled agents. No single component is the substrate -- it's the interplay.
+A substrate is the persistent system that gives an AI collaborator memory and working context across sessions: a knowledge base of files (this folder tree), plus skills, connectors, and scheduled agents. No single component is the substrate -- it's the interplay. To its user, the whole thing is their Agent Library.
 
-Top-level layout:
-
-```
-substrate-root/
-  CLAUDE.md          # guard file: warns sessions that haven't loaded the conventions
-  exfu/              # convention base (plugin-owned; agents and users don't edit it)
-    v0.3/            # this version's conventions, templates, shipped definitions
-    latest.txt       # current version name, e.g. "v0.3"
-    derived/         # generated cache: index, registries, dashboard. Never hand-edited.
-  user/              # the personal scope (special: unversioned, parent: none)
-  scopes/            # every other scope
-```
+Structurally it is a root holding the plugin-owned `exfu/` directory, the special `user/` scope, and a `scopes/` tree containing everything else. For a depiction of the layout as it appears on disk, see `exfu/readme.md` -- that is orientation material and lives outside the versioned contract so it can track what the plugin actually ships.
 
 ---
 
@@ -42,7 +43,7 @@ Minimal by design. The rich picture lives in the global index, not here.
 name: <human-readable name>
 purpose: <one-line purpose>
 parent: <parent scope name, or "root" for top-level scopes>
-exfu: v0.3
+exfu: 20260724-1749
 ---
 ```
 
@@ -83,9 +84,12 @@ Without the `scopes/` boundary, an agent couldn't tell folder-types (known conve
 ### Version resolution {#versions}
 
 - Every pinned scope reads its conventions from `exfu/<pin>/`.
-- The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because some sync layers, Box included, don't sync symlinks).
-- Convention versions install side by side (`exfu/v0.3/`, `exfu/v0.6/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
-- `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log, the dashboard. It is a cache: never hand-edited, safe to delete and regenerate.
+- The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because sync layers don't handle symlinks reliably).
+- Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1749`). No seconds, no timezone suffix (always UTC), no ISO punctuation. Every release mints a fresh identifier, so a version directory's contents never change under a stable name -- and plain lexicographic order is chronological order. Version identifiers deliberately share no naming surface with plugin release numbers.
+- Early releases used `v0.x` identifiers (`v0.2`, `v0.3`) -- the legacy scheme. Any timestamp identifier is newer than any `v0.x` identifier; never compare the two schemes by raw string sort (digits sort before `v`, which gets the order backwards).
+- Convention versions install side by side (`exfu/20260723-1446/`, `exfu/20260724-1749/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
+- **A version directory holds `ontology.md` and nothing else.** The plugin's other shipped content -- `exfu/readme.md`, `exfu/principles.md`, `exfu/librarians/`, `exfu/skills/` -- is unversioned and refreshed by plugin updates. The test for what gets frozen: a file belongs in a version directory if and only if a `Follows:` line can anchor into it. Bases shipped before 20260724-1749 also carry those four inside the version directory; that is the older shape, and migration lifts them out.
+- `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log. It is a cache: never hand-edited, safe to delete and regenerate. (The dashboard itself lives in `exfu/visualisations/dashboard/`; only its data sources live here.)
 
 ---
 
@@ -139,16 +143,16 @@ Skill definitions belonging to this scope: the *source of truth* markdown for sk
 
 - A skill here knows the scope's ontology and conventions rather than duplicating them.
 - The user scope's skills/ typically holds the source of the user's personal generated skills -- their way-of-working skill, reminders skill, inbox skill. Edit the source here, then repackage and reinstall (the skill-packaging skill handles that).
-- ExFu's own shipped skill sources live in the convention base at `exfu/<version>/skills/` (e.g. the way-of-working template). Scope skills/ folders hold scope-specific ones.
+- ExFu's own shipped skill sources live at `exfu/skills/` (e.g. the way-of-working template) -- unversioned, because they ship and move with the plugin. Scope skills/ folders hold scope-specific ones.
 - Boundaries: scheduled work goes in librarians/ or scheduled/; one-off background goes in context/.
 
 ### librarians/ {#librarians}
 
-Scheduled agents whose remit is the substrate itself: keeping this scope tidy, current, and ingestible. Analogy: cron jobs for housekeeping.
+Scheduled agents whose remit is the substrate itself: keeping this scope tidy, current, and ingestible. Analogy: cron jobs for housekeeping. In the user-facing register these are the user's Agent Librarians -- the ecosystem that keeps their library organised.
 
 - Sweeping the inbox, regenerating the index, reconciling todo/ with an external tracker, archiving stale context, flagging unreferenced versions.
 - Each librarian is one definition file in the scheduled-agent format (see [Scheduled agents](#scheduled-agents)). Definitions are *instances*, and they live here -- not in ontology/ (a librarian definition is not a concept).
-- ExFu ships its own librarians in the convention base at `exfu/<version>/librarians/` (nightly-index, inbox-triage, dashboard-generator, version-cleanup). Scope librarians/ folders hold scope-specific ones.
+- ExFu ships its own librarians at `exfu/librarians/` (nightly-index, inbox-triage, dashboard-generator, version-cleanup) -- unversioned, because each one describes a plugin-owned script and moves with it. Registry `source` paths therefore stay stable across convention mints. Scope librarians/ folders hold scope-specific ones.
 - Boundaries: work whose remit is the *user's domain* rather than the substrate goes in scheduled/. Ad hoc capabilities go in skills/.
 
 ### scheduled/ {#scheduled}
@@ -197,7 +201,7 @@ Structured data with repeating records and consistent fields. Analogy: a spreads
 Visual outputs produced by agents for this scope: HTML pages, dashboards, charts, diagrams. Analogy: a gallery.
 
 - Each visualisation in its own subfolder with all of its assets, named for what it shows.
-- The ExFu-shipped example is the substrate dashboard generated nightly at `exfu/derived/dashboard/index.html` (it lives in derived/ because it's regenerated cache; scope-level visualisations live here because they're kept work).
+- The ExFu-shipped example is the substrate dashboard, generated nightly at `exfu/visualisations/dashboard/index.html` -- the root's own gallery. It reads its data from `exfu/derived/`; the rendered page lives in the gallery because visual outputs are what this folder-type is for.
 - Boundaries: source data goes in databases/; the thing that *generates* a recurring visualisation is a librarian or agent.
 
 ---
@@ -244,7 +248,7 @@ The run log lives at `exfu/derived/agent-log.json`. Both files are derived cache
 
 A way of working is ExFu's concept for a person's standing operating manual: how their substrate is laid out (the navigation map) and the thin kernel of always-on instructions that apply to every session (communication style, decision defaults, hard constraints).
 
-- It materialises as a personal skill ("wow") generated from the template at `exfu/<version>/skills/wow-template.md`, installed into the user's AI platform, and loaded at the start of every session.
+- It materialises as a personal skill ("wow") generated from the template at `exfu/skills/wow-template.md`, installed into the user's AI platform, and loaded at the start of every session.
 - The skill's source of truth lives in the substrate at `user/skills/wow/`; the installed copy is a packaged artefact. Edit the source, repackage, reinstall.
 - A wow is a *map plus kernel*, never a workflow engine. Workflow logic belongs in skills, scheduled agents, or scope content. If the wow grows past a few screens, something is in the wrong place.
 
@@ -271,7 +275,7 @@ Every materialised folder-type directory contains an `agent.md`:
 
 2. **`Follows:` line** naming the convention it implements, by versioned anchor into this file:
 
-   `Follows: exfu/v0.3/ontology.md#todo`
+   `Follows: exfu/20260724-1749/ontology.md#todo`
 
 3. **`Local deviations:`** -- a bullet list of only what differs from the convention (e.g. "Tasks are tracked in ClickUp, folder 901514259169"). Omit the section entirely when nothing differs.
 

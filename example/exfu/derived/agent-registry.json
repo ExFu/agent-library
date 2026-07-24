@@ -6,7 +6,7 @@
       "cadence": "nightly",
       "depends_on": [],
       "enabled": true,
-      "source": "exfu/v0.3/librarians/nightly-index.md",
+      "source": "exfu/librarians/nightly-index.md",
       "installed": "2026-06-10T12:25:41Z",
       "last_run": "2026-06-10T12:25:53Z",
       "last_status": "success",
@@ -20,7 +20,7 @@
         "nightly-index"
       ],
       "enabled": true,
-      "source": "exfu/v0.3/librarians/inbox-triage.md",
+      "source": "exfu/librarians/inbox-triage.md",
       "installed": "2026-06-10T12:25:41Z",
       "last_run": "2026-06-10T12:25:53Z",
       "last_status": "success",
@@ -34,7 +34,7 @@
         "nightly-index"
       ],
       "enabled": true,
-      "source": "exfu/v0.3/librarians/dashboard-generator.md",
+      "source": "exfu/librarians/dashboard-generator.md",
       "installed": "2026-06-10T12:25:41Z",
       "last_run": "2026-06-10T12:25:53Z",
       "last_status": "success",

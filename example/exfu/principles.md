@@ -20,6 +20,10 @@ Fewer, more complete files. Agents ingest one complete read far more reliably th
 
 When asking users for information, frame questions around outcomes they care about, not structural details. "What are you trying to accomplish with this project?" beats "What folder-types do you need?"
 
+### Two registers
+
+Speak outcomes to users, implementation to agents. The user-facing register is the Agent Library and its Agent Librarians -- the edifice, and the ecosystem that keeps it organised. The internal register is the substrate -- scopes, folder-types, the index. Use library language with users; reach for substrate terms only when they ask how it works underneath. (The vocabulary is defined in `ontology.md`.)
+
 ### Build by doing
 
 The substrate grows through use, not through upfront planning. A new scope starts minimal (scope.md, maybe context/ and todo/) and gains structure as work demands it. Don't scaffold more than you need -- folder-types materialise when there's content for them, never "for completeness".
@@ -27,6 +31,20 @@ The substrate grows through use, not through upfront planning. A new scope start
 ### Accept chaos, annotate intent
 
 Real knowledge doesn't fit neatly into categories. Rather than forcing everything into the "right" place, accept that things will be messy and focus on annotating intent. An agent that knows WHY something was put somewhere can work with imperfect placement. An agent that only knows WHERE something is can't.
+
+### Open Knowledge Format alignment
+
+Google Cloud published the **Open Knowledge Format** (OKF) on 2026-06-12: a vendor-neutral spec for knowledge an AI agent can read without an SDK. Markdown files with YAML frontmatter, one required field (`type`) and five reserved (`title`, `description`, `resource`, `tags`, `timestamp`), one concept per file with the path as its identity, ordinary markdown links forming a graph, and two optional reserved filenames (`index.md`, `log.md`).
+
+The substrate's direction is **align now, adopt natively later, interoperate by projection.** The surface fit is already close: markdown plus YAML frontmatter is exactly this substrate's idiom, `description` already carries OKF's meaning in scheduled-agent and visualisation manifests, and path-as-identity is already how the planning corpus works.
+
+What is deliberately *not* done yet, and why:
+
+- **No field renames.** ExFu's `name` is OKF's `title`, and scope.md's `purpose` is OKF's `description`. Renaming them would break the index parser, the dashboard generator, every template, and every installed library at once -- a migration, not an alignment. It belongs in its own release.
+- **No `type` field yet.** Adding it in isolation would be ceremony: a lone conformant field does not make a bundle readable by an OKF consumer, and it is a field every agent would have to maintain for no present benefit.
+- **One concept per file is not adopted.** It contradicts the file-economy principle above, and the core ontology is deliberately one file because agents ingest a single complete read far more reliably. `Follows:` anchoring depends on that shape. This is a real tension with OKF, not an oversight.
+
+The interop goal does not require native conformance. Reading public OKF bundles needs an importer; being read by OKF visualisers needs a generated OKF projection of the library. Both leave the ingestion property intact, and both are additive rather than a rewrite. OKF is at v0.1; a projection is also the cheaper thing to revise as the spec moves.
 
 ## Recommendations
 

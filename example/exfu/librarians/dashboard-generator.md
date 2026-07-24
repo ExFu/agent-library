@@ -12,6 +12,7 @@ reads:
   - "*/inbox/"
 writes:
   - "exfu/visualisations/dashboard/index.html"
+  - "dashboard.html"
 depends_on:
   - nightly-index
 description: Generates the library dashboard, a static HTML page with the scope map, agent health, workspace views, and the instruction basket
@@ -49,7 +50,7 @@ The substrate is powerful but invisible: the user interacts with it through conv
 ## What it touches
 
 - Reads: the derived JSON files (index, registry, log) plus todo/, reminders/, and inbox/ content across scopes (via the script)
-- Writes: `exfu/visualisations/dashboard/index.html` (overwritten each run)
+- Writes: `exfu/visualisations/dashboard/index.html` (overwritten each run), and `dashboard.html` at the library root -- a small redirect page giving the dashboard a front door. The script only rewrites it when its content would change, and never touches a `dashboard.html` it did not author.
 
 ## Why it matters
 

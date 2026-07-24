@@ -1,8 +1,8 @@
 {
-  "generated": "2026-06-10T14:18:00Z",
-  "substrate_root": "/Users/al/Studio/projects/exfu_website/.claude/worktrees/serene-gagarin-324db3/plugin/example",
+  "generated": "2026-07-24T18:20:52Z",
+  "substrate_root": "/Users/al/Studio/projects/exfu_plugin/.claude/worktrees/project-improvement-priorities-06f179/example",
   "exfu_versions": {
-    "v0.3": {
+    "20260724-1749": {
       "is_latest": true,
       "scopes_using": [
         "Acme",
@@ -23,7 +23,7 @@
         "context": "data",
         "todo": "pointer",
         "reminders": "data",
-        "inbox": "empty"
+        "inbox": "data"
       }
     },
     {
@@ -31,7 +31,7 @@
       "path": "scopes/acme/",
       "type": "scope",
       "parent": "root",
-      "exfu_version": "v0.3",
+      "exfu_version": "20260724-1749",
       "folder_types": {
         "ontology": "data",
         "context": "data",
@@ -43,7 +43,7 @@
           "path": "scopes/acme/scopes/q3-renewal/",
           "type": "scope",
           "parent": "Acme",
-          "exfu_version": "v0.3",
+          "exfu_version": "20260724-1749",
           "folder_types": {
             "context": "data",
             "todo": "data"
@@ -56,10 +56,11 @@
       "path": "scopes/side-project/",
       "type": "scope",
       "parent": "root",
-      "exfu_version": "v0.3",
+      "exfu_version": "20260724-1749",
       "folder_types": {
         "context": "data",
-        "scheduled": "data"
+        "scheduled": "data",
+        "visualisations": "data"
       }
     }
   ]
