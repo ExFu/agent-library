@@ -20,7 +20,7 @@ Generates the user's personal `wow` skill from the template. Invoked by install 
 
 Gather these before you start:
 
-1. **`exfu/<version>/skills/wow-template.md`** in the substrate (resolve `<version>` via `exfu/latest.txt`) -- the canonical template. This is the structure you're filling in. The way-of-working concept it implements is defined in `exfu/<version>/ontology.md#wow`. If the convention base hasn't been deployed yet, fall back to the plugin's copy at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/skills/wow-template.md` (the plugin ships exactly one version directory -- list `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` to resolve it).
+1. **`exfu/skills/wow-template.md`** in the substrate (resolve `<version>` via `exfu/latest.txt`) -- the canonical template. This is the structure you're filling in. The way-of-working concept it implements is defined in `exfu/<version>/ontology.md#wow`. If the convention base hasn't been deployed yet, fall back to the plugin's copy at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/skills/wow-template.md` (the plugin ships exactly one version directory -- list `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` to resolve it).
 2. **The user's existing `wow`** -- if there is one, read it. You're merging, not replacing. Preserve anything specific the user has already built in: navigation map entries they've added, always-on kernel items, scope pointers.
 3. **`user/context/about-me.md`** -- the user's about-me content. Informs the always-on kernel and gives you the starting shape of the substrate.
 4. **Other `user/context/` files** if they exist: role, tools, writing-style. These feed the navigation map (high-traffic file pointers) and the always-on kernel (formatting preferences, communication style).

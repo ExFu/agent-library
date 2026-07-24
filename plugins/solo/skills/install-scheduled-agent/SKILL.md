@@ -39,7 +39,7 @@ The registry file is `exfu/derived/agent-registry.json` at the substrate root.
       "cadence": "nightly",
       "depends_on": [],
       "enabled": true,
-      "source": "exfu/20260723-1446/librarians/nightly-index.md",
+      "source": "exfu/librarians/nightly-index.md",
       "installed": "2026-06-10T14:00:00Z",
       "last_run": null,
       "last_status": null,
@@ -94,7 +94,7 @@ Optional fields:
 - `reads` / `writes` -- what it touches, for conflict detection and the dashboard.
 - `depends_on` -- entries that must run first within the same cadence.
 
-**Kind is determined by where the definition lives**, not by a frontmatter field: a definition in a `librarians/` folder (including the convention base's `exfu/<version>/librarians/`) registers as kind `librarian`; a definition in an `scheduled/` folder registers as kind `agent`. If a definition arrives from anywhere else, ask the user which remit it has and suggest moving it to the right folder.
+**Kind is determined by where the definition lives**, not by a frontmatter field: a definition in a `librarians/` folder (including the convention base's `exfu/librarians/`) registers as kind `librarian`; a definition in an `scheduled/` folder registers as kind `agent`. If a definition arrives from anywhere else, ask the user which remit it has and suggest moving it to the right folder.
 
 ---
 
@@ -109,7 +109,7 @@ Register a scheduled agent from its definition file.
 **Steps:**
 
 1. **Find the definition file.** If the user names a specific file, use that. Otherwise, search for it by name in these locations (in order):
-   - `exfu/<version>/librarians/` -- convention base shipped librarians (resolve `<version>` via `exfu/latest.txt`)
+   - `exfu/librarians/` -- convention base shipped librarians (resolve `<version>` via `exfu/latest.txt`)
    - `*/librarians/` and `*/scheduled/` directories under each scope (use the index at `exfu/derived/index.json` to find scopes)
    - Any path the user points to
 
@@ -199,7 +199,7 @@ Walk the substrate for definitions not yet in the registry.
 1. Read the registry to get the list of already-installed names.
 
 2. Walk these locations for markdown files with scheduled-agent frontmatter:
-   - `exfu/<version>/librarians/` -- convention base shipped librarians
+   - `exfu/librarians/` -- convention base shipped librarians
    - `*/librarians/` and `*/scheduled/` directories under each scope (the index gives you the scope list; check both folders per scope)
 
 3. For each file found, read the YAML frontmatter. A valid definition has at minimum: `name`, `cadence`, `description`, plus an instruction body. Skip files that don't parse or lack required fields -- they may be documentation (like `agent.md`).

@@ -96,15 +96,22 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 ### Step 6 -- Resolve the current exfu version
 
-Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260723-1446`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260724-1749`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
-The convention base lives at `exfu/<version>/` (e.g. `exfu/20260723-1446/`). It is deliberately flat and small:
+The convention base lives at `exfu/` and is deliberately flat and small. It splits in two:
+
+**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260724-1749/`), which holds one file:
 - `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
+
+**Unversioned shipped content** beside it at `exfu/`, refreshed by plugin updates:
+- `readme.md` -- the orientation map for the directory, including the on-disk layout depiction.
 - `principles.md` -- the design principles behind the conventions, plus tool recommendations.
 - `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
-Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260723-1446` follows the conventions in `exfu/20260723-1446/`. The `user/` scope is unversioned and always follows latest.
+A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260724-1749` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
+
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260724-1749` follows the conventions in `exfu/20260724-1749/ontology.md`. The `user/` scope is unversioned and always follows latest.
 
 ### Step 7 -- Load the user's personal context
 
@@ -284,19 +291,20 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    20260723-1446/        # versioned conventions -- deliberately flat and small
-      readme.md             # orientation map for this directory
+    20260724-1749/          # a convention version: the frozen contract
       ontology.md           # the complete core ontology, one file
-      principles.md         # design principles + recommendations
-      librarians/           # exfu-shipped librarian definitions
-      skills/               # exfu-shipped skill sources (wow template)
+    readme.md               # orientation map for this directory
+    principles.md           # design principles + recommendations
+    librarians/             # exfu-shipped librarian definitions
+    skills/                 # exfu-shipped skill sources (wow template)
     derived/                # generated content (unversioned cache)
       index.json            # the global index -- the primary navigation tool
       agent-registry.json   # registered scheduled agents and their health
       agent-log.json        # run history
     visualisations/         # exfu-shipped visual outputs
       dashboard/            # generated HTML dashboard
-    latest.txt              # points to current version (e.g. "20260723-1446")
+    latest.txt              # points to current version (e.g. "20260724-1749")
+  dashboard.html            # generated front door: redirects to the dashboard above
   user/                     # personal scope (unversioned, always follows latest)
     scope.md
     context/                # personal background (about-me, preferences)
@@ -327,7 +335,7 @@ substrate-root/
 ---
 name: <human-readable name>
 parent: <parent scope name, or "root" for top-level>
-exfu: 20260723-1446
+exfu: 20260724-1749
 ---
 ```
 
@@ -366,7 +374,7 @@ Every materialised folder-type directory contains an `agent.md` with this struct
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
 2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
-   `Follows: exfu/20260723-1446/ontology.md#todo`
+   `Follows: exfu/20260724-1749/ontology.md#todo`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 

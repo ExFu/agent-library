@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 9
+version: 11
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -111,6 +111,7 @@ The substrate root is a single folder. Inside it, exactly three things plus a gu
   exfu/                   # convention base and generated artefacts (not a scope)
   user/                   # special scope: personal context and global defaults
   scopes/                 # the tree of everything else
+  dashboard.html          # generated front door: redirects into exfu/visualisations/
 ```
 
 This layout is the same for solo users and team setups. There are no separate `orgs/` or `teams/` directories. Organisational structure is expressed through scopes -- an org is a scope, a team is a scope, a project is a scope.
@@ -121,14 +122,14 @@ Not a scope itself (no `scope.md`). This is the convention base and generated-ou
 
 ```
 exfu/
-  latest.txt              # single line: the current convention version (e.g. "20260723-1446")
-  20260723-1446/          # a convention base version -- deliberately flat and small
-    readme.md             # orientation map for this directory
+  latest.txt              # single line: the current convention version (e.g. "20260724-1749")
+  20260724-1749/          # a convention version -- the frozen contract
     ontology.md           # the complete core ontology, ONE file (scope model,
                           #   folder-types, scheduled agents, authoring rules)
-    principles.md         # ExFu principles and recommendations
-    librarians/           # shipped librarian definitions, ready to register
-    skills/               # shipped skill sources (the wow template)
+  readme.md               # orientation map for this directory
+  principles.md           # ExFu principles and recommendations
+  librarians/             # shipped librarian definitions, ready to register
+  skills/                 # shipped skill sources (the wow template)
   derived/                # generated output (never hand-edited)
     index.json            # the global index -- whole-substrate map
     agent-registry.json   # registered scheduled agents and their health
@@ -140,7 +141,9 @@ exfu/
 
 The convention base is one complete ontology file rather than a folder of fragments because agents ingest a single read far more reliably -- the same file-economy principle that governs everything written into the substrate.
 
-**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260723-1446`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260723-1446/` next to a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
+**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260724-1749` carry all four inside the version directory; that is the older shape, and migration lifts them out.
+
+**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1749`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260724-1749/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
 ### The user/ scope
 
@@ -229,7 +232,7 @@ Format:
 name: Acme
 purpose: Client relationship and commercial engagement with Acme Corp
 parent: root
-exfu: 20260723-1446
+exfu: 20260724-1749
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
@@ -304,7 +307,7 @@ A folder with no deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260723-1446/ontology.md#context
+Follows: exfu/20260724-1749/ontology.md#context
 ```
 
 That's it. One line plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
@@ -315,7 +318,7 @@ A folder with deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260723-1446/ontology.md#todo
+Follows: exfu/20260724-1749/ontology.md#todo
 
 Local deviations:
 - Tasks are tracked in ClickUp, not stored locally
@@ -467,7 +470,7 @@ A scheduled agent is recurring work defined as *agent instructions*: a markdown 
 
 Two kinds share identical mechanics and differ only in remit:
 
-- **Librarians** keep the substrate itself tidy so the user doesn't have to. Their definitions live in `librarians/` folders (the convention base ships its own at `exfu/<version>/librarians/`).
+- **Librarians** keep the substrate itself tidy so the user doesn't have to. Their definitions live in `librarians/` folders (the convention base ships its own at `exfu/librarians/`).
 - **Business agents** do the user's recurring domain work -- the standing jobs they'd brief an assistant on. Their definitions live in `scheduled/` folders.
 
 ### By example
@@ -572,7 +575,7 @@ The substrate is designed to grow.
 
 **Custom scheduled agents** -- Define librarians (recurring tidying, checking, routing of the substrate itself) in a scope's `librarians/` folder, and business agents (recurring domain work: scanning, digesting, watching) in a scope's `scheduled/` folder. Register them with the install-scheduled-agent skill to make them live.
 
-**Substrate visualisation** -- The dashboard at `exfu/visualisations/dashboard/index.html` renders the global index into a visual map of the entire substrate. The user opens it in a browser and sees the full scope tree, folder-type status, and ontology chain. It's regenerated nightly.
+**Substrate visualisation** -- The dashboard at `exfu/visualisations/dashboard/index.html` renders the global index into a visual map of the entire substrate. The user opens it in a browser and sees the full scope tree, folder-type status, and ontology chain. It's regenerated nightly, and `dashboard.html` at the library root redirects to it so nobody has to remember the path.
 
 **Inter-agent communication** -- Agents for different team members can exchange information via the available connectors. The pattern is defined by the team's way of working.
 
@@ -600,6 +603,8 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
+- 2026-07-24 v11: The conventions lock moves to the contract rather than the folder (plugin 0.9.0). A convention version directory now holds `ontology.md` and nothing else; `readme.md`, `principles.md`, `librarians/`, and `skills/` move out to unversioned `exfu/` and travel with plugin releases. The deciding rule is mechanical: a file belongs in a version directory if and only if a `Follows:` line can anchor into it, and all 16 anchors point into the ontology. Base minted as `20260724-1749`; the root-layout depiction moved from the ontology to `exfu/readme.md`. Registry `source` paths stop breaking on every mint. A build gate (`build/check-conventions-lock.sh`) now enforces byte-identity of shipped versions, and `build/mint-conventions.sh` makes minting one command. Bases before `20260724-1749` keep the old shape; both coexist. Decision record: `planning/conventions-lock-boundary.md`.
+- 2026-07-24 v10: The dashboard gains a front door. `dashboard.html` at the library root redirects to `exfu/visualisations/dashboard/index.html`, so users open the dashboard from the top of their library instead of remembering a four-deep path. It is a generated redirect page, not a symlink: sync layers handle symlinks unreliably (the same reason `exfu/latest.txt` is a text file), and browsers resolve relative URLs against the document URL, so a symlinked page would break the dashboard's own `../../../scopes/...` gallery links and view iframes. The dashboard bundle itself does not move.
 - 2026-07-23 v9: Conventions versioning moved to timestamp identifiers (plugin 0.6.0). Convention base versions are now named by their release moment as shortened UTC timestamps (YYYYMMDD-HHMM, e.g. 20260723-1446) instead of v0.x labels; identifiers no longer share a naming surface with plugin release numbers, lexicographic order is chronological, and every release mints a fresh identifier so a version's contents never change under a stable name. v0.x is now the legacy scheme: any timestamp identifier is newer than any v0.x one. First timestamped base minted as 20260723-1446 (contents of the former shipped v0.3). Side-by-side model and per-scope pins unchanged.
 - 2026-07-20 v8: Agent Library re-pitch (plugin 0.4.0). Added the two-register note: user-facing Agent Library / Agent Librarians vs internal substrate vocabulary, defined in ontology.md#vocabulary. Guard file and boot-skill references renamed substrate -> exfu-library. Connector access section rewritten for Dropbox (native delete/move, path addressing, revision history), replacing the Box workarounds; retired the _DELETED_ naming convention. Corrected the dashboard path to exfu/visualisations/dashboard/ and fixed the stale version header (previous edit logged v7 in the changelog but left the header at 6).
 - 2026-06-10 v7: Convention base flattened to file-economy form: the core ontology is now ONE file (exfu/v0.3/ontology.md, anchor-addressed by Follows: lines) instead of fragmented ontology/ subfolders; shipped librarian definitions moved to exfu/v0.3/librarians/ (instances, not ontology); wow template ships at exfu/v0.3/skills/wow-template.md. Added scheduled/ folder-type and the ScheduledAgents concept: librarians and business agents share mechanics (definition format, registry, cadence sessions) and differ in remit; registry renamed to exfu/derived/agent-registry.json with kind field, log to agent-log.json, task to nightly-agents. Added materialise-on-demand rule (no empty folder scaffolding), the no-state rule for descriptors (agent.md/readme.md/scope.md), and the file-economy authoring principle (fewer, complete files; flat ontologies).

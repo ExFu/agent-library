@@ -6,7 +6,7 @@
       "cadence": "nightly",
       "depends_on": [],
       "enabled": true,
-      "source": "exfu/20260723-1446/librarians/nightly-index.md",
+      "source": "exfu/librarians/nightly-index.md",
       "installed": null,
       "last_run": null,
       "last_status": null,

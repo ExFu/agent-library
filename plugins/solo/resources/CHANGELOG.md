@@ -6,6 +6,50 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.9.0 -- 2026-07-24
+
+**The conventions lock moves to the contract, not the folder.** A convention version directory now contains `ontology.md` and nothing else. Everything else the plugin ships -- `readme.md`, `principles.md`, `librarians/`, `skills/` -- moves out to unversioned `exfu/` and travels with plugin releases. Decision record: `planning/conventions-lock-boundary.md`.
+
+The timestamp scheme (0.6.0) froze version directories so a pinned scope always sees the same conventions. Right, and kept. But the freeze was drawn around a folder of related material rather than the contract surface, and it caught four things nothing resolves against. Measured: all 16 `Follows:` anchors point into `ontology.md`; nothing anchors into the readme, the principles, the librarian definitions, or the skill templates. They were locked purely by colocation.
+
+The rule that now decides membership, and is mechanically decidable rather than a per-edit judgement call:
+
+> A file belongs in a version directory if and only if a `Follows:` line can anchor into it.
+
+This came out of 0.8.0, where a two-line documentation edit was blocked by a rule that had no business covering it. Relaxing the rule to "additive-only" was considered and rejected: the base is read *live* (the registry pins agents to definitions by versioned path), so an additive line in a librarian's `writes:` frontmatter is textually additive but expansive in authority; "byte-identical" is checkable in CI while "additive enough" is judged by whoever wants the edit; and the identifier would stop being a sufficient description of a content set.
+
+**Changed**
+- Convention base minted as `20260724-1749/`, holding `ontology.md` alone. The root-layout depiction moved out of the ontology to `exfu/readme.md` -- it describes what the plugin ships, which is free to change. The ontology's versioning section documents the new boundary.
+- `readme.md`, `principles.md`, `librarians/`, `skills/` now live at `exfu/`. Registry `source` paths stop breaking on every mint: previously each one pinned `exfu/<version>/librarians/...`, so minting silently invalidated them in every installed library.
+- The 0.8.0 `dashboard.html` edits that were deferred as blocked are folded in -- the dashboard-generator librarian's `writes:` list and the layout depiction.
+- New `build/check-conventions-lock.sh`, run by `build.sh` before composing: any version directory present in both HEAD and the working tree must be byte-identical. Adding a version is fine; removing a superseded one is fine. The rule was broken three times under the old scheme, so it is now a gate rather than a convention.
+- New `build/mint-conventions.sh`: copies the current version to a fresh UTC timestamp, re-points every pin, removes the superseded directory. Minting is one command, so cost is never the reason to edit in place.
+- Install skills, the migration skill, the substrate guide (v11), `exfu-library`, `exfu-guides`, and the wow template all describe the split shape. Bases shipped before `20260724-1749` keep the four items inside the version directory; that is the older shape and both coexist.
+- `principles.md` records the Open Knowledge Format direction (see below).
+
+**Not changed:** parsers needed no work. `index.py discover_versions()` and `dashboard-generator.py find_convention_dir()` already keyed on "a version directory containing `ontology.md`", which is exactly the new shape.
+
+### Open Knowledge Format
+
+Google Cloud's OKF (published 2026-06-12, v0.1) is now recorded in `principles.md` as a direction: **align now, adopt natively later, interoperate by projection.** The surface fit is close -- markdown with YAML frontmatter is already the substrate's idiom and `description` already carries OKF's meaning. Deliberately not done: no field renames (`name`/`title`, `purpose`/`description` would break the index parser, the dashboard, every template and every installed library at once), no isolated `type` field, and no one-concept-per-file. That last one genuinely contradicts the v7 decision to flatten the ontology into a single file because agents ingest one complete read far more reliably, which `Follows:` anchoring depends on. Interop does not require conformance: an importer reads public OKF bundles, a generated projection makes the library readable by OKF visualisers, and both are additive.
+
+---
+
+## v0.8.0 -- 2026-07-24
+
+The dashboard gets a front door. `dashboard.html` now sits at the library root and redirects to the real page at `exfu/visualisations/dashboard/index.html`. Users open the dashboard from the top of their library instead of remembering a four-deep path, and the bundle stays in the visualisations gallery where visual outputs belong.
+
+**Why a redirect page rather than a symlink.** Two independent reasons. Sync layers handle symlinks unreliably -- Dropbox follows them and syncs a copy, so a root symlink would freeze at whatever the generator wrote that day and silently go stale; this is the same constraint that makes `exfu/latest.txt` a text file rather than a `latest` symlink. And browsers resolve relative URLs against the document URL, not a link's target: the dashboard emits `../../../scopes/...` paths for its gallery cards and mounted scope-view iframes, so a symlinked page would resolve every one of them from the wrong depth and break them. Redirecting moves the document URL to the real location first, so those references resolve exactly as generated. The pointer also survives the dashboard growing into a multi-file bundle, which a file symlink would not.
+
+**Changed**
+- `dashboard-generator.py` maintains the pointer alongside its normal output. Idempotent: an unchanged pointer is not rewritten, so nightly runs don't churn its mtime through the sync layer. A `dashboard.html` the generator did not author (no marker comment) is left alone rather than overwritten. Pointer status is reported in the run line.
+- The pointer carries three redirect mechanisms -- a script `location.replace()`, a `meta` refresh, and a visible link -- so it works with scripts disabled and degrades to one click if a browser declines both on `file://`.
+- Root-layout depictions in `substrate-guide.md` (now v10) and the `exfu-library` skill gained the root entry; `exfu-guides` now tells users to open `dashboard.html` rather than the deep path.
+
+**Note:** the pointer is created by the dashboard generator, not at install time -- a fresh install has no dashboard yet, and a root file pointing at a missing page would be a dead front door. It appears on the first dashboard run.
+
+---
+
 ## v0.7.0 -- 2026-07-23
 
 Project identity rename to **ExFu Agent Library**. The user-facing product label is now "ExFu Agent Library" (dropping the possessive "ExFu's"), and the three plugins are renamed to carry it:

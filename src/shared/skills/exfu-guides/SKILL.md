@@ -29,8 +29,8 @@ For convention base content (the canonical definitions agents follow). The plugi
 
 - `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` -- the complete core ontology in ONE file: the scope model and scope.md format, every folder-type (with anchors like `#todo`), scheduled agents and librarians, the way-of-working concept, and the authoring rules. This is the canonical source for nearly every structural question.
 - `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/principles.md` -- the design principles and tool recommendations.
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/librarians/` -- the shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup).
-- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/skills/wow-template.md` -- the way-of-working template.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/librarians/` -- the shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup).
+- `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/skills/wow-template.md` -- the way-of-working template.
 
 ## The core concepts
 
@@ -63,15 +63,17 @@ The 10 standard folder-types are the vocabulary of "where things go" inside a sc
 | `databases/` | Where do structured, repeating records live? |
 | `visualisations/` | Where do agent-created visual outputs live? |
 
-The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260723-1446/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
+The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260724-1749/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
 
 Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Folder-types section)
 
 ### 3. Convention base
 
-The convention base lives at `exfu/<version>/` inside the substrate (`exfu/latest.txt` names the current version). It contains the default definitions for all folder-types, the scope model docs, and the librarian definitions. It is the single canonical source for "how does this folder-type behave by default?"
+The convention base lives at `exfu/` inside the substrate, and splits in two. The **contract** is `exfu/<version>/ontology.md` (`exfu/latest.txt` names the current version): the default definitions for all folder-types and the scope model, frozen the moment it ships. Everything else the plugin supplies -- `exfu/readme.md`, `exfu/principles.md`, `exfu/librarians/`, `exfu/skills/` -- sits unversioned beside it and moves with plugin releases.
 
-Scopes reference the convention base via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260723-1446/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The convention base itself ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/` and gets installed into the user's substrate. It is deliberately flat and small (one ontology file, one principles file, shipped librarians, the wow template) so it can be ingested in a handful of reads.
+The rule deciding which is which: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Only the ontology qualifies, so only the ontology is frozen. That is what lets the conventions stay genuinely locked while documentation, shipped librarians, and templates keep evolving -- and it keeps registry `source` paths stable, because librarian definitions no longer move when a version is minted.
+
+Scopes reference the contract via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260724-1749/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The base ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` and gets installed into the user's substrate. It is deliberately flat and small so it can be ingested in a handful of reads. Bases shipped before `20260724-1749` hold all four unversioned items inside the version directory instead; that is the older shape.
 
 ### 4. Store-or-point
 
@@ -94,7 +96,7 @@ The registry at `exfu/derived/agent-registry.json` tracks all registered schedul
 
 ExFu ships four librarian definitions: nightly-index, inbox-triage, dashboard-generator, and version-cleanup.
 
-Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Scheduled agents section), shipped definitions in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/librarians/`
+Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Scheduled agents section), shipped definitions in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/librarians/`
 
 ### 6. Versioning
 
@@ -134,6 +136,8 @@ It's a living document. Small updates happen directly; substantial changes (new 
 ### 10. The dashboard
 
 When available, a static HTML page at `exfu/visualisations/dashboard/` that renders the global index into a visual substrate map. Shows the scope tree, folder-type status, ontology chains, and librarian health. Read from the index, not by walking the filesystem live -- so it's fast and works offline.
+
+Tell users to open `dashboard.html` at the top of their library rather than the path above: it is a small generated redirect that lands them on the real page, and it is the one place they can be expected to find without instructions. The bundle stays in the gallery, where visual outputs belong.
 
 Target audience is non-technical users. The dashboard is generated as part of the nightly index run or on-demand.
 

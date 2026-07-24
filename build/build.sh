@@ -439,6 +439,18 @@ build_variant() {
 overall_start=$(date +%s)
 build_errors=()
 
+# The conventions lock: a shipped version directory must never change under a
+# stable name. Checked before composing anything, because a violation makes
+# every built variant wrong in the same way.
+if [[ -x "${SCRIPT_DIR:-$(dirname "$0")}/check-conventions-lock.sh" ]]; then
+  echo ""
+  info "--- Conventions lock ---"
+  if ! "${SCRIPT_DIR:-$(dirname "$0")}/check-conventions-lock.sh"; then
+    echo -e "${RED}  Build aborted: conventions lock violated${NC}"
+    exit 1
+  fi
+fi
+
 for variant in "${VARIANTS[@]}"; do
   if ! build_variant "$variant"; then
     build_errors+=("$variant")

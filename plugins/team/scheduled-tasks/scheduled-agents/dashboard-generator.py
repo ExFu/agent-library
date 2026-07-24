@@ -9,6 +9,11 @@ self-contained HTML dashboard at exfu/visualisations/dashboard/index.html
 registry/log filenames so it works on substrates that predate the
 scheduled-agent vocabulary.
 
+Also maintains dashboard.html at the library root: a small redirect page so
+the dashboard has a front door where users actually look, without moving the
+bundle out of the gallery. See render_root_pointer() for why it redirects
+rather than links.
+
 The page is read-only about the substrate's files. Its interactive
 controls feed the Action Basket: queued, editable instructions the user
 hands to their AI (copy-paste or a claude:// deep link). Pending changes
@@ -3974,6 +3979,81 @@ def generate_dashboard(root):
     return page
 
 
+DASHBOARD_REL = "exfu/visualisations/dashboard/index.html"
+POINTER_NAME = "dashboard.html"
+POINTER_MARKER = "exfu-dashboard-pointer"
+
+
+def render_root_pointer():
+    """
+    The library root's front door: a small page that forwards to the real
+    dashboard in the visualisations gallery.
+
+    Why a redirect file and not a symlink. Sync layers handle symlinks
+    unreliably (the same reason `exfu/latest.txt` is a text file), and a
+    browser resolves relative URLs against the document URL rather than a
+    link's target -- so a symlinked page would resolve the dashboard's
+    `../../../scopes/...` gallery links and view iframes from the wrong
+    depth and break every one of them. Redirecting moves the document URL to
+    the real location first, so those references resolve as generated.
+
+    Three mechanisms, deliberately: a script replace (also keeps the pointer
+    out of the back button's way), a meta-refresh for when scripts are off,
+    and a visible link for when a browser declines both on file://. The
+    marker comment is how a later run knows this file is ours to rewrite.
+    """
+    return f"""<!doctype html>
+<!-- {POINTER_MARKER}: generated pointer, safe to delete. The dashboard itself
+     lives at {DASHBOARD_REL} -- open that directly if this page does not
+     forward you. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Your dashboard</title>
+  <meta http-equiv="refresh" content="0;url={DASHBOARD_REL}">
+  <style>
+    body {{ font: 16px/1.5 system-ui, sans-serif; margin: 4rem auto; max-width: 30rem; padding: 0 1.5rem; }}
+    a {{ color: #1a5fb4; }}
+  </style>
+</head>
+<body>
+  <p><a href="{DASHBOARD_REL}">Open your dashboard</a></p>
+  <script>location.replace("{DASHBOARD_REL}");</script>
+</body>
+</html>
+"""
+
+
+def write_root_pointer(root):
+    """
+    Put (or refresh) the pointer at the library root. Idempotent: an
+    unchanged pointer is left untouched rather than rewritten, so a nightly
+    run does not churn the file's mtime through the sync layer. A
+    dashboard.html the generator did not author is left alone -- the user put
+    it there and it is not ours to overwrite.
+
+    Returns a status string for the run's output.
+    """
+    path = root / POINTER_NAME
+    wanted = render_root_pointer()
+
+    if path.exists():
+        try:
+            existing = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            return f"pointer unreadable, left alone ({exc.strerror})"
+        if POINTER_MARKER not in existing:
+            return f"{POINTER_NAME} exists but is not ours, left alone"
+        if existing == wanted:
+            return "pointer already current"
+
+    try:
+        path.write_text(wanted, encoding="utf-8")
+    except OSError as exc:
+        return f"pointer could not be written ({exc.strerror})"
+    return f"pointer written to {POINTER_NAME}"
+
+
 def main():
     args = parse_args()
     root = Path(args.root).resolve()
@@ -3992,12 +4072,14 @@ def main():
     output_path = output_dir / "index.html"
     output_path.write_text(html_content, encoding="utf-8")
 
+    pointer_status = write_root_pointer(root)
+
     elapsed = time.monotonic() - start
     size_kb = len(html_content) / 1024
 
     print(
-        f"Dashboard generated at exfu/visualisations/dashboard/index.html "
-        f"({size_kb:.1f} KB, took {elapsed:.2f}s)"
+        f"Dashboard generated at {DASHBOARD_REL} "
+        f"({size_kb:.1f} KB, took {elapsed:.2f}s); {pointer_status}"
     )
 
 

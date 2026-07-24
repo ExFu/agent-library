@@ -40,10 +40,12 @@ Compare the Dropbox copy against the Box original before touching anything:
 
 ## Step 2 -- Refresh the convention base
 
-The `exfu/<version>/` directories are plugin-owned. Deploy the plugin's shipped version -- the single directory under `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` -- into the new root:
+The whole of `exfu/` except `derived/` and `visualisations/` is plugin-owned. Deploy the plugin's shipped base from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into the new root. It has two parts, and they behave differently:
 
-- If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions. (Under the timestamp scheme the same identifier means identical canonical content, so this is a repair, not a change.)
+- **The unversioned files** -- `readme.md`, `principles.md`, `librarians/`, `skills/` -- sit directly in `exfu/`. Copy them over whatever is there. They are refreshed by every plugin update, so this is always a straight overwrite.
+- **The version directory** (one, holding `ontology.md`) is the frozen contract. If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions. (Under the timestamp scheme the same identifier means identical canonical content, so this is a repair, not a change.)
 - If the plugin ships a newer version, install it alongside the existing one(s) and update `exfu/latest.txt` to name it. Leave older version directories in place -- scopes may still pin them (side-by-side model).
+- **Old-shape bases.** Versions before `20260724-1749` carry `readme.md`, `principles.md`, `librarians/`, and `skills/` *inside* the version directory. Leave those copies where they are -- scopes pinned to that version still read them. The unversioned copies at `exfu/` are what current scopes use; both coexist without conflict.
 - **Deciding "newer":** version identifiers are shortened UTC timestamps (`YYYYMMDD-HHMM`), so lexicographic order is chronological order. The one exception is the legacy `v0.x` scheme: any timestamp identifier is newer than any `v0.x` one -- never decide by raw string sort across the two schemes (digits sort before `v`, which gets it backwards).
 - Leave `exfu/derived/` and `exfu/visualisations/` alone -- they are the user's generated state.
 
