@@ -2,7 +2,7 @@
 name: Side Project
 purpose: Weekend experiment with a recipe recommendation engine
 parent: root
-exfu: 20260724-1749
+exfu: 20260724-1831
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,

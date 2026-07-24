@@ -167,7 +167,7 @@ If the user names Box specifically: be straight with them. Box's connector has n
 
 Use `request_cowork_directory` for the folder picker to identify the knowledge base root folder. Record the storage choice in the user scope's context later (Step 5), not in a separate `_meta/` file.
 
-### Step 4 -- Convention base deployment
+### Step 4 -- Convention base and ledger
 
 Once the storage folder is identified, deploy the shipped convention base. This is the structural foundation that all scopes reference.
 
@@ -175,12 +175,27 @@ Do the following in order:
 
 1. **Create `exfu/` at the substrate root.** This is the convention base directory.
 2. **Copy the shipped convention base** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/` at the substrate root, preserving its shape. Two parts:
-   - The version directory (the plugin ships exactly one, e.g. `20260724-1749`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
+   - The version directory (the plugin ships exactly one, e.g. `20260724-1831`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
    - The unversioned files beside it -- `readme.md`, `principles.md`, `librarians/` (the shipped librarian definitions), and `skills/` (the wow template). These sit directly in `exfu/`, not inside the version directory, and are refreshed by plugin updates.
 3. **Create `exfu/latest.txt`** containing exactly the shipped version name. This tells agents which convention version is current.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
+5. **Create `ledger/` at the substrate root**, beside `exfu/`. This is the library's own record of what has been done to it. Nothing else in the library can be used to reconstruct it: a plugin update refreshes `exfu/`, and `exfu/derived/` is a disposable cache. Write three files:
+   - `ledger/readme.md` -- one short paragraph saying what the folder is: the library's durable record of what has been done to it, added to and never rewritten, never overwritten by a plugin update, and not a working area of its own.
+   - `ledger/install.md` -- the record of this install: today's date, the plugin version (read it from the plugin manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface the install ran on (Claude Code or Cowork), and the storage backend the user chose in Step 3.
+   - `ledger/migrations.md` -- seeded, per the next item.
+6. **Seed `ledger/migrations.md` with every migration the plugin ships.** List the files in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/` and write one entry for each, in filename order, with outcome `not-applicable`. If that directory is absent or empty, the plugin ships none: write the file with its heading and no entries. Use this format, which is the format every ledger this plugin writes uses:
 
-Don't explain the convention base in detail to the user. A brief: *"I'm laying down the base definitions that everything else builds on. Think of it as the shared vocabulary -- so every part of your setup speaks the same language."*
+```markdown
+## <migration-id>
+- considered: <ISO date>
+- by: <actor> (<surface>), plugin <version>
+- outcome: not-applicable | applied | failed | skipped
+- notes: <one line; for a fresh install, "fresh install -- library created at the target shape">
+```
+
+**Seed it, and don't "correct" it later.** A fresh install is already in the target shape, so there is nothing for those migrations to do. Every later session computes pending migrations as shipped minus applied. Skip the seeding and a brand-new library looks maximally out of date, and the next session will try to run the entire history of migrations against a shape the library never had. `not-applicable` is the accurate outcome here, not a shortcut.
+
+Don't explain the convention base in detail to the user. A brief: *"I'm laying down the base definitions that everything else builds on. Think of it as the shared vocabulary -- so every part of your setup speaks the same language. I'm also starting a logbook that records what's been done to your library, so future sessions can pick up where we left off."*
 
 ### Step 5 -- User scope creation (delegate to scope-setup)
 
@@ -322,6 +337,7 @@ A checklist, not a script:
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
 - Dropbox account, Dropbox folder locally synced, Dropbox MCP connector connected (or alternative storage confirmed). Library folder identified via the folder picker. Hydration caveat ("Make Available Offline") surfaced and actioned.
 - Convention base deployed at `exfu/<version>/` with `exfu/latest.txt` naming it.
+- Ledger created at `ledger/` with `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`.
 - User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the substrate root.

@@ -14,7 +14,8 @@ Nothing anchors into this readme, the principles, the librarian definitions, or 
 
 - `<timestamp>/ontology.md` -- the complete core ontology in one file: the two vocabulary registers (Agent Library user-facing, substrate internal), the scope model, the folder-type catalogue, scheduled agents and librarians, the way-of-working concept, and the authoring rules. **Read this first.** `Follows:` references across the substrate point into it by anchor.
 - `principles.md` -- the design principles behind the conventions, plus curated tool recommendations.
-- `librarians/` -- the ExFu-shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup). Instances, ready to register. Unversioned because each describes a plugin-owned script and moves with it, which also keeps registry `source` paths stable across mints.
+- `librarians/` -- the ExFu-shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup, library-updater). Instances, ready to register. Unversioned because each describes a plugin-owned script and moves with it, which also keeps registry `source` paths stable across mints.
+- `migrations/` -- the shipped migrations that carry an existing library from an older shape to this one. Ordered by id; applied by the library-updater librarian, which records every outcome in `ledger/`.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template that personal wow skills are generated from.
 - `latest.txt` -- names the current convention version.
 - `derived/` -- generated cache: the global index, the scheduled-agent registry and log. Never hand-edited.
@@ -31,14 +32,19 @@ substrate-root/
   CLAUDE.md          # guard file: warns sessions that haven't loaded the conventions
   dashboard.html     # generated front door: redirects into exfu/visualisations/
   exfu/              # convention base (plugin-owned; agents and users don't edit it)
-    20260724-1749/   # a convention version: ontology.md only, frozen at ship
+    20260724-1831/   # a convention version: ontology.md only, frozen at ship
     readme.md        # this file
     principles.md    # design principles and recommendations
     librarians/      # shipped librarian definitions, ready to register
+    migrations/      # shipped migrations, applied by the library-updater
     skills/          # shipped skill sources (the wow template)
-    latest.txt       # current version name, e.g. "20260724-1749"
+    latest.txt       # current version name, e.g. "20260724-1831"
     derived/         # generated cache: index, registries. Never hand-edited.
     visualisations/  # ExFu-shipped visual outputs, e.g. the dashboard
+  ledger/            # durable record of what has been done to this library.
+                     #   Append-only. NEVER overwritten by a plugin update.
   user/              # the personal scope (special: unversioned, parent: none)
   scopes/            # every other scope
 ```
+
+Note the asymmetry between `exfu/` and `ledger/`: everything in `exfu/` is replaced wholesale on update, and nothing in `ledger/` ever is. That is the whole reason the ledger is not kept here.

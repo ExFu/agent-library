@@ -6,6 +6,31 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.10.0 -- 2026-07-24
+
+**Libraries can now be updated over time.** Every release that changes shape needs something to carry installed libraries across, and nothing owned that job -- 0.9.0 shipped its split base with no standalone upgrade path, and the two existing migration skills each encode one transition and know nothing about each other. Decision record: `planning/library-migrations.md`.
+
+**Migrations are boot-detected, not scheduled.** A plugin update does not touch the library; it changes what is installed alongside it. There is no update hook, so nothing *can* run at update time. The first opportunity to notice is the next session that loads `exfu-library`, which compares the migrations the plugin ships against the library's ledger and hands anything pending to the new `library-updater` librarian. Applying happens with the user present, never on a cadence.
+
+**New top-level `ledger/`.** The record of what has been done to a library cannot live in `exfu/` (plugin-owned, refreshed wholesale on update -- one refresh would destroy it) and cannot live in `exfu/derived/` (defined as a disposable cache). It is the one thing in the substrate that categorically cannot be regenerated, so it gets its own location that no update touches. Append-only, human-readable, holding `migrations.md` and `install.md`. In the user-facing register: the library's logbook.
+
+**Three rules that make this safe**
+- **Fresh installs seed, they do not replay.** A new library is already in the target shape, so install records every shipped migration as `not-applicable`. Without this, computing pending as *shipped minus applied* would make every brand-new library attempt the entire migration history against a shape it never had. This is the failure mode that would bite hardest as new users onboard.
+- **Preconditions are tested against actual structure, not the ledger.** Users half-migrate, restore backups, hand-edit. The ledger says what is believed; the filesystem says what is true. When they disagree the agent reports and stops, matching the discipline `exfu-migrate-to-dropbox` already applies to divergence.
+- **Version skew between surfaces is detected.** Claude Code and Cowork have separate plugin installs and either may auto-update, so the same library can be opened by a surface older than the library itself. A ledger recording migrations the installed plugin does not ship means the library is ahead: that surface declines structural work and says so.
+
+**Changed**
+- Convention base minted as `20260724-1831/`: the ontology gains the `ledger/` location (#ledger) and the migration concept and definition format (#migrations).
+- New `exfu/librarians/library-updater.md` and `exfu/migrations/`, both unversioned -- they describe plugin-owned behaviour, so by the 0.9.0 lock rule they are not part of the contract.
+- First migration ships: `20260724-1831-split-convention-base`, closing the upgrade gap 0.9.0 left open. It adds the unversioned copies and re-points registry `source` paths; it deliberately does not strip the old version directories, since scopes pinned there still read them.
+- Migration ids are `YYYYMMDD-HHMM-slug`, so lexicographic order is application order -- reusing the property the conventions scheme already relies on. Frontmatter carries `plugin:` and, when a mint is involved, `conventions:`, so the version movement is legible without reading the body.
+- Ledger templates, install-time seeding in all three install skills, boot-time detection in `exfu-library`, substrate guide v12.
+- Retirement policy stated from the start: the plugin ships migrations back to a documented floor; older libraries are told to reinstall rather than migrated through the full history.
+
+**Fixed:** `build/mint-conventions.sh` rewrote historical identifiers in the changelog. `grep -r src/` emits paths with a doubled slash (`src//shared/...`), which silently defeated the literal path match guarding history-recording files. Paths are normalised before the check now. Caught when the first real mint corrupted the v0.9.0 entry; restored in the same session.
+
+---
+
 ## v0.9.0 -- 2026-07-24
 
 **The conventions lock moves to the contract, not the folder.** A convention version directory now contains `ontology.md` and nothing else. Everything else the plugin ships -- `readme.md`, `principles.md`, `librarians/`, `skills/` -- moves out to unversioned `exfu/` and travels with plugin releases. Decision record: `planning/conventions-lock-boundary.md`.

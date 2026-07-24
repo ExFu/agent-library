@@ -43,8 +43,11 @@ fi
 echo "Minting $current -> $new"
 
 # Files that record history and must keep their historical identifiers.
+# Note the path is normalised first: `grep -r src/` emits `src//shared/...`
+# with a doubled slash, which silently defeated a literal match here and let a
+# mint rewrite the changelog's historical entries. Normalise, then compare.
 is_historical() {
-  case "$1" in
+  case "$(printf '%s' "$1" | tr -s '/')" in
     src/shared/resources/CHANGELOG.md) return 0 ;;
     *) return 1 ;;
   esac

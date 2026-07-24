@@ -221,7 +221,7 @@ The team is managing sharing manually (emailing updates, a shared drive without 
 
 Record the storage choice for later: it goes in the user scope's context during Step 6 and in the wow navigation map. There is no `_meta/storage-backend.md` in the current layout.
 
-### Step 5 -- Personal substrate: location and convention base
+### Step 5 -- Personal substrate: location, convention base, ledger
 
 Now set up the joiner's personal substrate as a separate folder, never inside the team's clone or shared folder.
 
@@ -233,14 +233,29 @@ Then deploy the shipped convention base into the personal root, in order:
 
 1. **Create `exfu/` at the personal substrate root.**
 2. **Copy the shipped convention base** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape. Two parts:
-   - The version directory (the plugin ships exactly one, e.g. `20260724-1749`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
+   - The version directory (the plugin ships exactly one, e.g. `20260724-1831`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
    - The unversioned files beside it -- `readme.md`, `principles.md`, `librarians/` (the shipped librarian definitions), and `skills/` (the wow template). These sit directly in `exfu/`, not inside the version directory, and are refreshed by plugin updates.
 3. **Create `exfu/latest.txt`** containing exactly the shipped version name.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
+5. **Create `ledger/` at the personal substrate root**, beside `exfu/`. This is the personal library's own record of what has been done to it. Nothing else can reconstruct it: a plugin update refreshes `exfu/`, and `exfu/derived/` is a disposable cache. Write three files:
+   - `ledger/readme.md` -- one short paragraph saying what the folder is: this library's durable record of what has been done to it, added to and never rewritten, never overwritten by a plugin update, and not a working area of its own.
+   - `ledger/install.md` -- the record of this install: today's date, the plugin version (read it from the plugin manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface the install ran on (Claude Code or Cowork), and the storage backend chosen for this personal root. Note the team's shared substrate here too (backend and location), so a later session can tell the two apart.
+   - `ledger/migrations.md` -- seeded, per the next item.
+6. **Seed `ledger/migrations.md` with every migration the plugin ships.** List the files in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/` and write one entry for each, in filename order, with outcome `not-applicable`. If that directory is absent or empty, the plugin ships none: write the file with its heading and no entries. Use this format, which is the format every ledger this plugin writes uses:
 
-Don't explain the convention base in detail. A brief: *"I'm laying down the base definitions your personal setup builds on -- the same vocabulary your team's shared setup already uses."*
+```markdown
+## <migration-id>
+- considered: <ISO date>
+- by: <actor> (<surface>), plugin <version>
+- outcome: not-applicable | applied | failed | skipped
+- notes: <one line; for a fresh install, "fresh install -- library created at the target shape">
+```
 
-Note the shared substrate already has its own convention base; never deploy over it.
+**Seed it, and don't "correct" it later.** A fresh install is already in the target shape, so there is nothing for those migrations to do. Every later session computes pending migrations as shipped minus applied. Skip the seeding and a brand-new library looks maximally out of date, and the next session will try to run the entire history of migrations against a shape the library never had. `not-applicable` is the accurate outcome here, not a shortcut.
+
+Don't explain the convention base in detail. A brief: *"I'm laying down the base definitions your personal setup builds on -- the same vocabulary your team's shared setup already uses -- plus a logbook of what's been done to your setup, so future sessions can pick up where we left off."*
+
+Note the shared substrate already has its own convention base and its own ledger, both the champion's responsibility. Never deploy over either, and don't write a ledger entry there for this install.
 
 ### Step 6 -- User scope creation (delegate to scope-setup)
 
@@ -397,6 +412,7 @@ A checklist, not a script:
 - For Dropbox: shared folder located, `exfu-dropbox-storage` operational. Joiner understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
 - Personal substrate established in a separate folder, identified via the folder picker.
 - Convention base deployed at the personal root: `exfu/<version>/` with `exfu/latest.txt` naming it.
+- Ledger created at the personal root's `ledger/` with `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`. The shared substrate's ledger untouched.
 - User scope created at `user/` with `scope.md`, `context/about-me.md` (including role capture and the team-connection record), and `ontology/ways-of-working.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the personal substrate root.

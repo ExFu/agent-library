@@ -89,18 +89,18 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 **If the index doesn't exist,** fall back to filesystem discovery:
 
-1. List the top-level structure: `exfu/`, `user/`, `scopes/`.
+1. List the top-level structure: `exfu/`, `ledger/`, `user/`, `scopes/`.
 2. Walk `scopes/` recursively, looking for directories that contain `scope.md`. Any directory with a `scope.md` is a scope; any without is a grouping folder.
 3. Read each `scope.md` for name, parent, and exfu version pin.
 4. Flag the missing index to the user -- suggest registering the nightly index librarian as a scheduled task so the index stays current.
 
 ### Step 6 -- Resolve the current exfu version
 
-Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260724-1749`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260724-1831`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
 The convention base lives at `exfu/` and is deliberately flat and small. It splits in two:
 
-**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260724-1749/`), which holds one file:
+**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260724-1831/`), which holds one file:
 - `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
 
 **Unversioned shipped content** beside it at `exfu/`, refreshed by plugin updates:
@@ -109,11 +109,29 @@ The convention base lives at `exfu/` and is deliberately flat and small. It spli
 - `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
-A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260724-1749` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
+A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260724-1831` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
 
-Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260724-1749` follows the conventions in `exfu/20260724-1749/ontology.md`. The `user/` scope is unversioned and always follows latest.
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260724-1831` follows the conventions in `exfu/20260724-1831/ontology.md`. The `user/` scope is unversioned and always follows latest.
 
-### Step 7 -- Load the user's personal context
+### Step 7 -- Check for pending migrations
+
+Releases change the substrate's shape, and migrations are what carry an existing library across. Nothing runs at plugin-update time -- a plugin update changes what is installed alongside the library, not the library itself, and there is no update hook -- so boot is the first opportunity to notice. The full contract is `exfu/<version>/ontology.md#migrations` and `#ledger`; this step is the detection half of it.
+
+1. **List what the plugin ships.** Read the filenames at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/`. Each filename stem is a migration id, shaped `YYYYMMDD-HHMM-slug`. If the directory doesn't exist, this plugin ships no migrations -- nothing to check, continue.
+2. **Read what the library has recorded.** Read `ledger/migrations.md` at the substrate root. The ledger is the library's durable record of what has been done to it: every migration considered, with its outcome (`applied`, `not-applicable`, `failed`). It is append-only and never touched by a plugin refresh, which is why it, not `exfu/derived/`, is the thing to trust here.
+3. **Pending is shipped minus recorded**, in id order. Ids sort lexicographically into application order, so no other ordering logic is needed.
+4. **Filter by `applies_when`, evaluated against the library itself.** Read each pending migration's frontmatter and test its `applies_when:` condition against actual structure on disk. Never evaluate it against the ledger alone: the ledger says what is believed, the filesystem says what is true. A migration whose precondition isn't met is `not-applicable` for this library, not pending.
+5. **Surface, don't apply.** Say plainly what's outstanding, in library language, and offer to run it: "there's a tidy-up waiting for your library from a recent update -- want me to run it now?" Never apply a migration silently, and never apply one marked `requires_user_decision: true` without the user present to make the call. Applying is a separate, consented act; every outcome (including `not-applicable` and `failed`) gets written to the ledger so a later session doesn't re-ask a settled question.
+
+If nothing is pending, say nothing and move on. Three situations need handling explicitly:
+
+**No `ledger/` at all.** The library was set up before the logbook convention existed. Do not read a missing ledger as "everything is pending" -- an old library is not an unmigrated one, and replaying the whole history against a shape it never had is how structure gets damaged. Tell the user what you found ("your library was set up before it started keeping a logbook, so its records don't tell me what shape it's in") and offer to create the ledger and work out which migrations genuinely apply by inspecting the structure, each `applies_when:` tested against what's actually on disk. Record every outcome, `not-applicable` included, so this only happens once.
+
+**The library is ahead of the plugin.** `ledger/migrations.md` records ids that the installed plugin does not ship. Another surface has already moved the library forward -- Claude Code and Cowork carry separate plugin installs, and either can auto-update without the user noticing -- which means this surface's plugin is the older one. **Do not attempt structural work.** Do not run migrations, reorganise folders, or rewrite descriptors. Say plainly that the library is newer than this copy of the plugin and that this surface needs updating before it's safe to change anything structural here.
+
+**The ledger and the filesystem disagree.** The ledger says a migration was applied but the structure says otherwise, or the structure is plainly migrated and the ledger has no record of it. **Report the discrepancy and stop.** Do not resolve it by interpretation. Only the user knows their real setup -- a second surface part-way through a migration, a restored backup, a folder copied by hand -- and a confident narrative that explains the divergence away is exactly the failure mode to distrust. Lay out both sides of the mismatch in plain terms and wait for the user's say-so before touching anything.
+
+### Step 8 -- Load the user's personal context
 
 Read the `user/` scope. This is the user's personal workspace -- context and preferences that apply across everything they do.
 
@@ -124,7 +142,7 @@ Key files to read:
 
 Read these files if they exist. They shape how you interact for the rest of the session. If the files don't exist, the user scope may be minimal -- that's fine. Some users start lean.
 
-### Step 8 -- Orient to the scope landscape
+### Step 9 -- Orient to the scope landscape
 
 Using the index (or the filesystem fallback from Step 5), build a picture of what the user has:
 
@@ -137,7 +155,7 @@ Tell the user plainly what you found. Example: "You've got 3 working areas: Acme
 
 **Don't overwhelm.** A brief summary is enough. The user knows what they have -- they're looking for confirmation that you do too.
 
-### Step 9 -- Navigate into a specific scope (when relevant)
+### Step 10 -- Navigate into a specific scope (when relevant)
 
 If the conversation context points to a specific scope (the user asked about it, or it's clear from context), navigate into it:
 
@@ -148,7 +166,7 @@ If the conversation context points to a specific scope (the user asked about it,
 
 **Navigate via the index, not the filesystem.** The index gives you scope paths directly. Only touch the filesystem to read the actual content files.
 
-### Step 10 -- Permissions and verb surfacing
+### Step 11 -- Permissions and verb surfacing
 
 What this step does depends on the storage backend detected in Step 3.
 
@@ -176,7 +194,7 @@ Do not mention git commands at any point. Users interact through the verbs above
 
 **Local-only substrates.** The user has full rights to their local filesystem. No permission lookup, no fallback note. Verbs collapse to direct filesystem operations: `save` (write the file), `check for updates` (no remote to check; could mean "show me what changed since last session" if useful). Sharing-and-review verbs do not apply because there is no automated propagation layer; the user handles distribution manually.
 
-### Step 11 -- Check scheduled-agent health
+### Step 12 -- Check scheduled-agent health
 
 Read `exfu/derived/agent-registry.json` if it exists. This file tracks every registered scheduled agent (librarians and business agents):
 - Which are registered and enabled, and of which kind
@@ -190,7 +208,7 @@ Surface any problems worth mentioning:
 
 If everything is healthy, say nothing. Health is background monitoring, not ceremony.
 
-### Step 12 -- Surface scheduled-agent attention items
+### Step 13 -- Surface scheduled-agent attention items
 
 Scheduled agents run agentically in their scheduled sessions, but some outcomes need the user: a decision the agent wouldn't make alone (deleting an unreferenced version), a triage summary worth a look, a business agent's finding, a failure that needs a human.
 
@@ -202,7 +220,7 @@ If there's something, surface it briefly: "Overnight runs left [n] things for yo
 
 If there's nothing, say nothing.
 
-### Step 13 -- Check reminders and inbox
+### Step 14 -- Check reminders and inbox
 
 Check whether a reminders skill is loaded in this session. The user's reminders skill is typically named `<username>-reminders` (e.g. `al-reminders`). Look for any installed skill whose name ends in `-reminders`. If one is loaded, delegate to it: read the reminders, surface anything due or overdue. If nothing is due, say nothing.
 
@@ -214,7 +232,7 @@ If neither type of skill is loaded, check the user scope directly:
 
 These checks are fast and quiet. Session start is not a ceremony.
 
-### Step 14 -- Orient and proceed
+### Step 15 -- Orient and proceed
 
 You should now understand: the substrate's structure, which scopes exist and how they nest, what the user's personal context and preferences are, what permission level to operate at, whether any scheduled agents need attention, and what (if anything) needs the user's attention.
 
@@ -291,7 +309,7 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    20260724-1749/          # a convention version: the frozen contract
+    20260724-1831/          # a convention version: the frozen contract
       ontology.md           # the complete core ontology, one file
     readme.md               # orientation map for this directory
     principles.md           # design principles + recommendations
@@ -303,8 +321,12 @@ substrate-root/
       agent-log.json        # run history
     visualisations/         # exfu-shipped visual outputs
       dashboard/            # generated HTML dashboard
-    latest.txt              # points to current version (e.g. "20260724-1749")
+    latest.txt              # points to current version (e.g. "20260724-1831")
   dashboard.html            # generated front door: redirects to the dashboard above
+  ledger/                   # durable state about the library itself (never regenerated)
+    migrations.md           # every migration considered, and its outcome
+    install.md              # when the library was created, by which plugin version
+    readme.md               # what the folder is, and the never-overwrite rule
   user/                     # personal scope (unversioned, always follows latest)
     scope.md
     context/                # personal background (about-me, preferences)
@@ -335,7 +357,7 @@ substrate-root/
 ---
 name: <human-readable name>
 parent: <parent scope name, or "root" for top-level>
-exfu: 20260724-1749
+exfu: 20260724-1831
 ---
 ```
 
@@ -374,7 +396,7 @@ Every materialised folder-type directory contains an `agent.md` with this struct
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
 2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
-   `Follows: exfu/20260724-1749/ontology.md#todo`
+   `Follows: exfu/20260724-1831/ontology.md#todo`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 

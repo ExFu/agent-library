@@ -240,13 +240,30 @@ With the storage in place, seed the shared substrate. Walk the champion through 
 
 **1. Convention base.** Deploy into the shared root, in order:
 - Create `exfu/` at the shared substrate root.
-- Copy the shipped convention base from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape: the version directory (the plugin ships exactly one, e.g. `20260724-1749`) holding `ontology.md`, plus the unversioned `readme.md`, `principles.md`, `librarians/`, and `skills/` sitting directly in `exfu/` beside it.
+- Copy the shipped convention base from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape: the version directory (the plugin ships exactly one, e.g. `20260724-1831`) holding `ontology.md`, plus the unversioned `readme.md`, `principles.md`, `librarians/`, and `skills/` sitting directly in `exfu/` beside it.
 - Create `exfu/latest.txt` containing exactly the shipped version name. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
 - Create `exfu/derived/` directory.
 
 Brief framing for the champion: *"This is the shared vocabulary -- the definitions every team member's Claude will read so they all work the same way. It's versioned, so the team can upgrade deliberately later."*
 
-**2. The team scope.** Create the team's own scope in the shared root. **Delegate to `scope-setup`**, passing it:
+**2. Ledger.** Create `ledger/` at the shared root, beside `exfu/`. It is the shared library's record of what has been done to it, and nothing else can reconstruct it: a plugin update refreshes `exfu/`, and `exfu/derived/` is a disposable cache. Three files:
+- `ledger/readme.md` -- one short paragraph: this library's durable record of what has been done to it, added to and never rewritten, never overwritten by a plugin update, not a working area of its own.
+- `ledger/install.md` -- today's date, the plugin version (from the manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface this install ran on (Claude Code or Cowork), the storage backend chosen in Step 5, and who provisioned it.
+- `ledger/migrations.md` -- one entry per migration the plugin ships at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/`, in filename order, each with outcome `not-applicable`. If that directory is absent or empty the plugin ships none: write the file with its heading and no entries.
+
+Entry format, used by every ledger this plugin writes:
+
+```markdown
+## <migration-id>
+- considered: <ISO date>
+- by: <actor> (<surface>), plugin <version>
+- outcome: not-applicable | applied | failed | skipped
+- notes: <one line; for a fresh install, "fresh install -- library created at the target shape">
+```
+
+**Seed it, and don't "correct" it later.** A fresh library is already in the target shape. Later sessions compute pending migrations as shipped minus applied, so an unseeded ledger makes a brand-new library look maximally out of date and sends the next session through the whole migration history against a shape it never had. `not-applicable` is the accurate outcome, not a shortcut. On the git path this is committed with the rest of the seeding, so every joiner clones the ledger along with it.
+
+**3. The team scope.** Create the team's own scope in the shared root. **Delegate to `scope-setup`**, passing it:
 - Scope type: `working` (a regular scope under `scopes/` in the shared substrate)
 - Scope name: the team's name
 - Parent: `root`
@@ -256,17 +273,17 @@ Then author the two files that make this scope matter, collaboratively:
 - `scopes/<team-name>/ontology/ways-of-working.md` -- the team's conventions doc. This is the most important file in the shared substrate; every team member's Claude reads it. Write a first draft together: what are the team's working norms? How do they communicate? Any shared tools, abbreviations, or practices Claude should know?
 - `scopes/<team-name>/context/team-members.md` -- brief profiles of who's on the team (roles, working styles, anything Claude should know to be a better collaborator). Light touch; the champion should not write detailed personal context about colleagues without their knowledge.
 
-**3. Further shared scopes.** Active client engagements, shared projects -- the champion can seed these now (delegate each to `scope-setup`) or return to them later. One or two real ones are worth doing now: they demonstrate the pattern and give joiners something to find.
+**4. Further shared scopes.** Active client engagements, shared projects -- the champion can seed these now (delegate each to `scope-setup`) or return to them later. One or two real ones are worth doing now: they demonstrate the pattern and give joiners something to find.
 
-**4. CLAUDE.md guard.** Write the guard file at the shared root before the first commit -- unless one is already there. Tell the champion briefly: *"I'm adding a guard file at the root. It tells future Claude sessions that this folder has structure, so it won't be treated as a generic folder if someone accidentally points Claude at it."* Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` (the guard content is embedded there). Do not overwrite an existing `CLAUDE.md` without explicit confirmation.
+**5. CLAUDE.md guard.** Write the guard file at the shared root before the first commit -- unless one is already there. Tell the champion briefly: *"I'm adding a guard file at the root. It tells future Claude sessions that this folder has structure, so it won't be treated as a generic folder if someone accidentally points Claude at it."* Use the canonical content from `${CLAUDE_PLUGIN_ROOT}/resources/substrate-guide.md` (the guard content is embedded there). Do not overwrite an existing `CLAUDE.md` without explicit confirmation.
 
-**5. First index.** Run the indexer against the shared root so the substrate is navigable from day one:
+**6. First index.** Run the indexer against the shared root so the substrate is navigable from day one:
 
 ```
 python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/substrate-index/index.py <shared-substrate-root>
 ```
 
-**6. First commit** (git path): commit the seeded structure with a clear message and push.
+**7. First commit** (git path): commit the seeded structure with a clear message and push.
 
 ### Step 7 -- Personal substrate: location and convention base
 
@@ -274,7 +291,7 @@ Set up the champion's personal substrate, separate from the shared one -- never 
 
 *"Now your own setup. Where would you like your personal library to live? Dropbox is the recommended default -- it syncs across devices and works with the connector for mobile access."* Use `request_cowork_directory` for the folder picker. If Dropbox, surface the hydration caveat ("Make Available Offline") for this folder too.
 
-Deploy the convention base into the personal root, same recipe as Step 6.1: the shipped `exfu/<version>/` copied from the plugin, `exfu/latest.txt` naming it, `exfu/derived/`.
+Deploy the convention base into the personal root, same recipe as Step 6.1: the shipped `exfu/<version>/` copied from the plugin, `exfu/latest.txt` naming it, `exfu/derived/`. Then create the personal root's own `ledger/`, same recipe as Step 6.2: `readme.md`, an `install.md` recording this personal root (date, plugin version, surface, backend chosen here), and a `migrations.md` seeded with every shipped migration as `not-applicable`. This is a separate library from the shared one, so it gets its own ledger; the two never share.
 
 ### Step 8 -- User scope creation (delegate to scope-setup)
 
@@ -421,8 +438,8 @@ All pre-installed via the plugin. No URL fetching needed.
 - Storage backend chosen (git, Dropbox, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
 - For git: repo provisioned or connected, remote URL confirmed, seeded structure committed and pushed, champion understands the git rhythm.
 - For Dropbox: folders created and shared, access set for the team, `exfu-dropbox-storage` operational, champion understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
-- Shared substrate seeded: convention base at its `exfu/<version>/` with `latest.txt` naming it, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
-- Champion's personal substrate established in a separate folder: convention base deployed, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
+- Shared substrate seeded: convention base at its `exfu/<version>/` with `latest.txt` naming it, `ledger/` created with `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
+- Champion's personal substrate established in a separate folder: convention base deployed, its own `ledger/` created and seeded the same way, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
 - Agent registry at the personal root with nightly-index registered; `nightly-agents` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - Compliance briefing surfaced and reviewed (or at least located for later review).
