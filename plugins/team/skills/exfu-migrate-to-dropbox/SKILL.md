@@ -31,7 +31,7 @@ You need filesystem access to both roots in this session. Use `request_cowork_di
 Compare the Dropbox copy against the Box original before touching anything:
 
 1. Recursively count files and directories in each root (ignore `.DS_Store` and other OS noise, and ignore `_trash/` -- it is deliberately not coming along).
-2. Compare the top-level structure: `CLAUDE.md`, `exfu/`, `user/`, `scopes/` must all be present on the Dropbox side, and `ledger/` too if the old root has one.
+2. Compare the top-level structure: `CLAUDE.md`, `exfu/`, `user/`, `scopes/` must all be present on the Dropbox side, and `durable/` too if the old root has one.
 3. Spot-check a handful of the most recently modified files: same size and content on both sides.
 4. Report the comparison plainly. If content files are missing, list them and copy the gaps (Box -> Dropbox, one direction only) before continuing.
 5. Derived files that differ (`exfu/derived/`, `exfu/visualisations/`) are expected when the old root's scheduled tasks are still running -- the old side will be a run ahead. Leave them alone; do not copy them across. Step 8 regenerates the new root's derived state from scratch.
@@ -45,10 +45,10 @@ The whole of `exfu/` except `derived/` and `visualisations/` is plugin-owned. De
 - **The unversioned files** -- `readme.md`, `principles.md`, `librarians/`, `skills/` -- sit directly in `exfu/`. Copy them over whatever is there. They are refreshed by every plugin update, so this is always a straight overwrite.
 - **The version directory** (one, holding `ontology.md`) is the frozen contract. If the same version is already present at the new root, copy the plugin's directory over it. A plugin-owned refresh, no decisions. (Under the timestamp scheme the same identifier means identical canonical content, so this is a repair, not a change.)
 - If the plugin ships a newer version, install it alongside the existing one(s) and update `exfu/latest.txt` to name it. Leave older version directories in place -- scopes may still pin them (side-by-side model).
-- **Old-shape bases.** Versions before `20260724-1831` carry `readme.md`, `principles.md`, `librarians/`, and `skills/` *inside* the version directory. Leave those copies where they are -- scopes pinned to that version still read them. The unversioned copies at `exfu/` are what current scopes use; both coexist without conflict.
+- **Old-shape bases.** Versions before `20260724-1910` carry `readme.md`, `principles.md`, `librarians/`, and `skills/` *inside* the version directory. Leave those copies where they are -- scopes pinned to that version still read them. The unversioned copies at `exfu/` are what current scopes use; both coexist without conflict.
 - **Deciding "newer":** version identifiers are shortened UTC timestamps (`YYYYMMDD-HHMM`), so lexicographic order is chronological order. The one exception is the legacy `v0.x` scheme: any timestamp identifier is newer than any `v0.x` one -- never decide by raw string sort across the two schemes (digits sort before `v`, which gets it backwards).
 - Leave `exfu/derived/` and `exfu/visualisations/` alone -- they are the user's generated state.
-- **Never touch `ledger/`.** It sits outside `exfu/` precisely so a refresh cannot reach it. It is the library's only record of what has been done to it, nothing can regenerate it, and it must come across the migration intact. If the new root has no `ledger/` but the old one does, copy it over unchanged before going further; if neither has one, the library predates the logbook convention and the boot skill will offer to create it.
+- **A refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.** State it that way round, always -- an exception list ("never touch X, Y") grows silently wrong as new durable things are added, and a forgotten entry destroys the one category of file that cannot be recovered. `durable/` is the library's permanent record: what has been done to it, in `durable/ledger/`, which nothing can regenerate and which must come across the migration intact. If the new root has no `durable/` but the old one does, copy it over unchanged before going further; if neither has one, the library predates the permanent record and the boot skill will offer to create it.
 
 ## Step 3 -- Rewrite the CLAUDE.md guard
 

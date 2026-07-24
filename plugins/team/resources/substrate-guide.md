@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 12
+version: 13
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -103,13 +103,13 @@ The persistent brain. This knowledge base is tier 3. It holds instructions, memo
 
 ## Directory structure
 
-The substrate root is a single folder. Inside it, the plugin-owned convention base, the library's own ledger, the two scope locations, a guard file, and the generated dashboard front door:
+The substrate root is a single folder. Inside it, the plugin-owned convention base, the library's permanent record, the two scope locations, a guard file, and the generated dashboard front door:
 
 ```
 [root]/
   CLAUDE.md               # guard file -- read this first
   exfu/                   # convention base and generated artefacts (not a scope)
-  ledger/                 # durable record of what's been done to this library
+  durable/                # the permanent record: what's been done to this library
   user/                   # special scope: personal context and global defaults
   scopes/                 # the tree of everything else
   dashboard.html          # generated front door: redirects into exfu/visualisations/
@@ -123,8 +123,8 @@ Not a scope itself (no `scope.md`). This is the convention base and generated-ou
 
 ```
 exfu/
-  latest.txt              # single line: the current convention version (e.g. "20260724-1831")
-  20260724-1831/          # a convention version -- the frozen contract
+  latest.txt              # single line: the current convention version (e.g. "20260724-1910")
+  20260724-1910/          # a convention version -- the frozen contract
     ontology.md           # the complete core ontology, ONE file (scope model,
                           #   folder-types, scheduled agents, authoring rules)
   readme.md               # orientation map for this directory
@@ -142,23 +142,35 @@ exfu/
 
 The convention base is one complete ontology file rather than a folder of fragments because agents ingest a single read far more reliably -- the same file-economy principle that governs everything written into the substrate.
 
-**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260724-1831` carry all four inside the version directory; that is the older shape, and migration lifts them out.
+**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260724-1910` carry all four inside the version directory; that is the older shape, and migration lifts them out.
 
-**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1831`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260724-1831/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
+**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1910`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260724-1910/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
-### The ledger/ directory
+### The durable/ directory -- the permanent record
 
-Not a scope (no `scope.md`) and not a folder-type. This is where the library's durable state **about itself** lives: `migrations.md` (every migration considered and how it went), `install.md` (when the library was created, by which plugin version and surface), and a `readme.md` explaining the rules.
+Not a scope (no `scope.md`) and not a folder-type. It exists exactly once, at the root, and holds the small set of append-only facts **about the library itself** that nothing can regenerate.
 
-It sits at the root rather than inside `exfu/` for a specific reason. Everything in `exfu/` is plugin-owned and replaced wholesale when the plugin updates, and `exfu/derived/` is explicitly a disposable cache. The ledger is the one thing in the substrate that cannot be regenerated: delete it and there is no way to establish what state the library is in. So it lives where no update touches it.
+It sits at the root because every other home is categorically wrong. Everything in `exfu/` is plugin-owned and replaced wholesale when the plugin updates, so anything kept there can be destroyed by a routine refresh. `exfu/derived/` is explicitly a disposable cache, safe to delete and rebuild. `user/` and `scopes/` hold the user's own material, not the library's record of itself. The naming states the rule: `derived` is rebuilt, `durable` is kept.
 
-Append-only. Entries are added, never rewritten; a wrong entry is corrected by a later one saying so. In the user-facing register it is the library's **logbook**.
+Three tests, all of which must hold before anything is written here:
+
+- **Unregenerable.** No librarian or script can reproduce it from material that still exists. The check is concrete: delete it, run every librarian twice, and see whether it comes back. Being expensive to recompute is not the same thing -- that belongs in `exfu/derived/`.
+- **About the library, not about the world.** It only means anything as a fact about this library's installation, migration, decisions, or operation. Records whose subject is a person, company, deal, or a day in the user's life are domain data and belong in a scope's `databases/`.
+- **Append-only, human-readable text.** Markdown or JSONL, every entry dated and carrying a stable id, never rewritten in place; a wrong entry is corrected by a later entry saying so. This third test is what keeps the other two honest -- it excludes databases, embeddings, mutable counters, and config files by construction rather than by judgement.
+
+**State the carve-out positively.** Every skill that refreshes, copies, or migrates a library says it in this form, and never as a list of exceptions:
+
+> **A refresh replaces `exfu/`. It never touches `durable/`, `user/`, or `scopes/`.**
+
+An exception list grows silently wrong: each new durable thing is a fresh chance to forget an entry, and a forgotten entry destroys the one category of file that cannot be recovered. Naming what a refresh *may* replace has no such failure mode.
+
+`ledger/` is the first tenant and for now the only one -- materialise-on-demand applies here as everywhere, so `durable/` ships holding `ledger/` and a `readme.md` carrying the membership test, and gains nothing else until a second genuine tenant exists. The ledger holds `migrations.md` (every migration considered and how it went) and `install.md` (when the library was created, by which plugin version and surface). In the user-facing register `durable/` is the library's **permanent record** and the ledger is its **logbook**; librarians say "permanent record" to users and never say "durable".
 
 ### Migrations -- how a library moves between shapes
 
 Releases change structure. Migrations carry existing libraries across, and the ledger records the result.
 
-**They are detected at boot, not scheduled.** A plugin update does not touch the library, it changes what is installed alongside it -- there is no update hook, so nothing can run at update time. The boot skill compares the migrations the plugin ships (`exfu/migrations/`) against `ledger/migrations.md`, and hands anything pending to the `library-updater` librarian. Applying is done with the user present, never unattended.
+**They are detected at boot, not scheduled.** A plugin update does not touch the library, it changes what is installed alongside it -- there is no update hook, so nothing can run at update time. The boot skill compares the migrations the plugin ships (`exfu/migrations/`) against `durable/ledger/migrations.md`, and hands anything pending to the `library-updater` librarian. Applying is done with the user present, never unattended.
 
 Three rules make this safe:
 
@@ -255,7 +267,7 @@ Format:
 name: Acme
 purpose: Client relationship and commercial engagement with Acme Corp
 parent: root
-exfu: 20260724-1831
+exfu: 20260724-1910
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
@@ -330,7 +342,7 @@ A folder with no deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1831/ontology.md#context
+Follows: exfu/20260724-1910/ontology.md#context
 ```
 
 That's it. One line plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
@@ -341,7 +353,7 @@ A folder with deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1831/ontology.md#todo
+Follows: exfu/20260724-1910/ontology.md#todo
 
 Local deviations:
 - Tasks are tracked in ClickUp, not stored locally
@@ -626,7 +638,7 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
-- 2026-07-24 v12: Library migrations become a convention (plugin 0.10.0). New top-level `ledger/` holds the library's durable state about itself -- `migrations.md`, `install.md` -- append-only and never touched by a plugin update, because `exfu/` is refreshed wholesale and `exfu/derived/` is a disposable cache, while the ledger is the one thing that cannot be regenerated. Migrations are boot-detected rather than scheduled: a plugin update does not touch the library, so there is no update hook to fire; the boot skill compares shipped migrations against the ledger and hands pending work to the new `library-updater` librarian, applied with the user present. Three safety rules: fresh installs seed rather than replay, preconditions are tested against actual structure rather than the ledger, and a library ahead of its surface's plugin is detected and blocks structural work (Claude Code and Cowork have separate plugin installs and either may auto-update). First migration ships: 20260724-1831-split-convention-base, closing the upgrade gap left by v11. Decision record: `planning/library-migrations.md`.
+- 2026-07-24 v13: Library migrations become a convention, and durable state gets a home (plugin 0.10.0). New top-level `durable/` is the library's permanent record: the append-only facts about the library itself that nothing can regenerate and that no refresh may overwrite. Its first tenant is the logbook at `durable/ledger/` (`migrations.md`, `install.md`). The container is deliberately more general than that tenant, because more stateful things will need to survive outside `exfu/` over time. Membership test, all three required: unregenerable (delete it, run every librarian twice, see if it returns -- cost is not part of the test), about the library rather than the world (domain records belong in a scope's `databases/`), and append-only human-readable text (which excludes SQLite, embeddings and mutable config by construction, and matters because libraries sync through Dropbox or git). The carve-out is stated positively and never as an exception list: a refresh replaces `exfu/`, and never touches `durable/`, `user/`, or `scopes/` -- an exception list grows silently wrong, and a live data-loss bug of exactly that kind was found and fixed in `exfu-migrate-to-dropbox`. Migrations themselves are boot-detected rather than scheduled: a plugin update does not touch the library, so there is no update hook to fire; the boot skill compares shipped migrations against the ledger and hands pending work to the `library-updater` librarian, applied with the user present. Three safety rules: fresh installs seed rather than replay, preconditions test actual structure rather than the ledger, and a library ahead of its surface's plugin blocks structural work (Claude Code and Cowork have separate plugin installs and either may auto-update). Decision records: `planning/library-migrations.md`.
 - 2026-07-24 v11: The conventions lock moves to the contract rather than the folder (plugin 0.9.0). A convention version directory now holds `ontology.md` and nothing else; `readme.md`, `principles.md`, `librarians/`, and `skills/` move out to unversioned `exfu/` and travel with plugin releases. The deciding rule is mechanical: a file belongs in a version directory if and only if a `Follows:` line can anchor into it, and all 16 anchors point into the ontology. Base minted as `20260724-1749`; the root-layout depiction moved from the ontology to `exfu/readme.md`. Registry `source` paths stop breaking on every mint. A build gate (`build/check-conventions-lock.sh`) now enforces byte-identity of shipped versions, and `build/mint-conventions.sh` makes minting one command. Bases before `20260724-1749` keep the old shape; both coexist. Decision record: `planning/conventions-lock-boundary.md`.
 - 2026-07-24 v10: The dashboard gains a front door. `dashboard.html` at the library root redirects to `exfu/visualisations/dashboard/index.html`, so users open the dashboard from the top of their library instead of remembering a four-deep path. It is a generated redirect page, not a symlink: sync layers handle symlinks unreliably (the same reason `exfu/latest.txt` is a text file), and browsers resolve relative URLs against the document URL, so a symlinked page would break the dashboard's own `../../../scopes/...` gallery links and view iframes. The dashboard bundle itself does not move.
 - 2026-07-23 v9: Conventions versioning moved to timestamp identifiers (plugin 0.6.0). Convention base versions are now named by their release moment as shortened UTC timestamps (YYYYMMDD-HHMM, e.g. 20260723-1446) instead of v0.x labels; identifiers no longer share a naming surface with plugin release numbers, lexicographic order is chronological, and every release mints a fresh identifier so a version's contents never change under a stable name. v0.x is now the legacy scheme: any timestamp identifier is newer than any v0.x one. First timestamped base minted as 20260723-1446 (contents of the former shipped v0.3). Side-by-side model and per-scope pins unchanged.

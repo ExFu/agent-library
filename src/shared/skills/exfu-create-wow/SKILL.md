@@ -34,7 +34,7 @@ If files are missing -- no existing wow, no `user/context/` yet -- work with wha
 
 Customise these sections with what you've read:
 
-- **Navigation map -- Substrate shape**: note any structural deviations from the standard ExFu layout (`exfu/`, `user/`, `scopes/`). If the user has grouping folders under `scopes/` (e.g. `scopes/clients/`), note that. If they've added non-standard folder-types to a scope, note that.
+- **Navigation map -- Substrate shape**: note any structural deviations from the standard ExFu layout (`exfu/`, `durable/`, `user/`, `scopes/`). If the user has grouping folders under `scopes/` (e.g. `scopes/clients/`), note that. If they've added non-standard folder-types to a scope, note that.
 - **Navigation map -- Active scopes**: list scope names, paths, and parent relationships from `exfu/derived/index.json`. Include folder-type status for each (which types are present, which are pointer-only).
 - **Navigation map -- High-traffic files**: add pointers to files that actually exist. The baseline set: `user/context/about-me.md`, `user/ontology/ways-of-working.md`, `exfu/derived/index.json`. Add any other `user/context/` files that exist. Don't add stubs for files that haven't been created yet.
 - **Always-on kernel -- Communication style**: if the user expressed communication preferences during the install (short sentences, no preambles, direct responses), capture them. If not, leave the stubs.

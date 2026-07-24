@@ -45,7 +45,7 @@ Two consequences Al identified:
   be detected as *ahead*, and that surface must decline structural work rather
   than operate on a shape it does not understand.
 
-### 2. Durable state gets its own top-level folder: `ledger/`
+### 2. Durable state gets its own top-level folder: `durable/`, holding `ledger/`
 
 **Al's ruling.** The ledger cannot live in `exfu/`: that directory is
 plugin-owned and refreshed wholesale on update, so one careless refresh destroys
@@ -53,20 +53,82 @@ the only record of what state the library is in. It cannot live in
 `exfu/derived/` either -- that is defined as a disposable cache, and the ledger
 is the one thing in the system that categorically cannot be regenerated.
 
-`ledger/` is a new top-level location beside `exfu/`, `user/`, and `scopes/`.
-Not a scope (no scope.md). Never written by a plugin refresh. Append-only.
+**Refined in the same session, and this corrects the first sketch.** That sketch
+put `ledger/` itself at the top level. Al judged the name too specific for a root
+position: more stateful things will need to survive outside `exfu/` over time --
+he named long-lived databases and SQLite -- and each would otherwise arrive
+arguing for a root entry of its own, leaving the root a list of tenants that says
+nothing about what they have in common. So the top-level entry is the *category*.
+`durable/` sits beside `exfu/`, `user/`, and `scopes/`; the ledger is its first
+tenant, at `durable/ledger/`. Not a scope (no scope.md), not a folder-type, and
+it exists exactly once, at the root.
 
-Naming: chosen for precision -- an append-only record of what has been applied.
-Rejected `_state` (the underscore convention was retired with `_meta/` and
-`_trash/`), `derived` (taken, and means the opposite), `history` (suggests
-git-like versioning). In the user-facing register it is "your library's
-logbook". *If Al prefers another name, it is a one-command rename plus a mint.*
+**Why `durable` won.** The corpus had already chosen the word. Before anyone
+tried to name a folder, "durable" was doing exactly this job in eleven places --
+the substrate guide, the ontology, `exfu/readme.md`, the boot skill, and all
+three install skills -- every one of them describing the library's durable record
+of what has been done to it. Naming the folder after the word the writing already
+reached for costs nothing to learn. It also pairs against `derived`: one is
+rebuilt, the other is kept, and between them the two words state the whole rule.
+
+`state/` was the obvious alternative, and rejecting it matters. The ontology
+already points that word somewhere else -- "Current state belongs in the derived
+index, the dashboard, and the content itself", in the authoring rule that forbids
+descriptors from carrying state. A root `state/` would make the file every agent
+reads cold contradict itself on its own vocabulary. The ledger's own name stands
+as chosen, for the same precision as before; still rejected for it are `_state`
+(the underscore convention was retired with `_meta/` and `_trash/`), `derived`
+(taken, and means the opposite), and `history` (suggests git-like versioning).
+
+User-facing register: `durable/` is the library's "permanent record" and the
+ledger is "your library's logbook". Librarians never say "durable" to a user.
+
+**The membership test.** Three conditions, all of which must hold before anything
+is written to `durable/`:
+
+- **Unregenerable.** No librarian or script can reproduce it from material that
+  still exists. Delete it, run every librarian twice, and see whether it comes
+  back. Regeneration *cost* is deliberately not part of the test: expensive to
+  recompute belongs in `exfu/derived/`.
+- **About the library, not about the world.** It only means anything as a fact
+  about this library's installation, migration, decisions, or operation. Records
+  about a person, company, deal, or a day in the user's life are domain data and
+  belong in a scope's `databases/`.
+- **Append-only, human-readable text.** Markdown or JSONL, dated, stable ids,
+  never rewritten in place. This condition keeps the other two honest: it
+  excludes databases, embeddings, mutable counters, and config by construction
+  rather than by judgement -- which is also why the SQLite that prompted the
+  generalisation does not itself belong here.
+
+**The carve-out is stated positively, never as an exception list.** Every skill
+that refreshes, copies, or migrates a library says it in this form:
+
+> **A refresh replaces `exfu/`. It never touches `durable/`, `user/`, or `scopes/`.**
+
+This is not a style preference. An exception list grows silently wrong -- each
+new durable thing is a fresh chance to forget an entry, and a forgotten entry
+destroys the one category of file that cannot be recovered. Naming what a refresh
+*may* replace has no such failure mode. This is not hypothetical: a live
+data-loss bug of exactly this kind -- an exception list that had gone stale --
+was found and fixed in `exfu-migrate-to-dropbox`, which now states the rule
+positively at its structural-comparison step.
 
 Contents:
 
-- `ledger/migrations.md` -- append-only record of applied migrations
-- `ledger/install.md` -- when the library was created, by which plugin version and surface
-- `ledger/readme.md` -- what the folder is and the never-overwrite rule
+- `durable/ledger/migrations.md` -- append-only record of applied migrations
+- `durable/ledger/install.md` -- when the library was created, by which plugin version and surface
+- `durable/ledger/readme.md` -- what the folder is and the never-overwrite rule
+- `durable/readme.md` -- the membership test and the never-delete rule
+
+Materialise on demand applies: `durable/` gains nothing beyond `ledger/` until a
+second genuine tenant exists.
+
+**No migration is required for this change.** The root-level `ledger/` shape was
+never published -- the commits carrying it are unpushed and the marketplace pins
+no version to them -- so no library in the world has one. A library either
+predates the concept entirely (no `durable/`, no `ledger/`) or is created in the
+current shape. Writing a compatibility path for a shape that never shipped would
+be inventing a case to maintain forever.
 
 ### 3. Migration identity is a timestamp, ordering is lexicographic
 
@@ -124,11 +186,11 @@ cannot. Design constraints:
 
 ## Enactment
 
-1. Mint a new convention version carrying: the `ledger/` location, the migration
-   concept and definition format, and the updater's remit. (Al pre-approved the
-   mint.)
+1. Mint a new convention version carrying: the `durable/` location and the ledger
+   inside it, the migration concept and definition format, and the updater's
+   remit. (Al pre-approved the mint.)
 2. Ship `exfu/migrations/` and `exfu/librarians/library-updater.md`.
 3. Write the first migration: `20260724-1749-split-convention-base`.
 4. Boot-time detection in `exfu-library`, including the ahead/behind surface check.
 5. Ledger seeding in the three install skills.
-6. Example library gains `ledger/`; rebuild.
+6. Example library gains `durable/`; rebuild.

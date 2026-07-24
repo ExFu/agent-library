@@ -5,7 +5,7 @@ A browsable reference implementation of the current substrate design. Shows what
 ## What this demonstrates
 
 1. **exfu/ as special location.** No scope.md. Deliberately flat: the versioned contract, plus the unversioned readme, principles, shipped librarians, and shipped skill sources.
-2. **The single-file core ontology.** exfu/20260724-1831/ontology.md carries the complete structural vocabulary in one read; every agent.md Follows: line anchors into it (e.g. `ontology.md#todo`).
+2. **The single-file core ontology.** exfu/20260724-1910/ontology.md carries the complete structural vocabulary in one read; every agent.md Follows: line anchors into it (e.g. `ontology.md#todo`).
 3. **The lock boundary.** The version directory holds ontology.md and nothing else -- a file is frozen if and only if a Follows: line can anchor into it. readme.md, principles.md, librarians/ and skills/ sit unversioned beside it and move with plugin releases. latest.txt names the current version; derived/ is the generated cache.
 4. **Minimal scope.md.** Every scope.md is YAML frontmatter + protective header. No entities, no status fields.
 5. **Scope nesting via scopes/.** acme/ has scopes/q3-renewal/. The nested scope declares parent: Acme.
@@ -20,7 +20,7 @@ A browsable reference implementation of the current substrate design. Shows what
 12. **Agent registry.** derived/agent-registry.json shows the runtime state: registered scheduled agents with kind (librarian or agent), cadence groups (nightly-agents, weekly-agents), and health tracking.
 13. **Run log.** derived/agent-log.json shows the run history: one entry per outcome, with timestamp, status, and a one-line detail.
 14. **Example index and dashboard.** derived/index.json and exfu/visualisations/dashboard/index.html show what the nightly run produces.
-15. **The ledger.** ledger/ holds the library's durable record of itself: migrations.md (every migration considered and its outcome) and install.md. It sits outside exfu/ because everything in exfu/ is replaced wholesale by a plugin update, and nothing can regenerate the ledger. Note the seeded entry: this library was created at the current shape, so the shipped migration is recorded not-applicable rather than pending.
+15. **The permanent record.** durable/ holds the facts about this library that nothing can regenerate: readme.md carries the membership test, and durable/ledger/ is the logbook -- migrations.md (every migration considered and its outcome) and install.md. It sits outside exfu/ because a refresh replaces exfu/; it never touches durable/, user/, or scopes/. Note the seeded entry: this library was created at the current shape, so the shipped migration is recorded not-applicable rather than pending.
 16. **The dashboard's front door.** dashboard.html at the root is a generated redirect to the real page in the visualisations gallery -- a redirect rather than a symlink, because sync layers handle symlinks unreliably and a symlinked page would resolve the dashboard's own relative gallery links from the wrong depth.
 
 ## Structure
@@ -28,7 +28,7 @@ A browsable reference implementation of the current substrate design. Shows what
 ```
 dashboard.html    generated front door: redirects into exfu/visualisations/
 exfu/             convention base, versioning infra, generated cache
-  20260724-1831/  the versioned contract: ontology.md (the core, ONE file)
+  20260724-1910/  the versioned contract: ontology.md (the core, ONE file)
   readme.md       orientation map, including the on-disk layout
   principles.md   design principles and recommendations
   librarians/     shipped librarian definitions
@@ -36,9 +36,12 @@ exfu/             convention base, versioning infra, generated cache
   skills/         shipped skill sources (wow template)
   derived/        generated files (index.json, agent-registry.json, agent-log.json)
   visualisations/ generated dashboard
-  latest.txt      points to 20260724-1831
-ledger/           durable record of what's been done to this library (never
-                  overwritten by an update): migrations.md, install.md
+  latest.txt      points to 20260724-1910
+durable/          the permanent record: facts about this library that nothing
+                  can regenerate. A refresh replaces exfu/; it never touches
+                  durable/, user/, or scopes/.
+  readme.md       the membership test and the never-delete rule
+  ledger/         the logbook: migrations.md, install.md
 user/             personal workspace (unversioned): context, ontology, todo pointer,
                   reminders, inbox
 scopes/
@@ -49,4 +52,4 @@ scopes/
 
 ## Design reference
 
-See `planning/v0.3.0-reconciliation.md` for the design decisions the scope model came from, `planning/conventions-lock-boundary.md` for why the version directory holds only the ontology, `planning/library-migrations.md` for the migration convention, and `exfu/20260724-1831/ontology.md` here for the conventions themselves.
+See `planning/v0.3.0-reconciliation.md` for the design decisions the scope model came from, `planning/conventions-lock-boundary.md` for why the version directory holds only the ontology, `planning/library-migrations.md` for the migration convention, and `exfu/20260724-1910/ontology.md` here for the conventions themselves.

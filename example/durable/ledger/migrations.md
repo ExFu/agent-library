@@ -16,7 +16,7 @@ Entry format:
 
 ---
 
-## 20260724-1831-split-convention-base
+## 20260724-1910-split-convention-base
 - considered: 2026-07-24
 - by: al (Claude Code), plugin 0.10.0
 - outcome: not-applicable

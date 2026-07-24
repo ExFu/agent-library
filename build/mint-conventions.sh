@@ -79,9 +79,25 @@ p.write_text(head.replace(old, new) + sep + tail, encoding="utf-8")
 PY
     else
       python3 - "$f" "$current" "$new" <<'PY'
-import sys, pathlib
+import sys, pathlib, re
 p, old, new = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
-p.write_text(p.read_text(encoding="utf-8").replace(old, new), encoding="utf-8")
+text = p.read_text(encoding="utf-8")
+
+# A migration's `id:` is its own authoring identity, not a pointer at the
+# current conventions. Re-stamping it would desynchronise the id from its
+# filename (the ontology requires filename stem == id) and silently rewrite
+# the identity of a migration that may already have been applied and recorded
+# in libraries' ledgers. Its `conventions:` field DOES move, because that
+# records which version movement the migration performs.
+if "/exfu/migrations/" in p.as_posix():
+    out = []
+    for line in text.split("\n"):
+        out.append(line if re.match(r"^id:\s", line) else line.replace(old, new))
+    text = "\n".join(out)
+else:
+    text = text.replace(old, new)
+
+p.write_text(text, encoding="utf-8")
 PY
     fi
     echo "  repointed $f"

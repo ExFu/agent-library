@@ -34,7 +34,7 @@ For convention base content (the canonical definitions agents follow). The plugi
 
 ## The core concepts
 
-These are the ten concepts the substrate is built on. Know them cold. When a question touches one, read the canonical source before answering -- don't rely on this summary alone.
+These are the eleven concepts the substrate is built on. Know them cold. When a question touches one, read the canonical source before answering -- don't rely on this summary alone.
 
 ### 1. Scopes
 
@@ -63,7 +63,7 @@ The 10 standard folder-types are the vocabulary of "where things go" inside a sc
 | `databases/` | Where do structured, repeating records live? |
 | `visualisations/` | Where do agent-created visual outputs live? |
 
-The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260724-1831/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
+The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260724-1910/ontology.md#todo`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
 
 Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Folder-types section)
 
@@ -73,7 +73,7 @@ The convention base lives at `exfu/` inside the substrate, and splits in two. Th
 
 The rule deciding which is which: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Only the ontology qualifies, so only the ontology is frozen. That is what lets the conventions stay genuinely locked while documentation, shipped librarians, and templates keep evolving -- and it keeps registry `source` paths stable, because librarian definitions no longer move when a version is minted.
 
-Scopes reference the contract via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260724-1831/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The base ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` and gets installed into the user's substrate. It is deliberately flat and small so it can be ingested in a handful of reads. Bases shipped before `20260724-1831` hold all four unversioned items inside the version directory instead; that is the older shape.
+Scopes reference the contract via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260724-1910/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The base ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` and gets installed into the user's substrate. It is deliberately flat and small so it can be ingested in a handful of reads. Bases shipped before `20260724-1910` hold all four unversioned items inside the version directory instead; that is the older shape.
 
 ### 4. Store-or-point
 
@@ -125,7 +125,19 @@ The personal scope. Always exists at the substrate root alongside `exfu/` and `s
 
 `user/` is not a working scope -- it's who the user is. It has no `exfu:` version pin (always reads through `latest`), no `parent` (it sits at the root), and its content travels with the user across every context.
 
-### 9. The wow skill
+### 9. The permanent record
+
+`durable/` at the root holds the facts about the library itself that nothing can regenerate: which migrations have been applied, when the library was created and by which version. Its first tenant is the logbook at `durable/ledger/`. Not a scope, not a folder-type.
+
+It exists because every other home is wrong. `exfu/` is replaced wholesale when the plugin updates. `exfu/derived/` is a cache that is safe to delete and rebuild. So the rule every skill states is positive rather than a list of exceptions: **a refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.**
+
+Three tests decide what may go there, all required: unregenerable (delete it, run every librarian twice, see whether it comes back -- being expensive to recompute is not the same thing), about the library rather than the world (a CRM belongs in a scope's `databases/`), and append-only human-readable text (which is what keeps databases and binaries out, since libraries sync through Dropbox or git).
+
+**With users, call it their "permanent record" and the ledger their "logbook".** Never say "durable" to a user. If they ask what to back up, this is the answer: nothing else in the library is irreplaceable.
+
+Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (#durable)
+
+### 10. The wow skill
 
 The user's personal navigation map and thin always-on kernel. Generated during install by the `exfu-create-wow` skill, updated as the substrate evolves.
 
@@ -133,7 +145,7 @@ The user's personal navigation map and thin always-on kernel. Generated during i
 
 It's a living document. Small updates happen directly; substantial changes (new scopes, restructured folders) warrant a full regeneration via `exfu-create-wow`.
 
-### 10. The dashboard
+### 11. The dashboard
 
 When available, a static HTML page at `exfu/visualisations/dashboard/` that renders the global index into a visual substrate map. Shows the scope tree, folder-type status, ontology chains, and librarian health. Read from the index, not by walking the filesystem live -- so it's fast and works offline.
 
@@ -147,7 +159,7 @@ Target audience is non-technical users. The dashboard is generated as part of th
 Read the primer or the guide intro. Give a one-paragraph answer in plain language. Offer to go deeper on any part.
 
 **"What is a scope?" / "How do I create one?"**
-Summarise: a bounded working context with a predictable internal shape. Has `scope.md` with frontmatter, contains folder-types, nests via `scopes/`. The three top-level zones are `exfu/`, `user/`, and `scopes/`. Read the Scope section of `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` for the format spec. Creating one is the scope-setup skill's job.
+Summarise: a bounded working context with a predictable internal shape. Has `scope.md` with frontmatter, contains folder-types, nests via `scopes/`. The four top-level zones are `exfu/`, `durable/`, `user/`, and `scopes/`. Read the Scope section of `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` for the format spec. Creating one is the scope-setup skill's job.
 
 **"What are folder-types?" / "What goes where?"**
 The 10 standard types answer "how does this scope handle this kind of thing?" Walk through the table above. Emphasise that each is a discovery convention -- the data might live locally or in an external tool.
