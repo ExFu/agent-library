@@ -194,3 +194,37 @@ Most can run in parallel. License decision is independent. Update-check depends 
 - **Validation rigour.** How thoroughly should the build script validate before producing output? V1 minimum: every skill has a SKILL.md, every scheduled task has a TASK.md, manifest parses, all referenced paths exist. More sophisticated checks can land later (e.g. cross-skill reference validation, lint for banlist words in shipping content, etc.).
 - **CI/CD on plugin builds.** Worth setting up GitHub Actions to build on every commit? Useful for catching breaks early, but may be overkill for v1. Defer.
 - **Plugin signing.** Is there a mechanism for signing plugin files so users can verify authenticity? Probably out of scope until Anthropic supports it natively.
+
+---
+
+## Settled -- distribution coordinates (2026-08-10)
+
+Everything above is the original v1 design record and is left as written. This
+section carries the operative state, so the repo self-orients without reading
+the whole history. Two of the open questions above are now answered.
+
+**Channel (answers "Anthropic plugin marketplace").** Anthropic does support
+third-party marketplaces: a plain GitHub repo carrying
+`.claude-plugin/marketplace.json`. That is the primary channel for both Claude
+Code and Cowork. The `exfu.ai` download page stays as the fallback for
+networks that cannot reach GitHub.
+
+**Coordinates.** The marketplace repo is `ExFu/exfu-marketplace`, renamed from
+`ExFu/claude-marketplace` -- the old name now resolves only by GitHub's rename
+redirect, so it is not a name to rely on. The marketplace itself is named
+`exfu`, which is what the install target resolves against:
+
+```
+/plugin marketplace add ExFu/exfu-marketplace
+/plugin install exfu-agent-library-solo@exfu
+```
+
+The marketplace repo holds the manifest and points its entries at this repo's
+`plugins/`. This repo ships no marketplace manifest of its own, and `build.sh`
+performs no marketplace sync.
+
+**Licence (answers "License").** Resolved as **Proprietary**, not MIT. `LICENSE`
+at the repo root holds the terms; all three plugin manifests declare
+`"license": "Proprietary"`. The repo is public for distribution convenience
+only -- publication grants no open-source licence, and redistribution needs
+written permission. Enquiries: al@exfu.ai.

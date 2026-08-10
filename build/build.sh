@@ -4,7 +4,7 @@
 # Composes src/shared/ + src/<variant>/ into installable plugin directories
 # under plugins/<variant>/ — the committed plugin sources this repo publishes.
 # Distribution (the marketplace manifest) lives in the separate
-# ExFu/claude-marketplace repo; this repo neither ships nor syncs a marketplace.
+# ExFu/exfu-marketplace repo; this repo neither ships nor syncs a marketplace.
 #
 # Usage:
 #   ./build/build.sh solo
@@ -474,5 +474,5 @@ echo "============================================================"
 # ---------------------------------------------------------------------------
 # No marketplace sync. This repo does not ship or expose a marketplace
 # manifest; distribution is handled entirely by the separate
-# ExFu/claude-marketplace repo, whose entries are maintained there.
+# ExFu/exfu-marketplace repo, whose entries are maintained there.
 # ---------------------------------------------------------------------------

@@ -7,8 +7,8 @@ The ExFu plugin ecosystem (three plugins installing an "Agent Library" run by
 sub-project inside the `exfu_website` repo. On 2026-07-22 it was extracted into
 this standalone repo (git subtree split, plugin-only history preserved) so it
 can evolve, version, and distribute independently. Public distribution runs
-through a dedicated marketplace repo, `ExFu/claude-marketplace` (marketplace
-name `exfu-agent-library`); this repo (`ExFu/agent-library`) is the plugin source it
+through a dedicated marketplace repo, `ExFu/exfu-marketplace` (marketplace
+name `exfu`); this repo (`ExFu/agent-library`) is the plugin source it
 publishes. The website repo keeps the full interleaved history as
 archive; this repo's planning state was carried forward into a fresh APV log
 (see the APV section below and `planning/repo-extraction.md`).
@@ -20,11 +20,11 @@ archive; this repo's planning state was carried forward into a fresh APV log
   - `src/solo/`, `src/team/`, `src/team-admin/` -- variant-specific content and `.claude-plugin/plugin.json` manifests
 - `build/build.sh` -- composes `src/shared/` + `src/<variant>/` into installable plugin dirs
 - `plugins/` -- the composed, committed build output; these are the marketplace's plugin sources
-- Public distribution runs through the separate **`ExFu/claude-marketplace`** repo
-  (marketplace name `exfu-agent-library`), which carries the marketplace manifest and points its
+- Public distribution runs through the separate **`ExFu/exfu-marketplace`** repo
+  (marketplace name `exfu`), which carries the marketplace manifest and points its
   entries at this repo's `plugins/`. It is the primary install channel for both Claude Code
-  and Cowork: `/plugin marketplace add ExFu/claude-marketplace` then
-  `/plugin install exfu-agent-library-solo@exfu-agent-library`. This repo does not ship or
+  and Cowork: `/plugin marketplace add ExFu/exfu-marketplace` then
+  `/plugin install exfu-agent-library-solo@exfu`. This repo does not ship or
   expose a marketplace manifest of its own; distribution is entirely the dedicated
   marketplace repo's concern, and `build.sh` performs no marketplace sync.
 - `dist/` -- gitignored versioned zips (`build.sh --dist`) for the website download flow
@@ -37,7 +37,7 @@ archive; this repo's planning state was carried forward into a fresh APV log
   run `./build/build.sh all` and commit the regenerated `plugins/` alongside.
 - Version bumps touch: the three `src/*/.claude-plugin/plugin.json` manifests and
   `src/shared/resources/CHANGELOG.md`. The marketplace entries live in the separate
-  `ExFu/claude-marketplace` repo and are bumped there.
+  `ExFu/exfu-marketplace` repo and are bumped there.
 - Sticky-note / product copy: inner monologue tone, never feature specs; no em-dashes.
 
 ## Relationship to exfu_website
@@ -45,7 +45,7 @@ archive; this repo's planning state was carried forward into a fresh APV log
 The website (`/Users/al/Studio/projects/exfu_website`) serves the public install
 page and the published download zips in `public/downloads/`. Publishing a release
 to the website is a manual step (copy zips from `dist/`, update the install page
-versions). The public `ExFu/claude-marketplace` repo is the primary
+versions). The public `ExFu/exfu-marketplace` repo is the primary
 distribution channel (this repo is the source it publishes from).
 
 <!-- apv:orientation -->
@@ -86,6 +86,6 @@ propagate) — resolve the skill source directly, in order:
 2. Else read the highest-version match under
    `${CLAUDE_CONFIG_DIR:-~/.claude}/plugins/cache/*/exfu-agent-planning-and-delegating/*/skills/<name>/SKILL.md`.
 3. Else the plugin is not installed —
-   `claude plugin marketplace add https://github.com/ExFu/claude-marketplace.git`
+   `claude plugin marketplace add https://github.com/ExFu/exfu-marketplace.git`
    then `claude plugin install exfu-agent-planning-and-delegating@exfu`.
 <!-- /exfu-agent-planning-and-delegating:orientation -->
