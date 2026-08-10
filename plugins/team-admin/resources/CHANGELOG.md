@@ -6,6 +6,16 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.10.1 -- 2026-08-10
+
+**The licence now travels with the plugin.** Every manifest has declared `"license": "Proprietary"` for a while, but the text itself sat only at the top of the source repo, which is not something an installed plugin carries. Anyone installing from the marketplace got a licence claim with nothing behind it, and no obvious way to read the terms they were accepting. The build now copies `LICENSE` into each plugin, so the claim and the text arrive together.
+
+The build fails outright when the file is missing from the repo root, rather than quietly producing a plugin that asserts a licence it cannot show. A declared licence with no text behind it is exactly the thing worth catching at build time instead of leaving for a user to discover.
+
+Nothing about how the plugins behave has changed. Distribution coordinates settled in the same round: the marketplace repo is `ExFu/exfu-marketplace` and the install line is `/plugin install exfu-agent-library-solo@exfu`. Decision record: `planning/T2-build-and-distribution.md`.
+
+---
+
 ## v0.10.0 -- 2026-07-24
 
 **Libraries can now be updated over time.** Every release that changes shape needs something to carry installed libraries across, and nothing owned that job -- 0.9.0 shipped its split base with no standalone upgrade path, and the two existing migration skills each encode one transition and know nothing about each other. Decision record: `planning/library-migrations.md`.
