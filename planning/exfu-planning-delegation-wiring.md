@@ -3,6 +3,7 @@
 **Status:** Adopted (Al, 2026-07-23, in-session). Landed in the same sitting it
 was raised: the repo now self-orients to `exfu-agent-planning-and-delegating`
 on every surface, and its APV attachment was audited up to toolchain 0.7.1.
+Re-audited 2026-08-10 against toolchain 0.7.2 (see "Re-audit at 0.7.2" below).
 
 Anchor for the working-environment wiring of this repo. Not product work: no
 plugin source changed, nothing in `src/` or `plugins/` was touched. This
@@ -74,6 +75,54 @@ repo's own CLAUDE.md warns about. It also keeps the declaration symmetric with
 `exfu-agent-planning-and-delegating@exfu` beside it and with the
 `[requires]` block in `.apv-config.toml`, so the repo states its APV dependency
 in-repo rather than relying on the machine it happens to be cloned onto.
+
+## Re-audit at 0.7.2
+
+The plugin was updated and renamed (`agent-plan-visualiser` ->
+`exfu-agent-plan-visualiser`, now 0.7.2), so this anchor was reopened and
+`/apv-init` re-run. Every component reported `ok` with no refused hook slot:
+the three git hooks resolve the toolchain by a discovery glob that already
+matches the new name, so the rename did not strand them. Two things did need
+fixing, and one apparent problem turned out not to be one.
+
+**The CLAUDE.md orientation block was stale, and silently so.** It named the
+retired plugin and gave a fallback path,
+`~/.claude/plugins/cache/*/agent-plan-visualiser/*/skills/`, that no longer
+matched anything on disk. A cold agent on a surface without the plugin would
+have followed it and found nothing -- precisely the worktree case the block
+exists to rescue. `apv-init` offered a migration but warned that the legacy
+block's extent was inferred, having no closing marker; the inferred region was
+checked against the section boundaries before accepting, and stopped exactly
+where the next heading began. The migrated block adds the closing marker, the
+skill-versus-slash-alias distinction for Cowork/Desktop, install instructions,
+and a note that fresh worktrees must run `/apv-init` because git hooks live in
+`.git/` and are not committed.
+
+**The gate was running four checks where the shipped default is seven.**
+Because `apv-init` respects an existing `.apv-config.toml` rather than
+rewriting it, a config predating `pending-ceremony`,
+`deferred-verification` and `attribution-drift` keeps silently omitting them:
+the file looks configured, the gate reports `PASS`, and nothing announces the
+gap. This is the cost of the respect-existing-config rule, and it is worth
+knowing about at each toolchain bump -- the diff to watch is the init script's
+own template, not the report. Adding the three surfaced a real signal that had
+been invisible: `proposal-multi-provider` has sat in `draft` for 19 commits
+with its acceptance ceremony pending, which is exactly the
+`2026-07-03.ceremony-prompting-gap` failure the check was written to catch.
+`attribution-drift` is inert here (no `[projects]` registry, so no stamps) but
+correct to carry. The commented `[projects]` template was also refreshed to the
+current `dirs` carve-out shape.
+
+**The schema version is not stale, despite appearances.** `.apv/schema-version.txt`
+reads `0.3.0` while the toolchain ships schemas through `0.6.0`. No migration is
+owed: `0.3.0` is still what `apv-init` seeds, and `validate-events.sh` always
+validates against the newest epoch, whose `schema_version` enum is a superset of
+the earlier ones. Recorded here because the mismatch reads as a defect on every
+inspection and is not one.
+
+Left alone: `apv_min_version` stays at `0.7.1`. It is a floor and 0.7.2
+satisfies it; raising it should be a deliberate act when a newer feature is
+actually depended on, not a reflex at each bump.
 
 ## Consequences
 
