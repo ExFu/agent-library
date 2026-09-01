@@ -32,13 +32,13 @@ substrate-root/
   CLAUDE.md          # guard file: warns sessions that haven't loaded the conventions
   dashboard.html     # generated front door: redirects into exfu/visualisations/
   exfu/              # convention base (plugin-owned; agents and users don't edit it)
-    20260724-1910/   # a convention version: ontology.md only, frozen at ship
+    20260901-1907/   # a convention version: ontology.md only, frozen at ship
     readme.md        # this file
     principles.md    # design principles and recommendations
     librarians/      # shipped librarian definitions, ready to register
     migrations/      # shipped migrations, applied by the library-updater
     skills/          # shipped skill sources (the wow template)
-    latest.txt       # current version name, e.g. "20260724-1910"
+    latest.txt       # current version name, e.g. "20260901-1907"
     derived/         # generated cache: index, registries. Never hand-edited.
     visualisations/  # ExFu-shipped visual outputs, e.g. the dashboard
   durable/           # the permanent record: facts about this library that

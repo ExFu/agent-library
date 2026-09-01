@@ -17,7 +17,7 @@ Releases change the shape of a library. Something has to carry installed librari
 
 This librarian is that something. It is **not scheduled**, and that is deliberate: a plugin update does not touch the library, it changes what is installed alongside it. There is no update hook, so nothing can run at update time. The boot skill notices the gap at the start of the next session and hands here.
 
-Follows: exfu/20260724-1910/ontology.md#migrations
+Follows: exfu/20260901-1907/ontology.md#migrations
 
 ## Instructions
 

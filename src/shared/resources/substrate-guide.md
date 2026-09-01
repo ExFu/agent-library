@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 13
+version: 14
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -123,8 +123,8 @@ Not a scope itself (no `scope.md`). This is the convention base and generated-ou
 
 ```
 exfu/
-  latest.txt              # single line: the current convention version (e.g. "20260724-1910")
-  20260724-1910/          # a convention version -- the frozen contract
+  latest.txt              # single line: the current convention version (e.g. "20260901-1907")
+  20260901-1907/          # a convention version -- the frozen contract
     ontology.md           # the complete core ontology, ONE file (scope model,
                           #   folder-types, scheduled agents, authoring rules)
   readme.md               # orientation map for this directory
@@ -142,9 +142,9 @@ exfu/
 
 The convention base is one complete ontology file rather than a folder of fragments because agents ingest a single read far more reliably -- the same file-economy principle that governs everything written into the substrate.
 
-**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260724-1910` carry all four inside the version directory; that is the older shape, and migration lifts them out.
+**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260901-1907` carry all four inside the version directory; that is the older shape, and migration lifts them out.
 
-**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1910`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260724-1910/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
+**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260901-1907`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260901-1907/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
 ### The durable/ directory -- the permanent record
 
@@ -267,7 +267,7 @@ Format:
 name: Acme
 purpose: Client relationship and commercial engagement with Acme Corp
 parent: root
-exfu: 20260724-1910
+exfu: 20260901-1907
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
@@ -281,10 +281,11 @@ Optional 2-3 sentence elaboration of purpose. Not required.
 - `purpose` -- one sentence. What this scope is for. Enough for an agent to decide whether to read deeper.
 - `parent` -- the name of the parent scope, or "root" for top-level scopes under `scopes/`. This is what makes extraction/sharing safe -- an agent knows something is above it.
 - `exfu` -- the ExFu convention version this scope references. New scopes default to whatever `latest.txt` points to. Existing scopes keep their pin until explicitly migrated.
+- `status` (optional) -- a lifecycle assertion. `stale` is the only recognised value: a deliberate declaration that the scope's content is no longer kept current. Absent means active. The global index picks it up and the dashboard badges the scope; remove the line to reactivate.
 
 **What scope.md does NOT contain:**
 - Entities, conventions, current state, dependencies (these live in folder-types)
-- Status, dates, progress tracking (those belong in `todo/` or the global index)
+- Dates, progress tracking, ambient status snapshots (those belong in `todo/` or the global index -- the declared `status: stale` assertion above is the one exception, because it only changes when someone changes it)
 - Arrays of related skills or dependencies (scope.md is a boundary marker, not a knowledge store)
 
 **The protective header** (the blockquote) appears in both `scope.md` and every `agent.md`. Its job is to catch agents that wander into the substrate without having loaded ExFu skills. The exact wording is consistent across every file.
@@ -342,7 +343,7 @@ A folder with no deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1910/ontology.md#context
+Follows: exfu/20260901-1907/ontology.md#context
 ```
 
 That's it. One line plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
@@ -353,7 +354,7 @@ A folder with deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1910/ontology.md#todo
+Follows: exfu/20260901-1907/ontology.md#todo
 
 Local deviations:
 - Tasks are tracked in ClickUp, not stored locally
@@ -638,6 +639,7 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
+- 2026-09-01 v14: Scopes gain a lifecycle assertion (plugin 0.11.0, conventions minted as 20260901-1907). scope.md may now carry an optional `status:` field whose only recognised value is `stale` -- a deliberate declaration that the scope's content is no longer kept current; absent means active, and `status: active` is never written. The global index carries the assertion and the dashboard badges and dims stale scopes. This is a carve-out from the no-state rule, not a repeal: the rule bans snapshots that drift silently, and a declaration that stays true until someone removes the line has exactly the opposite property.
 - 2026-07-24 v13: Library migrations become a convention, and durable state gets a home (plugin 0.10.0). New top-level `durable/` is the library's permanent record: the append-only facts about the library itself that nothing can regenerate and that no refresh may overwrite. Its first tenant is the logbook at `durable/ledger/` (`migrations.md`, `install.md`). The container is deliberately more general than that tenant, because more stateful things will need to survive outside `exfu/` over time. Membership test, all three required: unregenerable (delete it, run every librarian twice, see if it returns -- cost is not part of the test), about the library rather than the world (domain records belong in a scope's `databases/`), and append-only human-readable text (which excludes SQLite, embeddings and mutable config by construction, and matters because libraries sync through Dropbox or git). The carve-out is stated positively and never as an exception list: a refresh replaces `exfu/`, and never touches `durable/`, `user/`, or `scopes/` -- an exception list grows silently wrong, and a live data-loss bug of exactly that kind was found and fixed in `exfu-migrate-to-dropbox`. Migrations themselves are boot-detected rather than scheduled: a plugin update does not touch the library, so there is no update hook to fire; the boot skill compares shipped migrations against the ledger and hands pending work to the `library-updater` librarian, applied with the user present. Three safety rules: fresh installs seed rather than replay, preconditions test actual structure rather than the ledger, and a library ahead of its surface's plugin blocks structural work (Claude Code and Cowork have separate plugin installs and either may auto-update). Decision records: `planning/library-migrations.md`.
 - 2026-07-24 v11: The conventions lock moves to the contract rather than the folder (plugin 0.9.0). A convention version directory now holds `ontology.md` and nothing else; `readme.md`, `principles.md`, `librarians/`, and `skills/` move out to unversioned `exfu/` and travel with plugin releases. The deciding rule is mechanical: a file belongs in a version directory if and only if a `Follows:` line can anchor into it, and all 16 anchors point into the ontology. Base minted as `20260724-1749`; the root-layout depiction moved from the ontology to `exfu/readme.md`. Registry `source` paths stop breaking on every mint. A build gate (`build/check-conventions-lock.sh`) now enforces byte-identity of shipped versions, and `build/mint-conventions.sh` makes minting one command. Bases before `20260724-1749` keep the old shape; both coexist. Decision record: `planning/conventions-lock-boundary.md`.
 - 2026-07-24 v10: The dashboard gains a front door. `dashboard.html` at the library root redirects to `exfu/visualisations/dashboard/index.html`, so users open the dashboard from the top of their library instead of remembering a four-deep path. It is a generated redirect page, not a symlink: sync layers handle symlinks unreliably (the same reason `exfu/latest.txt` is a text file), and browsers resolve relative URLs against the document URL, so a symlinked page would break the dashboard's own `../../../scopes/...` gallery links and view iframes. The dashboard bundle itself does not move.

@@ -6,7 +6,8 @@ Walks the substrate directory tree, discovers scopes via scope.md files,
 and produces a global JSON index at exfu/derived/index.json.
 
 The index gives any agent a whole-substrate picture in one read: every scope,
-its tree position, which folder-types are populated, and version pins.
+its tree position, which folder-types are populated, version pins, and any
+declared lifecycle assertion (status: stale) from scope.md.
 
 Usage:
     python3 index.py /path/to/substrate-root
@@ -82,6 +83,16 @@ def read_scope_md(scope_dir):
         return parse_yaml_frontmatter(text)
     except OSError:
         return None
+
+
+def scope_status(fields):
+    """
+    Read the lifecycle assertion from parsed scope.md fields.
+    "stale" is the only recognised assertion; anything else (including
+    absence) means the scope is active and yields None.
+    """
+    value = (fields or {}).get("status", "").strip().lower()
+    return "stale" if value == "stale" else None
 
 
 def detect_folder_type_status(folder_dir):
@@ -200,6 +211,10 @@ def build_scope_entry(scope_dir, fields, default_parent):
         "folder_types": folder_types,
     }
 
+    status = scope_status(fields)
+    if status:
+        entry["status"] = status
+
     # Recurse into scopes/ for children
     child_scopes = scan_scopes_dir(scope_dir / "scopes", name)
     if child_scopes:
@@ -284,6 +299,9 @@ def build_index(root):
             "exfu_version": user_fields.get("exfu"),
             "folder_types": folder_types,
         }
+        user_status = scope_status(user_fields)
+        if user_status:
+            user_entry["status"] = user_status
         scopes.append(user_entry)
 
     # 2. Scan scopes/ directory

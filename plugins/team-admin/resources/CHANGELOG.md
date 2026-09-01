@@ -6,7 +6,13 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
-## v0.10.1 -- 2026-08-10
+## v0.11.0 -- 2026-09-01
+
+**Scopes can now be marked stale.** A scope that winds down often isn't ready to delete or archive -- the content still matters as history, but nobody should mistake it for current. scope.md gains an optional `status:` field whose only recognised value is `stale`; absent means active. The substrate index carries the assertion into `index.json`, and the dashboard shows it: stale scope cards recede with a "stale" badge on the substrate map, and the map graph renders them faint with an amber dashed ring and a "marked stale" tag in the detail panel.
+
+This is a deliberate carve-out from the descriptors-carry-no-state rule, not a repeal of it. The rule exists because snapshots ("currently empty", counts, dates) drift out of date silently. A lifecycle assertion doesn't: it stays true until someone removes the line, which is exactly the property that makes it safe to keep in the boundary marker. `status: active` is never written -- absence is the active state, so the field only appears when it's saying something. The ontology, substrate guide, scope-setup, and exfu-library skills all document the assertion and the carve-out.
+
+Because the scope.md contract is part of the versioned conventions, this ships as a freshly minted convention base, `20260901-1907`, superseding `20260724-1910`. Existing scopes keep their pins and behave exactly as before -- the index and dashboard read the field wherever it appears, so a stale mark works on older-pinned scopes too, but the documented contract lives in the new version, which new scopes pin automatically.
 
 **The licence now travels with the plugin.** Every manifest has declared `"license": "Proprietary"` for a while, but the text itself sat only at the top of the source repo, which is not something an installed plugin carries. Anyone installing from the marketplace got a licence claim with nothing behind it, and no obvious way to read the terms they were accepting. The build now copies `LICENSE` into each plugin, so the claim and the text arrive together.
 

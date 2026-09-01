@@ -641,6 +641,12 @@ def render_css():
       border-radius: 999px;
       white-space: nowrap;
     }
+    .card-badges { display: inline-flex; gap: 0.35rem; align-items: baseline; flex: none; }
+    .card-badge-stale { background: var(--amber-soft); color: var(--amber); cursor: help; }
+    /* A stale scope stays on the map but recedes: the assertion is
+       visible at a glance without shouting over the active scopes. */
+    .card-stale { opacity: 0.62; }
+    .card-stale:hover { opacity: 1; }
     .card-purpose {
       color: var(--muted);
       font-size: 0.84rem;
@@ -953,6 +959,7 @@ def render_css():
     #side-panel h3 { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0.2rem 0 0.15rem; }
     #side-panel p { font-size: 0.86rem; color: var(--muted); margin: 0.35rem 0; }
     .panel-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); }
+    .panel-tag-stale { color: var(--amber); }
     .panel-section {
       font-size: 0.66rem;
       font-weight: 600;
@@ -1974,6 +1981,9 @@ def render_graph_js():
       g.setAttribute('data-name', nd.name);
       var fill = COL.inkSoft, stroke = 'none', dash = '';
       if (nd.stype === 'user') { fill = COL.rust; }
+      if (nd.stype === 'scope' && nd.data && nd.data.status === 'stale') {
+        fill = COL.faint; stroke = COL.amber; dash = '3 2';
+      }
       if (nd.stype === 'group') { fill = COL.paper; stroke = COL.faint; dash = '2 2'; }
       if (nd.stype === 'agent') {
         fill = healthColor(nd.data && nd.data.status);
@@ -2116,6 +2126,7 @@ def render_graph_js():
     if (!sc) return;
     var h = '<h3>' + esc(sc.name) + '</h3>';
     if (sc.type === 'user') h += '<div class="panel-tag">your personal scope</div>';
+    if (sc.status === 'stale') h += '<div class="panel-tag panel-tag-stale">marked stale -- no longer kept current</div>';
     if (sc.purpose) h += '<p>' + esc(sc.purpose) + '</p>';
     if (sc.aboutHtml) {
       h += '<div class="panel-section">About</div><div class="panel-prose">' + sc.aboutHtml + '</div>';
@@ -2415,8 +2426,11 @@ def render_scope_card(scope, is_user=False):
     purpose = esc(scope.get("purpose", ""))
     exfu_ver = scope.get("exfu_version")
     folder_types = scope.get("folder_types", {})
+    is_stale = scope.get("status") == "stale"
 
     card_class = "card user-scope" if is_user else "card"
+    if is_stale:
+        card_class += " card-stale"
 
     parts = [f'<div class="{card_class}" data-scope="{name}">']
 
@@ -2424,12 +2438,21 @@ def render_scope_card(scope, is_user=False):
     parts.append(f'<span class="card-name">{name}</span>')
 
     badges = []
+    if is_stale:
+        badges.append(
+            '<span class="card-badge card-badge-stale" title="Marked stale '
+            'in scope.md: its content is no longer kept current. Remove the '
+            'status line to reactivate.">stale</span>'
+        )
+    plain = []
     if is_user:
-        badges.append("personal")
+        plain.append("personal")
     if exfu_ver:
-        badges.append(esc(exfu_ver))
+        plain.append(esc(exfu_ver))
+    if plain:
+        badges.append(f'<span class="card-badge">{" / ".join(plain)}</span>')
     if badges:
-        parts.append(f'<span class="card-badge">{" / ".join(badges)}</span>')
+        parts.append(f'<span class="card-badges">{"".join(badges)}</span>')
 
     parts.append("</div>")
 
@@ -3090,6 +3113,7 @@ def build_dashboard_data(root, registry_data, unregistered, scopes_flat):
             "parent": s.get("parent"),
             "version": s.get("exfu_version"),
             "purpose": s.get("purpose", ""),
+            "status": s.get("status"),
             "folderTypes": s.get("folder_types", {}),
             "group": grouping_label(s),
             "children": [c.get("name", "") for c in s.get("children", [])],
@@ -3144,17 +3168,25 @@ def render_view_bar(pane_prefix, filters_html):
 
 def enrich_scopes_with_purpose(root, scopes):
     """
-    Walk the scope tree and add 'purpose' from scope.md if not present.
+    Walk the scope tree and add 'purpose' (and the 'status' assertion,
+    for indexes generated before it existed) from scope.md if not present.
     Modifies scopes in place.
     """
     for scope in scopes:
-        if "purpose" not in scope or not scope["purpose"]:
+        needs_purpose = "purpose" not in scope or not scope["purpose"]
+        needs_status = "status" not in scope
+        if needs_purpose or needs_status:
             rel_path = scope.get("path", "")
             scope_md = root / rel_path / "scope.md"
             if scope_md.exists():
                 text = read_file_text(scope_md)
                 fields = parse_yaml_frontmatter(text)
-                scope["purpose"] = fields.get("purpose", "")
+                if needs_purpose:
+                    scope["purpose"] = fields.get("purpose", "")
+                if needs_status:
+                    declared = fields.get("status", "").strip().lower()
+                    if declared == "stale":
+                        scope["status"] = "stale"
         for child in scope.get("children", []):
             enrich_scopes_with_purpose(root, [child])
 

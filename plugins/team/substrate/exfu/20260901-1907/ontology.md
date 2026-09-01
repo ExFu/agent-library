@@ -1,8 +1,8 @@
-# ExFu core ontology -- 20260724-1910
+# ExFu core ontology -- 20260901-1907
 
 This is the complete structural vocabulary of an ExFu substrate, in one file. Read it top to bottom once and you know how everything here is organised: what a scope is, what each folder-type means, how scheduled agents and librarians work, and the authoring rules that keep the substrate ingestible.
 
-It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/20260724-1910/ontology.md#todo`.
+It is one file by design. Agents ingest a single complete read far more reliably than a folder of fragments, so the core ontology lives here rather than sharded across many small files. `Follows:` references elsewhere in the substrate point into this file using heading anchors, e.g. `Follows: exfu/20260901-1907/ontology.md#todo`.
 
 **This file is the whole of the versioned contract.** A version directory contains this file and nothing else: a file belongs here if and only if a `Follows:` line can anchor into it. Everything else the plugin ships -- the orientation readme, the principles, the shipped librarian definitions, the skill templates -- lives unversioned at `exfu/` and moves with plugin releases. That boundary is what lets conventions stay frozen while everything around them evolves.
 
@@ -103,7 +103,7 @@ kind: migration
 cadence: on-update
 description: One line saying what shape changes
 plugin: "0.11.0 -> 0.12.0"
-conventions: "20260724-1910 -> 20260801-0900"   # omit when no conventions change
+conventions: "20260901-1907 -> 20260801-0900"   # omit when no conventions change
 applies_when: <scope>/widgets/ does not exist    # the TARGET, never the old shape
 requires_user_decision: false
 reversible: true
@@ -156,7 +156,7 @@ Minimal by design. The rich picture lives in the global index, not here.
 name: <human-readable name>
 purpose: <one-line purpose>
 parent: <parent scope name, or "root" for top-level scopes>
-exfu: 20260724-1910
+exfu: 20260901-1907
 ---
 ```
 
@@ -166,8 +166,9 @@ Followed by the protective header (see [Authoring rules](#authoring-rules)) and 
 - **purpose** -- one sentence, enough for an agent to decide whether to read deeper.
 - **parent** -- the parent scope's name, or `root`. A portability safeguard: if the scope is shared or extracted alone, the agent knows context is missing above it.
 - **exfu** -- which convention version this scope follows. New scopes pin whatever `latest.txt` says at creation time; pins only change by explicit migration.
+- **status** (optional) -- a lifecycle assertion. The only recognised value is `stale`: a deliberate declaration that this scope's content is no longer kept current and should be read with that caveat. Absent means active -- never write `status: active`. Set it when a scope winds down but isn't ready to archive; remove the line to reactivate. The index carries it and the dashboard shows it.
 
-scope.md does NOT contain state, status, dates, entity lists, or dependencies. Those live in folder-types or the derived index.
+scope.md does NOT contain state, dates, entity lists, or dependencies. Those live in folder-types or the derived index. The `status: stale` assertion is not state in that sense: it is a deliberate declaration that only changes when someone changes it, not a snapshot that drifts out of date on its own.
 
 **Special cases:** the `user/` scope has `parent: none` and no `exfu:` field (it is unversioned and always follows latest). The `exfu/` directory has no scope.md at all -- it is the convention base, not a scope.
 
@@ -198,10 +199,10 @@ Without the `scopes/` boundary, an agent couldn't tell folder-types (known conve
 
 - Every pinned scope reads its conventions from `exfu/<pin>/`.
 - The `user/` scope reads through `exfu/latest.txt` (a plain text file naming the current version; used instead of a symlink because sync layers don't handle symlinks reliably).
-- Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1910`). No seconds, no timezone suffix (always UTC), no ISO punctuation. Every release mints a fresh identifier, so a version directory's contents never change under a stable name -- and plain lexicographic order is chronological order. Version identifiers deliberately share no naming surface with plugin release numbers.
+- Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260901-1907`). No seconds, no timezone suffix (always UTC), no ISO punctuation. Every release mints a fresh identifier, so a version directory's contents never change under a stable name -- and plain lexicographic order is chronological order. Version identifiers deliberately share no naming surface with plugin release numbers.
 - Early releases used `v0.x` identifiers (`v0.2`, `v0.3`) -- the legacy scheme. Any timestamp identifier is newer than any `v0.x` identifier; never compare the two schemes by raw string sort (digits sort before `v`, which gets the order backwards).
-- Convention versions install side by side (`exfu/20260723-1446/`, `exfu/20260724-1910/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
-- **A version directory holds `ontology.md` and nothing else.** The plugin's other shipped content -- `exfu/readme.md`, `exfu/principles.md`, `exfu/librarians/`, `exfu/skills/` -- is unversioned and refreshed by plugin updates. The test for what gets frozen: a file belongs in a version directory if and only if a `Follows:` line can anchor into it. Bases shipped before 20260724-1910 also carry those four inside the version directory; that is the older shape, and migration lifts them out.
+- Convention versions install side by side (`exfu/20260723-1446/`, `exfu/20260901-1907/`). Old scopes keep their pins until explicitly migrated; both bases stay fully functional.
+- **A version directory holds `ontology.md` and nothing else.** The plugin's other shipped content -- `exfu/readme.md`, `exfu/principles.md`, `exfu/librarians/`, `exfu/skills/` -- is unversioned and refreshed by plugin updates. The test for what gets frozen: a file belongs in a version directory if and only if a `Follows:` line can anchor into it. Bases shipped before 20260901-1907 also carry those four inside the version directory; that is the older shape, and migration lifts them out.
 - `exfu/derived/` is unversioned generated content -- the global index, the scheduled-agent registry and log. It is a cache: never hand-edited, safe to delete and regenerate. (The dashboard itself lives in `exfu/visualisations/dashboard/`; only its data sources live here.)
 
 ---
@@ -388,7 +389,7 @@ Every materialised folder-type directory contains an `agent.md`:
 
 2. **`Follows:` line** naming the convention it implements, by versioned anchor into this file:
 
-   `Follows: exfu/20260724-1910/ontology.md#todo`
+   `Follows: exfu/20260901-1907/ontology.md#todo`
 
 3. **`Local deviations:`** -- a bullet list of only what differs from the convention (e.g. "Tasks are tracked in ClickUp, folder 901514259169"). Omit the section entirely when nothing differs.
 
@@ -397,6 +398,8 @@ A folder with no deviations is the header plus one line. A sibling `readme.md` w
 ### Descriptors carry no state
 
 agent.md, readme.md, and scope.md describe what a folder or scope *is for* -- static facts that stay true. They never capture state: no "currently empty", no item counts, no "last updated", no status notes. State is only true at write time and goes stale silently, misleading every later reader. Current state belongs in the derived index, the dashboard, and the content itself.
+
+The one exception is scope.md's optional `status: stale` assertion (see [scope.md format](#scope-md)). It passes because it is a declaration, not a snapshot: it stays true until someone deliberately removes it, so it cannot drift out of date silently.
 
 ### Naming
 
