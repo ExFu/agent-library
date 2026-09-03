@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-09-03T18:11:57Z",
+  "generation": 1,
+  "actor": "al",
+  "at": "2026-09-03T18:11:57Z",
+  "source_hashes": {
+    "user/docket/reminders.jsonl": "c4180ef3d45bd38fde426fa65896cbde3bcb0b34cf81d10eeb94710721264a1a",
+    "user/docket/agent-backlog.jsonl": "f15df63a925481dafbdc4461dfe8a90c4e79a95bd2df975fca42ce9b5ccb7699",
+    "user/docket/triggers.jsonl": "7d77d0b5ca89501e1a157eef5b4fef58e3e5677da9865fe6bb45116f4dc7e0e1",
+    "user/docket/channels.jsonl": "470545c092f3f5f412ec3680ff6f3eece2f049903fe967f72324037aad7e4eec"
+  },
+  "due": [
+    {
+      "occurrence": "20260609T090300Z-T1ACMEQ5T7@2026-07-01T09:00+01:00",
+      "trigger": "20260609T090300Z-T1ACMEQ5T7",
+      "scope": "Alastair",
+      "mode": "once",
+      "scheduled_at": "2026-07-01T08:00:00Z",
+      "target": {
+        "type": "docket-entry",
+        "scope": "Alastair",
+        "id": "20260609T090000Z-R1ACMEQ5T7",
+        "title": "Chase the Acme security questionnaire if it still has not come back"
+      },
+      "assess": "Surface this reminder.",
+      "handler": {
+        "kind": "deliver",
+        "weight": "light",
+        "ref": null
+      },
+      "handler_kind": "deliver",
+      "weight": "light",
+      "ref": null,
+      "channel": "slack-dm",
+      "channel_id": "20260903T174500Z-C1SLACKDMA",
+      "channel_kind": "dm",
+      "channel_via": "slack",
+      "channel_target": "@al",
+      "resolved_send": "auto",
+      "send_reason": "grant active",
+      "owner": "al",
+      "signal": null,
+      "other_intents": [],
+      "suppressed": false,
+      "suppressed_reason": null,
+      "skipped_occurrences": [],
+      "reason": "once at 2026-07-01T08:00:00Z has passed with no receipt"
+    },
+    {
+      "occurrence": "20260609T090301Z-T2RENEWFIN@2026-07-23T09:00+01:00",
+      "trigger": "20260609T090301Z-T2RENEWFIN",
+      "scope": "Alastair",
+      "mode": "once",
+      "scheduled_at": "2026-07-23T08:00:00Z",
+      "target": {
+        "type": "docket-entry",
+        "scope": "Alastair",
+        "id": "20260609T090100Z-R2RENEWFIN",
+        "title": "Ask me whether the renewal pricing confirmation went to finance"
+      },
+      "assess": "Surface this reminder.",
+      "handler": {
+        "kind": "deliver",
+        "weight": "light",
+        "ref": null
+      },
+      "handler_kind": "deliver",
+      "weight": "light",
+      "ref": null,
+      "channel": "slack-dm",
+      "channel_id": "20260903T174500Z-C1SLACKDMA",
+      "channel_kind": "dm",
+      "channel_via": "slack",
+      "channel_target": "@al",
+      "resolved_send": "auto",
+      "send_reason": "grant active",
+      "owner": "al",
+      "signal": null,
+      "other_intents": [],
+      "suppressed": false,
+      "suppressed_reason": null,
+      "skipped_occurrences": [],
+      "reason": "once at 2026-07-23T08:00:00Z has passed with no receipt"
+    }
+  ]
+}

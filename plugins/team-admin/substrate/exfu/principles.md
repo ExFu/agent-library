@@ -58,7 +58,7 @@ Rather than storing tasks as files in todo/, point to a dedicated task tool (Cli
 
 ### Voice-to-text for context
 
-Dictating context is faster than writing it. Tools like Whisper, Otter, or your phone's built-in transcription can capture thoughts that you then drop into inbox/ for triage. Don't worry about formatting; the inbox-triage librarian sweeps periodically.
+Dictating context is faster than writing it. Tools like Whisper, Otter, or your phone's built-in transcription can capture thoughts that you then leave in your docket's agent backlog for your agents to attend to. Don't worry about formatting; the backlog-sweep librarian summarises what is waiting each night.
 
 ### Version control for team substrates
 

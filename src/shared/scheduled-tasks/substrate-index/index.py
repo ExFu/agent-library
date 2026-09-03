@@ -8,6 +8,16 @@ and produces a global JSON index at exfu/derived/index.json.
 The index gives any agent a whole-substrate picture in one read: every scope,
 its tree position, which folder-types are populated, and version pins.
 
+Since 0.11.0 each scope entry also carries:
+
+- "docket": present when the scope has a docket/ folder. Per-file status for
+  the three entry files (data | pointer | empty), the pointer text declared
+  for each in agent.md's "Local deviations:" (`todo: tracked in ClickUp, not
+  stored locally`), the count of armed triggers, and the channel names.
+- "deprecated": the deprecated folder-types (todo/, reminders/, inbox/) this
+  scope still holds with content, so the dashboard, the boot skill and the
+  docket migration can find candidates without walking the tree.
+
 Usage:
     python3 index.py /path/to/substrate-root
 """
@@ -21,11 +31,29 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Standard folder-types in the catalogue
+# Standard folder-types in the catalogue. The three deprecated names stay so
+# scopes that still hold them keep indexing.
 FOLDER_TYPES = [
     "ontology", "context", "skills", "librarians", "scheduled",
-    "todo", "reminders", "inbox", "databases", "visualisations",
+    "docket", "todo", "reminders", "inbox", "databases", "visualisations",
 ]
+
+# Folder-types superseded by docket/ (ontology.md#deprecated). Still indexed,
+# never scaffolded.
+DEPRECATED_FOLDER_TYPES = ["todo", "reminders", "inbox"]
+
+# The docket's entry files, by the name used before the colon in a pointer
+# line and as the stem of the JSONL file.
+DOCKET_ENTRY_FILES = ["todo", "reminders", "agent-backlog"]
+
+# A per-file pointer line in docket/agent.md's "Local deviations:", e.g.
+# "- todo: tracked in ClickUp, not stored locally". The file name before the
+# colon is explicit; the text after it has to say the data is elsewhere.
+DOCKET_POINTER_RE = re.compile(
+    r"^\s*(?:[-*]\s*)?(todo|reminders|agent-backlog)\s*:\s*(.+?)\s*$",
+    re.IGNORECASE,
+)
+DOCKET_POINTER_WORDS = ("tracked in", "not stored locally", "managed in", "lives in")
 
 # Directories to skip when walking
 SKIP_NAMES = {
@@ -33,7 +61,9 @@ SKIP_NAMES = {
     ".DS_Store", ".idea", ".vscode", ".claude", ".omc",
 }
 
-# Phrases that indicate a pointer (external system) in agent.md
+# Phrases that indicate a pointer (external system) in agent.md. Only the
+# deprecated folder-types are judged this way; docket/ uses the explicit
+# per-file line form above.
 POINTER_PHRASES = [
     "tasks are tracked in",
     "lives in",
@@ -129,19 +159,149 @@ def detect_folder_type_status(folder_dir):
     return "empty"
 
 
+def read_jsonl_rows(path):
+    """
+    Rows of a JSONL file as dicts. Blank and unparseable lines are skipped
+    (a half-written line under sync must not sink the whole index), and so
+    are tombstoned rows (deleted: true).
+    """
+    rows = []
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return rows
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict) and not row.get("deleted"):
+            rows.append(row)
+    return rows
+
+
+def parse_docket_pointers(agent_text):
+    """
+    Per-file pointer declarations from docket/agent.md: {"todo": "tracked in
+    ClickUp, not stored locally", ...}. Only lines in the explicit
+    "<file>: <text>" form count, and a file is a pointer only when one of its
+    lines says the data is elsewhere, so a stray "todo:" heading never reads
+    as a pointer. Several lines for one file (the pointer, then how to reach
+    the tool) join with "; " so the URL travels with the declaration.
+    """
+    lines_by_file = {}
+    for line in agent_text.split("\n"):
+        m = DOCKET_POINTER_RE.match(line)
+        if m:
+            lines_by_file.setdefault(m.group(1).lower(), []).append(m.group(2).strip())
+    pointers = {}
+    for name, lines in lines_by_file.items():
+        if any(w in text.lower() for text in lines for w in DOCKET_POINTER_WORDS):
+            pointers[name] = "; ".join(lines)
+    return pointers
+
+
+def scan_docket(folder_dir):
+    """
+    Status of a docket/ folder, judged per file.
+
+    A file is "data" when it exists and holds at least one row with status
+    "open" (tombstones excluded): a file holding only done or archived rows
+    is on nobody's plate, so it reads "empty" until compaction removes it.
+    A file is "pointer" when agent.md declares a pointer line for it and
+    nothing local carries open rows. Otherwise "empty".
+
+    Returns (folder_status, docket_obj). The folder is "data" if any file is,
+    else "pointer" if any file is, else "empty".
+    """
+    agent_text = ""
+    agent_md = folder_dir / "agent.md"
+    if agent_md.exists():
+        try:
+            agent_text = agent_md.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            agent_text = ""
+    pointers = parse_docket_pointers(agent_text)
+
+    files = {}
+    for name in DOCKET_ENTRY_FILES:
+        path = folder_dir / f"{name}.jsonl"
+        has_open = False
+        if path.is_file():
+            has_open = any(
+                str(r.get("status", "open")).lower() == "open"
+                for r in read_jsonl_rows(path)
+            )
+        if has_open:
+            files[name] = "data"
+        elif name in pointers:
+            files[name] = "pointer"
+        else:
+            files[name] = "empty"
+
+    triggers_path = folder_dir / "triggers.jsonl"
+    armed = 0
+    if triggers_path.is_file():
+        armed = sum(
+            1 for r in read_jsonl_rows(triggers_path)
+            if str(r.get("status", "armed")).lower() == "armed"
+        )
+
+    channels_path = folder_dir / "channels.jsonl"
+    channels = []
+    if channels_path.is_file():
+        for r in read_jsonl_rows(channels_path):
+            name = r.get("name")
+            if name and name not in channels:
+                channels.append(name)
+
+    statuses = set(files.values())
+    if "data" in statuses:
+        folder_status = "data"
+    elif "pointer" in statuses:
+        folder_status = "pointer"
+    else:
+        folder_status = "empty"
+
+    docket = {
+        "files": files,
+        "pointers": pointers,
+        "triggers": armed,
+        "channels": channels,
+    }
+    return folder_status, docket
+
+
 def scan_folder_types(scope_dir):
     """
     Scan a scope directory for folder-types and their status.
-    Returns dict of folder-type name to status, including only
-    types that are present (data or pointer) or in the standard catalogue.
+    Returns (folder_types, docket): a dict of folder-type name to status for
+    every type present on disk, and the docket object (or None when the
+    scope has no docket/ folder).
     """
     result = {}
+    docket = None
     for ft in FOLDER_TYPES:
         ft_dir = scope_dir / ft
-        if ft_dir.exists():
+        if not ft_dir.exists():
+            continue
+        if ft == "docket":
+            status, docket = scan_docket(ft_dir)
+        else:
             status = detect_folder_type_status(ft_dir)
-            result[ft] = status
-    return result
+        result[ft] = status
+    return result, docket
+
+
+def deprecated_present(folder_types):
+    """Deprecated folder-types this scope still holds with content."""
+    return [
+        ft for ft in DEPRECATED_FOLDER_TYPES
+        if folder_types.get(ft) in ("data", "pointer")
+    ]
 
 
 def scan_scopes_dir(scopes_dir, parent_name):
@@ -185,11 +345,10 @@ def build_scope_entry(scope_dir, fields, default_parent):
     name = fields.get("name", scope_dir.name)
     parent = fields.get("parent", default_parent)
     exfu_version = fields.get("exfu")
-    folder_types = scan_folder_types(scope_dir)
+    all_types, docket = scan_folder_types(scope_dir)
 
     # Only include folder-types that aren't all empty
-    folder_types = {k: v for k, v in folder_types.items() if v != "empty"} or \
-                   {k: v for k, v in scan_folder_types(scope_dir).items()}
+    folder_types = {k: v for k, v in all_types.items() if v != "empty"} or all_types
 
     entry = {
         "name": name,
@@ -198,7 +357,10 @@ def build_scope_entry(scope_dir, fields, default_parent):
         "parent": parent if parent != "none" else None,
         "exfu_version": exfu_version,
         "folder_types": folder_types,
+        "deprecated": deprecated_present(all_types),
     }
+    if docket is not None:
+        entry["docket"] = docket
 
     # Recurse into scopes/ for children
     child_scopes = scan_scopes_dir(scope_dir / "scopes", name)
@@ -275,7 +437,7 @@ def build_index(root):
     user_dir = root / "user"
     user_fields = read_scope_md(user_dir)
     if user_fields is not None:
-        folder_types = scan_folder_types(user_dir)
+        folder_types, docket = scan_folder_types(user_dir)
         user_entry = {
             "name": user_fields.get("name", "user"),
             "path": "user/",
@@ -283,7 +445,10 @@ def build_index(root):
             "parent": None,
             "exfu_version": user_fields.get("exfu"),
             "folder_types": folder_types,
+            "deprecated": deprecated_present(folder_types),
         }
+        if docket is not None:
+            user_entry["docket"] = docket
         scopes.append(user_entry)
 
     # 2. Scan scopes/ directory

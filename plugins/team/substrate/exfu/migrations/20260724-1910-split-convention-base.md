@@ -5,7 +5,7 @@ kind: migration
 cadence: on-update
 description: Lift readme, principles, librarians and skills out of the version directory to unversioned exfu/
 plugin: "0.9.0 -> 0.10.0"
-conventions: "20260723-1446 -> 20260724-1910"
+conventions: "20260723-1446 -> 20260903-1743"
 applies_when: exfu/ has no unversioned librarians/ (or no readme.md, principles.md, skills/) at its top level
 requires_user_decision: false
 reversible: true
@@ -21,7 +21,7 @@ writes:
 
 # Migration: split the convention base
 
-Follows: exfu/20260724-1910/ontology.md#migrations
+Follows: exfu/20260903-1743/ontology.md#migrations
 
 ## What changes and why
 
@@ -37,7 +37,7 @@ Applies when `exfu/` is **missing** the unversioned copies: no `librarians/`, `r
 
 Note the test is the *absence of the target*, not the presence of the old shape. This matters because step 3 deliberately leaves old version directories intact, so "a version directory still contains librarians/" stays true forever and would re-trigger on every check. Testing for what should exist afterwards makes the precondition accurate in both directions: true before, false after.
 
-Does **not** apply to a library installed at `20260724-1910` or later -- those were created in the target shape. Record `not-applicable` and move on.
+Does **not** apply to a library installed at `20260903-1743` or later -- those were created in the target shape. Record `not-applicable` and move on.
 
 ## Instructions
 

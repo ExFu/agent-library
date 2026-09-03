@@ -50,13 +50,13 @@ Connectors don't live in your library. They're separate integrations you set up 
 
 ### 4. The librarians
 
-Agent Librarians are what runs without you asking. Overnight, on a schedule, they do the maintenance a library needs: one walks the whole library and rebuilds the index so everything stays findable. One sweeps your inbox of quick captures and suggests where each item belongs. One redraws the visual dashboard so you can see your whole setup at a glance.
+Agent Librarians are what runs without you asking. Overnight, on a schedule, they do the maintenance a library needs: one walks the whole library and rebuilds the index so everything stays findable. One sweeps the things you've left for your agents and suggests where each item belongs. One checks, every hour, whether anything on your docket is due to be surfaced, and delivers it. One redraws the visual dashboard so you can see your whole setup at a glance.
 
 There are deliberately several of them, not one. Your library isn't run by a single all-knowing agent; it's an ecosystem, each librarian with a narrow job it does well. When you want something, you (or Claude, on your behalf) appeal to the right one. That's also why the library stays trustworthy: each job is small, inspectable, and runs on a cadence you can see.
 
 The same machinery can also work *for your domain*, not just for the library. A business agent is a standing brief: watch the market for a car matching this spec, draft a weekly digest of this project, file invoices as they arrive. Librarians keep the library; business agents do your recurring work. Same mechanics, different remit.
 
-This is where the "working collaborator" framing becomes most literal. The index is fresh when you wake up. The inbox is triaged. The reminder surfaced without you having to remember to ask.
+This is where the "working collaborator" framing becomes most literal. The index is fresh when you wake up. Your docket has been swept. The reminder surfaced without you having to remember to ask.
 
 ---
 

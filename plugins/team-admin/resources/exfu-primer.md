@@ -26,9 +26,9 @@ That second part matters. ExFu is not implementation-for-hire. The goal is that 
 
 **Your personal `wow` skill.** A short, custom-generated skill that lives in Claude's global instructions and loads on every session. It's a map of your setup: it tells Claude what you have, how it's structured, and where to look when something comes up. You extend it over time as your library grows.
 
-**Agent Librarians.** From day one, your library is staffed. A nightly index maps everything so Claude can find it. An inbox triage suggests where your quick captures belong. A dashboard generator redraws your library's visual map overnight. You can add more over time, including business agents that do your recurring domain work, like watching a market or drafting a weekly digest.
+**Agent Librarians.** From day one, your library is staffed. A nightly index maps everything so Claude can find it. A backlog sweep looks at the things you've left for your agents and suggests where each belongs. A dispatcher checks every hour whether anything you asked to be reminded about is due, and delivers it. A dashboard generator redraws your library's visual map overnight. You can add more over time, including business agents that do your recurring domain work, like watching a market or drafting a weekly digest.
 
-**Optional skills, selected to fit you.** The install conversation surfaces what's likely to be useful: reminders, inbox (quick-capture), writing-styles, daily briefing, skills for active work areas. You pick what resonates; everything else stays available for a follow-up.
+**Optional skills, selected to fit you.** The install conversation surfaces what's likely to be useful: your docket (tasks, reminders, and quick capture in one place, with a personal skill to work it from any device), writing-styles, daily briefing, skills for active work areas. You pick what resonates; everything else stays available for a follow-up.
 
 **The library guide.** A reference document that lives in your library. Claude reads it to understand the conventions of your setup. You can read it too: it explains the structure, the naming conventions, the access patterns.
 

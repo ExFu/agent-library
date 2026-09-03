@@ -21,3 +21,12 @@ Entry format:
 - by: al (Claude Code), plugin 0.10.0
 - outcome: not-applicable
 - notes: fresh install -- library created at the target shape
+
+## 20260903-1743-docket
+- inventory: Alastair (reminders 3, inbox 1, todo pointer); Acme (todo pointer only)
+- Alastair: converted -- 3 reminders with once triggers, 1 backlog entry, todo pointer carried; originals in docket/legacy/
+- Acme: skipped -- Al: "leave Acme on the old shape until the renewal closes"; pointer-only, nothing to convert
+- considered: 2026-09-03
+- by: al (Claude Code), plugin 0.11.0
+- outcome: applied
+- notes: al-reminders and al-inbox replaced by al-docket in the same sitting; slack-dm channel declared and granted auto.

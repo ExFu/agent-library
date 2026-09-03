@@ -70,6 +70,14 @@ Infer the storage backend from the substrate's environment:
 
 Note the backend for the rest of the session. It determines which verb vocabulary to surface and whether sync logic applies.
 
+**Then note which messaging connectors this session has.** The docket's channels (`ontology.md#channels`) name a connector to send through -- Slack, Gmail, WhatsApp, or any custom MCP that can send a message -- and whether that connector is actually present differs by surface. Look at the tools available in this session, and write what you find to `exfu/derived/channels.json`:
+
+```json
+{"detected_at": "2026-09-04T09:03:00Z", "surface": "claude-code | cowork | desktop | mobile | web", "connectors": ["slack", "gmail"]}
+```
+
+It is a text cache, regenerable, never hand-edited: overwrite it every boot, list only connectors you can see, and an empty list is a valid answer. The dispatcher and the daily briefing read it to decide whether a channel can be reached from here; a channel whose connector is absent degrades to pull (surfaced in-session and on the dashboard) rather than failing. Skip the write silently if the substrate is read-only in this session.
+
 ### Step 4 -- Read the user's wow skill for orientation
 
 Check whether the user has a ways-of-working skill loaded in this session. The user's wow skill is typically named `<username>-wow` or `<username>` (e.g. `al-wow`, `al`). Look for any installed skill whose name matches this pattern. If one is loaded, it provides high-level orientation -- read it and let it shape how you interact for the rest of the session.
@@ -96,11 +104,11 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 ### Step 6 -- Resolve the current exfu version
 
-Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260724-1910`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260903-1743`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
 The convention base lives at `exfu/` and is deliberately flat and small. It splits in two:
 
-**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260724-1910/`), which holds one file:
+**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260903-1743/`), which holds one file:
 - `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
 
 **Unversioned shipped content** beside it at `exfu/`, refreshed by plugin updates:
@@ -109,9 +117,9 @@ The convention base lives at `exfu/` and is deliberately flat and small. It spli
 - `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
-A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260724-1910` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
+A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260903-1743` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
 
-Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260724-1910` follows the conventions in `exfu/20260724-1910/ontology.md`. The `user/` scope is unversioned and always follows latest.
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260903-1743` follows the conventions in `exfu/20260903-1743/ontology.md`. The `user/` scope is unversioned and always follows latest.
 
 ### Step 7 -- Check for pending migrations
 
@@ -216,21 +224,47 @@ Scheduled agents run agentically in their scheduled sessions, but some outcomes 
 
 Check the most recent entries in `exfu/derived/agent-log.json` (latest entry per agent):
 - Any `status: failure` -- mention which one and its detail line.
-- Any detail line flagging something for the user (e.g. "v0.2 unreferenced; candidate for removal", "7 inbox items, 2 stale", "2 new sightings match the brief").
+- Any detail line flagging something for the user (e.g. "v0.2 unreferenced; candidate for removal", "3 backlogs summarised, 7 items, 2 stale", "4 due: 2 delivered, 1 drafted, 1 skipped", "2 new sightings match the brief").
 
 If there's something, surface it briefly: "Overnight runs left [n] things for you to look at." Don't force processing -- mention and move on.
 
 If there's nothing, say nothing.
 
-### Step 14 -- Check reminders and inbox
+### Step 14 -- Check the docket
 
-Check whether a reminders skill is loaded in this session. The user's reminders skill is typically named `<username>-reminders` (e.g. `al-reminders`). Look for any installed skill whose name ends in `-reminders`. If one is loaded, delegate to it: read the reminders, surface anything due or overdue. If nothing is due, say nothing.
+The docket (`ontology.md#docket`) is what is open for the user: tasks, reminders, and things they have left for their agents, plus the triggers that say when each gets heard. This step is the boot-time drain the dispatcher relies on (`ontology.md#dispatcher`): whatever is due and addressed to the session, the session delivers, so a person in Claude several times a day is served faster than any cron.
 
-Check whether an inbox skill is loaded. The user's inbox skill is typically named `<username>-inbox`. If one is loaded, delegate to it: check the count. If there are items, mention briefly ("Inbox has [n] items"). Don't force processing.
+**If a `<username>-docket` skill is loaded** (e.g. `al-docket`; look for any installed skill whose name ends in `-docket`), delegate to it and skip the rest of this step. It carries the user's own preferences for what to surface at session start.
 
-If neither type of skill is loaded, check the user scope directly:
-- `user/reminders/` -- look for any reminder files with natural-language trigger rules that fire today
-- `user/inbox/` -- count items if any exist
+**Otherwise, run the check yourself:**
+
+1. **Get the due view.** Read `exfu/derived/due.json` if it exists. It is fresh only if its `source_hashes` still match the docket files it was computed from (`triggers.jsonl`, `fires.jsonl`, `signals.jsonl`, `channels.jsonl` per scope); if they do not, if you cannot tell, or if this is a filesystem session where running a script costs nothing, refresh it:
+
+   ```
+   python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/library-index/index.py due <substrate-root> --json
+   ```
+
+   The tool rebuilds the per-machine index incrementally, rewrites `due.json`, and prints the triggers due now for this library's actor, each with its handler, channel, target entry title, occurrence id and resolved `send` mode. On a connector-only session (a phone, an unmounted context) you cannot run it: use `due.json` as it stands if it is fresh, and if it is stale read `docket/reminders.jsonl` and `docket/triggers.jsonl` from `user/` directly and judge what is due by eye.
+
+2. **Deliver what belongs in the session.** For each due trigger whose `channel` is absent or resolves to `pull` (including a name that resolves to nothing, which degrades to pull): write the intent receipt, deliver in the session (for `deliver`: show the entry or the `assess` text; for `agent`: only act if the brief is small enough to finish in a sentence or two, otherwise present it and ask), then write the result receipt with any signals the handling produced -- exactly as the dispatcher librarian does:
+
+   ```
+   python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/library-index/index.py receipt <substrate-root> <occurrence> intent
+   python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/library-index/index.py receipt <substrate-root> <occurrence> result --status delivered [--signals name,...]
+   ```
+
+   Receipts are what stop the hourly dispatcher firing the same occurrence again. Where you cannot run the script, append the two receipt rows to the scope's `docket/fires.jsonl` by hand in the shape `ontology.md#fires` gives, intent before acting and result after. Leave triggers with a reachable `dm` or `broadcast` channel to the dispatcher; do not send on its behalf.
+
+3. **Surface the rest, briefly:**
+   - Reminders due or overdue (open entries in `reminders.jsonl` whose trigger has elapsed, or whose `agent_notes` say now), as a short list.
+   - The open agent-backlog count, in one clause ("3 things waiting for your agents"); `docket/backlog-summary.md` has the sweep's suggestions if the user wants them. Don't force processing.
+   - Any trigger with `status: paused` (three consecutive failures), plus counts from the last few days of receipts of anything undelivered (a `failed` result, or a channel that could not be resolved and fell back to pull) or `suppressed` (a send cap or a signal loop). These are exactly the nudges that exist to catch the user's attention, so say plainly which one is stuck and why.
+
+   If nothing is due, the backlog is empty and nothing is paused or suppressed, say nothing.
+
+**Deprecated path -- a library with no docket.** If the index shows no `docket/` anywhere but does list `todo/`, `reminders/` or `inbox/` (the pre-0.11 folder-types, `ontology.md#deprecated`), fall back to the old behaviour. Check whether a `<username>-reminders` or `<username>-inbox` skill is loaded and delegate to whichever is present: read the reminders and surface anything due or overdue; check the inbox count and mention it briefly ("Inbox has [n] items"). If neither is loaded, read the user scope directly: `user/reminders/` for reminder lines whose natural-language rule fires today, `user/inbox/` for a count. A scope can carry both shapes during migration; read the docket for what is in the docket and the deprecated folders for what is still in them.
+
+**One-time nudge.** If the index reports any scope with deprecated folder-types and `durable/ledger/migrations.md` has no entry for the docket migration, mention once per session that a docket migration is available -- "there's a tidy-up available that brings your tasks, reminders and captures into one place; your librarian can run it whenever you're ready" -- and move on. Never repeat it in the same session, never make it a condition of anything else, and never run it from here: applying is the library-updater's job, with the user present.
 
 These checks are fast and quiet. Session start is not a ceremony.
 
@@ -311,19 +345,23 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    20260724-1910/          # a convention version: the frozen contract
+    20260903-1743/          # a convention version: the frozen contract
       ontology.md           # the complete core ontology, one file
     readme.md               # orientation map for this directory
     principles.md           # design principles + recommendations
     librarians/             # exfu-shipped librarian definitions
     skills/                 # exfu-shipped skill sources (wow template)
-    derived/                # generated content (unversioned cache)
+    derived/                # generated text caches (unversioned; the binary
+                            # search index lives per machine, outside the
+                            # synced root, at ~/.exfu/derived/<library-id>/)
       index.json            # the global index -- the primary navigation tool
       agent-registry.json   # registered scheduled agents and their health
       agent-log.json        # run history
+      channels.json         # which messaging connectors this surface has
+      due.json              # the due view: triggers ready to fire, with source hashes
     visualisations/         # exfu-shipped visual outputs
       dashboard/            # generated HTML dashboard
-    latest.txt              # points to current version (e.g. "20260724-1910")
+    latest.txt              # points to current version (e.g. "20260903-1743")
   dashboard.html            # generated front door: redirects to the dashboard above
   durable/                  # the permanent record: facts about the library itself
                             # that nothing can regenerate. A refresh replaces
@@ -342,7 +380,7 @@ substrate-root/
     acme/                   # a scope (has scope.md)
       scope.md
       context/
-      todo/
+      docket/               # what is open here: todo, reminders, agent backlog
       scopes/               # child scopes gathered here
         sales/
           scope.md
@@ -363,7 +401,7 @@ substrate-root/
 ---
 name: <human-readable name>
 parent: <parent scope name, or "root" for top-level>
-exfu: 20260724-1910
+exfu: 20260903-1743
 ---
 ```
 
@@ -371,7 +409,7 @@ Followed by a protective header blockquote, then an optional purpose statement i
 
 The `user/` scope omits the `exfu` field (it's unversioned, always follows latest) and sets `parent: none`.
 
-### The 10 folder-types
+### The 8 folder-types
 
 Inside any scope, these are the standard vocabulary for where things go:
 
@@ -382,13 +420,13 @@ Inside any scope, these are the standard vocabulary for where things go:
 | `skills/` | What skill definitions belong to this scope? |
 | `librarians/` | What substrate maintenance runs here on a schedule? |
 | `scheduled/` | What business-logic work runs here on a schedule? |
-| `todo/` | How does this scope handle tasks? |
-| `reminders/` | How does this scope handle lightweight nudges? |
-| `inbox/` | Where do uncategorised thoughts go for this scope? |
+| `docket/` | What is open here -- tasks, reminders, things left for agents -- and when and how does each get heard? |
 | `databases/` | Where do structured, repeating records live? (CRM, logs, journals) |
 | `visualisations/` | Where do agent-created visual outputs live for this scope? |
 
 Each materialised folder-type has an `agent.md` that follows the reference+delta pattern (see below). The catalogue is open -- a scope may add folder-types not listed here (define them in the scope's ontology).
+
+Three older folder-types -- `todo/`, `reminders/` and `inbox/` -- are deprecated in favour of `docket/` (`ontology.md#deprecated`). A scope that still has them keeps working and every reader understands them; no new scope creates them, and the docket migration offers to convert them scope by scope.
 
 **Materialise on demand.** Folder-types exist only where there is content. A scope with just scope.md and context/ is healthy, not incomplete. Never scaffold empty folders; add a folder-type the moment its first content appears (the scope-setup skill handles this).
 
@@ -402,7 +440,7 @@ Every materialised folder-type directory contains an `agent.md` with this struct
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
 2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
-   `Follows: exfu/20260724-1910/ontology.md#todo`
+   `Follows: exfu/20260903-1743/ontology.md#docket`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 
@@ -445,9 +483,13 @@ These are internalised here so they're available even when the convention base h
 
 **Substrate (the Agent Library).** The combination of files, skills, connectors, and scheduled agents that together give Claude persistent memory and context across sessions and devices. No single component is the substrate -- it's the interplay. To its user, the whole thing is their Agent Library; substrate is the internal register (see `ontology.md#vocabulary`).
 
-**Scope.** A bounded context with its own knowledge, definitions, and conventions. Everything is a scope: personal space, org, team, project, client. Every scope has the same internal shape (the 10 folder-types). Scopes can nest via their own `scopes/` subdirectory. A scope is identified by the presence of `scope.md`.
+**Scope.** A bounded context with its own knowledge, definitions, and conventions. Everything is a scope: personal space, org, team, project, client. Every scope has the same internal shape (the 8 folder-types). Scopes can nest via their own `scopes/` subdirectory. A scope is identified by the presence of `scope.md`.
 
-**Folder-type.** A standard kind of content that a scope may contain: ontology, context, skills, librarians, scheduled, todo, reminders, inbox, databases, visualisations. Each is a discovery convention first, a storage location second -- it tells an agent how the scope handles that kind of thing. Folder-types materialise only when content exists for them.
+**Folder-type.** A standard kind of content that a scope may contain: ontology, context, skills, librarians, scheduled, docket, databases, visualisations (plus the deprecated todo, reminders and inbox, still readable in older scopes). Each is a discovery convention first, a storage location second -- it tells an agent how the scope handles that kind of thing. Folder-types materialise only when content exists for them.
+
+**Docket.** The folder-type for what is open in a scope: `todo.jsonl`, `reminders.jsonl` and `agent-backlog.jsonl`, one JSON record per line under a common envelope, read whole in one call from any surface. Beside them sit the mechanics that make entries do something -- `triggers.jsonl` (when and how a matter gets heard), `signals.jsonl` (facts agents recorded for whoever listens), `fires.jsonl` (receipts of triggers firing) and `channels.jsonl` (how the scope reaches people). The hourly dispatcher librarian fires due triggers; this skill's Step 14 drains the pull-channel ones at session start. Full contract: `ontology.md#docket` and `#docket-mechanics`.
+
+**Global index and the search index.** `exfu/derived/index.json` is the whole-substrate map (below). The searchable index over docket records, `library.sqlite`, is binary and therefore lives per machine outside the synced root at `~/.exfu/derived/<library-id>/`, rebuilt from the text records by `scheduled-tasks/library-index/index.py`; it is never a source of truth and a phone never touches it.
 
 **Convention base.** The exfu-shipped definitions at `exfu/<version>/`. Defines what each folder-type means and how it behaves by default. Every agent.md references the convention base and records only local deviations.
 

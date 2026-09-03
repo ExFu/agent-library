@@ -233,7 +233,7 @@ Then deploy the shipped convention base into the personal root, in order:
 
 1. **Create `exfu/` at the personal substrate root.**
 2. **Copy the shipped convention base** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape. Two parts:
-   - The version directory (the plugin ships exactly one, e.g. `20260724-1910`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
+   - The version directory (the plugin ships exactly one, e.g. `20260903-1743`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
    - The unversioned files beside it -- `readme.md`, `principles.md`, `librarians/` (the shipped librarian definitions), and `skills/` (the wow template). These sit directly in `exfu/`, not inside the version directory, and are refreshed by plugin updates.
 3. **Create `exfu/latest.txt`** containing exactly the shipped version name.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
@@ -241,6 +241,7 @@ Then deploy the shipped convention base into the personal root, in order:
    - `durable/readme.md` -- what the permanent record is, plus the three tests anything kept here must pass: unregenerable, about the library rather than about the world, and append-only human-readable text. Copy it as shipped.
    - `durable/ledger/readme.md` -- what the logbook is and the rules that govern it. Copy it as shipped.
    - `durable/ledger/install.md` -- the record of this install. Fill the shipped skeleton in: today's date, the plugin version (read it from the plugin manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface the install ran on (Claude Code or Cowork), the storage backend chosen for this personal root, and the conventions version deployed above. Note the team's shared substrate here too (backend and location), so a later session can tell the two apart.
+   - `durable/ledger/grants.md` -- the record of consent the joiner gives, later, for a channel to send on their behalf without asking. Copy it as shipped from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/grants.md`; it starts with no entries.
    - `durable/ledger/migrations.md` -- seeded, per the next item.
 6. **Seed `durable/ledger/migrations.md` with every migration the plugin ships.** List the files in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/` and write one entry for each, in filename order, with outcome `not-applicable`. If that directory is absent or empty, the plugin ships none: leave the file with its heading and no entries. Use this format, which is the format every ledger this plugin writes uses:
 
@@ -269,7 +270,7 @@ With the convention base in place, create the joiner's personal scope. **Delegat
 The scope-setup skill will:
 - Ask about-me questions and write `user/context/about-me.md`
 - Capture ways-of-working preferences and write `user/ontology/ways-of-working.md`
-- Optionally set up todo, reminders, and inbox with sane defaults
+- Set up the joiner's docket at `user/docket/` -- the one place for their tasks, reminders, and things they leave for their agents. It scaffolds only `agent.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/scope/docket/agent.md`) and `readme.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/docket-readme.md`); the entry files appear on their first entry, and a task tool the joiner already has becomes a pointer line in `agent.md` rather than a local file
 
 **Role capture is a deliberate extra beat for team installs.** The joiner's role shapes how Claude reads everything -- a CFO and a product manager ask the same question and need different framing. Make sure the about-me captures it explicitly: job title, what the role actually involves, the kind of decisions they make, who they work with regularly, the tools they live in. If the team's shared substrate defines role-capture conventions (check the team scope's ontology), follow them.
 
@@ -317,9 +318,10 @@ The team's shared substrate should already have its own guard from the champion'
 ### Step 9 -- Librarian registration (delegate to install-scheduled-agent)
 
 **Delegate to the `install-scheduled-agent` skill.** It will:
-- Register the nightly-index librarian against the joiner's personal substrate
-- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json` at the personal substrate root
-- Set up the `nightly-agents` scheduled task (which runs all nightly-cadence scheduled agents -- librarians first, then any business agents)
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json` at the personal substrate root. That registers the shipped librarians it lists against the joiner's personal substrate: nightly-index, docket-compact, and backlog-sweep on the nightly cadence, and the dispatcher on the hourly cadence
+- Set up two scheduled tasks, one per cadence:
+  - `nightly-agents` -- runs all nightly-cadence scheduled agents (librarians first, then any business agents). Created in Cowork's Scheduled tab, as before.
+  - `hourly-agents` -- runs the dispatcher, the librarian that checks whether any reminder rule is due and delivers it. Create this one as a **Claude Code Desktop local scheduled task** (Code tab, Routines, Local) with the **cheapest model** selected in its model picker: it runs against the local index on this machine and must be cheap, because on most runs nothing is due. Cowork's scheduled tasks run in the cloud without local files, so they cannot host it. A joiner who only has Cowork skips this task; they get the same check when a session starts, and the dashboard shows what is waiting
 
 The shared substrate's librarians are the champion's responsibility -- they run on the champion's machine. Don't register anything against the shared root.
 
@@ -356,9 +358,9 @@ As the conversation naturally surfaces needs, offer the skills that match. Don't
 - Reminders that work across all their devices.
 - A contact list or personal CRM maintained for them.
 
-If the joiner already got inbox, reminders, or todo during user scope creation (Step 6), don't re-offer those. Pick two or three from what's left.
+The joiner's docket was set up during user scope creation (Step 6), so capture and reminders are already covered there; `setup-docket` is what makes them usable in every session. Pick two or three from what's left.
 
-**Available skills:** `setup-reminders`, `setup-inbox`, `setup-writing-styles` -- same as the solo install.
+**Available skills:** `setup-docket`, `setup-writing-styles` -- same as the solo install.
 
 **Demonstrate the team layer working** before closing:
 - Do a live pull (git) or fresh read (Dropbox) from the shared substrate and show the joiner something current from it.
@@ -381,7 +383,7 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock -- always installed:**
 - `skill-packaging` -- how Claude packages skills into files for the user to install. Used for custom skills the joiner wants to create later, not for the bundled ones.
-- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to both substrates by reading their indexes, runs the docket's due check at session start and delegates to the user's personal docket skill if it is installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks.
 
@@ -391,8 +393,7 @@ All pre-installed via the plugin. No URL fetching needed.
 - Local-only path: neither skill is registered as the storage layer; everything works against local folders directly.
 
 **Optional but high-value:**
-- `setup-reminders` -- one-time intake that generates the joiner's personal `<username>-reminders` skill.
-- `setup-inbox` -- one-time intake that generates the joiner's personal `<username>-inbox` skill.
+- `setup-docket` -- one-time intake that generates the joiner's personal `<username>-docket` skill (capture, remind, complete, snooze, session-start check).
 - `daily-briefing` (scheduled task) -- morning briefing. Can include both personal and team-layer content.
 - `setup-writing-styles` -- voice intake from writing samples that generates the joiner's personal `<username>-writing-styles` skill.
 
@@ -415,11 +416,11 @@ A checklist, not a script:
 - For Dropbox: shared folder located, `exfu-dropbox-storage` operational. Joiner understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
 - Personal substrate established in a separate folder, identified via the folder picker.
 - Convention base deployed at the personal root: `exfu/<version>/` with `exfu/latest.txt` naming it.
-- Permanent record created at the personal root's `durable/` with `readme.md`, and its ledger at `durable/ledger/` with `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`. The shared substrate's `durable/` untouched.
-- User scope created at `user/` with `scope.md`, `context/about-me.md` (including role capture and the team-connection record), and `ontology/ways-of-working.md`.
+- Permanent record created at the personal root's `durable/` with `readme.md`, and its ledger at `durable/ledger/` with `readme.md`, `install.md`, `grants.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`. The shared substrate's `durable/` untouched.
+- User scope created at `user/` with `scope.md`, `context/about-me.md` (including role capture and the team-connection record), `ontology/ways-of-working.md`, and `docket/agent.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the personal substrate root.
-- Agent registry at the personal root's `exfu/derived/agent-registry.json` with nightly-index registered; `nightly-agents` scheduled task created.
+- Agent registry at the personal root's `exfu/derived/agent-registry.json` with the shipped librarians registered (nightly-index, docket-compact, backlog-sweep, dispatcher); `nightly-agents` scheduled task created, and `hourly-agents` created as a Claude Code Desktop local task with the cheapest model, or deliberately skipped on a Cowork-only surface.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - A personal `wow` skill generated with a navigation map pointing at both substrates, installed, and added to Global Instructions.
 - `exfu-library` skill installed and operational.

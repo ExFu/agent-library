@@ -14,7 +14,7 @@ Nothing anchors into this readme, the principles, the librarian definitions, or 
 
 - `<timestamp>/ontology.md` -- the complete core ontology in one file: the two vocabulary registers (Agent Library user-facing, substrate internal), the scope model, the folder-type catalogue, scheduled agents and librarians, the way-of-working concept, and the authoring rules. **Read this first.** `Follows:` references across the substrate point into it by anchor.
 - `principles.md` -- the design principles behind the conventions, plus curated tool recommendations.
-- `librarians/` -- the ExFu-shipped librarian definitions (nightly-index, inbox-triage, dashboard-generator, version-cleanup, library-updater). Instances, ready to register. Unversioned because each describes a plugin-owned script and moves with it, which also keeps registry `source` paths stable across mints.
+- `librarians/` -- the ExFu-shipped librarian definitions (nightly-index, backlog-sweep, docket-compact, dispatcher, dashboard-generator, version-cleanup, library-updater). Instances, ready to register. Unversioned because each describes a plugin-owned script and moves with it, which also keeps registry `source` paths stable across mints.
 - `migrations/` -- the shipped migrations that carry an existing library from an older shape to this one. Ordered by id; applied by the library-updater librarian, which records every outcome in `durable/ledger/`.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template that personal wow skills are generated from.
 - `latest.txt` -- names the current convention version.
@@ -32,13 +32,13 @@ substrate-root/
   CLAUDE.md          # guard file: warns sessions that haven't loaded the conventions
   dashboard.html     # generated front door: redirects into exfu/visualisations/
   exfu/              # convention base (plugin-owned; agents and users don't edit it)
-    20260724-1910/   # a convention version: ontology.md only, frozen at ship
+    20260903-1743/   # a convention version: ontology.md only, frozen at ship
     readme.md        # this file
     principles.md    # design principles and recommendations
     librarians/      # shipped librarian definitions, ready to register
     migrations/      # shipped migrations, applied by the library-updater
     skills/          # shipped skill sources (the wow template)
-    latest.txt       # current version name, e.g. "20260724-1910"
+    latest.txt       # current version name, e.g. "20260903-1743"
     derived/         # generated cache: index, registries. Never hand-edited.
     visualisations/  # ExFu-shipped visual outputs, e.g. the dashboard
   durable/           # the permanent record: facts about this library that

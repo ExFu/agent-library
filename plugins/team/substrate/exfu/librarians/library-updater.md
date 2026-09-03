@@ -17,7 +17,7 @@ Releases change the shape of a library. Something has to carry installed librari
 
 This librarian is that something. It is **not scheduled**, and that is deliberate: a plugin update does not touch the library, it changes what is installed alongside it. There is no update hook, so nothing can run at update time. The boot skill notices the gap at the start of the next session and hands here.
 
-Follows: exfu/20260724-1910/ontology.md#migrations
+Follows: exfu/20260903-1743/ontology.md#migrations
 
 ## Instructions
 
@@ -43,7 +43,7 @@ For each pending migration in order, read its `applies_when:` and evaluate it **
 
 Migrations are ordered because later ones assume earlier ones landed. Never batch them and never reorder.
 
-A migration deploys plugin-owned content, and the boundary is stated positively: **a refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.** The only write outside `exfu/` any migration makes is appending to the logbook. If a migration body asks for more than that, stop and report it rather than running it.
+A migration that deploys plugin-owned content writes only under `exfu/`, and the boundary is stated positively: **a refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.** A migration that changes the shape of the user's own scopes is different, and is allowed only under three conditions, all of which you check before running it: its frontmatter `writes:` declares every path outside `exfu/` it will touch; it is marked `requires_user_decision: true`; and it works scope by scope with a journal (below). A migration body that asks for a write its frontmatter does not declare, or that would write into `user/` or `scopes/` without those marks, is stopped and reported rather than run.
 
 For each:
 
@@ -54,6 +54,8 @@ For each:
 5. Record the outcome in `durable/ledger/migrations.md` **before starting the next one**. A half-applied run that stops must leave an accurate record of exactly how far it got.
 
 If a migration fails, stop the whole run. Record `failed` with what happened. Do not continue to later migrations against a library in a half-known state.
+
+**Scope-by-scope migrations keep a journal.** When a migration works per scope: inventory every candidate scope first and list them under the migration's ledger heading before touching any; for each scope, judge whether conversion is doable (recognisable shape, parseable content, the user present for anything destructive) and either convert it or record it `skipped` with the reason; make every step idempotent so a scope that failed can be resumed on a later run without redoing the others; preserve originals until the scope verifies; and record the migration itself as `applied` only when every selected scope has verified. A `skipped` scope may stay on the deprecated shape indefinitely; every reader still understands it. The ledger heading then carries one line per scope (`- <scope>: converted | skipped | failed -- <note>`) above the outcome line.
 
 ### 4. Record decisions, not just outcomes
 

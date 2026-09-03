@@ -6,6 +6,33 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.11.0 -- 2026-09-03
+
+**What is open in a scope now lives in one docket, as records.** Tasks, reminders and captured thoughts were three folder-types of freeform markdown that scripts guessed at: the dashboard took the first date it found in a line as a reminder's date, decided a folder was a pointer by substring-matching phrases, and split reminder files by whether they happened to use headings or bullets. The two generations of personal skills disagreed about where the files even lived. And one file per captured item is the most expensive shape there is for an agent to read. Decision record: `planning/structured-worklist.md`, adopted after a Codex audit and a two-voice council.
+
+**One folder, three files, one shape.** `docket/` replaces `todo/`, `reminders/` and `inbox/` with `todo.jsonl`, `reminders.jsonl` and `agent-backlog.jsonl`: one JSON object per line, a whole collection in one read from any surface including a phone through the storage connector. The record is deliberately thin (title, notes for humans, agent notes as freeform instructions for agents, status, timestamps, keywords) and carries no ontological fields: priority, dependencies and recurrence are prose an agent can act on. Anything a program must read arrives as a **mixin** file joined on library-wide ids, never as a column. The inbox is renamed for what it always was: the **agent backlog**, a queue of things the user leaves for their agents, not the user's own in-tray.
+
+**Reminders generalise into triggers, signals and a dispatcher.** A trigger is a scope's statement that at some moment, or on some occurrence, something should be assessed by an agent, and how: deliver through a channel, spin up a sub-agent at a declared weight, or run a registered definition. A fired trigger's handler reports **signals**, and any trigger may arm on a signal name, so "check email for the Acme reply" and "on the reply, draft the follow-up" form a workflow neither side knows about. Every fire writes an append-only **receipt**, intent before acting and result after, so a crash cannot double-send and a shared scope carries its own record of what fired. Three schedule modes ship (`once`, `cron`, `on-signal`); natural-language rules are resolved once at authoring time. The **dispatcher** librarian runs hourly as a Claude Code Desktop local task with the cheapest model, never boots the library, and reads one due view; the boot skill drains the same view at session start.
+
+**Channels and consent.** Any scope may declare how it reaches people (`dm`, `broadcast`; `pull` is always there). Whether the dispatcher may send unattended is a property of the channel, `draft` by default, and elevation to `auto` is a grant recorded in `durable/ledger/grants.md`, which the dispatcher checks before every automatic send; in this release `auto` is honoured only on a dm to the trigger's owner.
+
+**The search index moves outside the synced library.** The ontology always said fast lookups are built per machine outside the synced root; `exfu/derived/` was inside it. A stdlib SQLite index with full-text search now lives at `~/.exfu/derived/<library-id>/`, rebuilt incrementally by content hash so nothing is recomputed unless it changed, and never a source of truth. Text caches stay in `exfu/derived/`. No embeddings yet: every path available today needs an install the plugin cannot assume or a per-call cost it will not add; the schema reserves the columns.
+
+**Deprecated, never wiped.** The three old folder-types stay in the ontology as deprecated, every reader keeps a labelled legacy path for them, and the docket migration is offered scope by scope, journalled, reversible, and skippable forever. Half a dozen libraries exist at different stages; the change is meant to be kind to all of them.
+
+**Changed**
+- Convention base minted as `20260903-1743/`: `#docket` replaces three folder-types (kept as `#deprecated` with their anchors); new `#docket-mechanics` (`#records`, `#mixins`, `#triggers`, `#signals`, `#fires`, `#actors`, `#channels`, `#grants`, `#schedule-modes`, `#dispatcher`); the derived-location rule reworded; migrations gain the scope-by-scope journal rule.
+- New `scheduled-tasks/library-index/index.py` (stdlib only): incremental index, `query`, `due`, `explain`, `fire`, `receipt`, `compact`, and `exfu/derived/due.json`.
+- New librarians `docket-compact` (nightly) and `dispatcher` (hourly); `inbox-triage` becomes `backlog-sweep`; registry template gains all three and the hourly cadence. `library-updater` now permits declared scope writes after consent, with a journal.
+- Second migration ships: `20260903-1743-docket`, offered per scope, `requires_user_decision: true`.
+- `setup-docket` replaces `setup-reminders` and `setup-inbox`; one `docket-template.md` replaces two; the six todo/reminders/inbox defaults and three scope folders are retired.
+- `substrate-index/index.py` indexes dockets per file and lists deprecated folder-types per scope; the dashboard gains a Docket section with trigger, receipt and signal views and keeps a labelled legacy renderer.
+- `exfu-library` writes `channels.json` at boot and drains the due view at session start; `scope-setup` offers only `docket/`; install skills describe the hourly Desktop task and seed `grants.md`; substrate guide v14.
+
+**Not changed:** the durable membership test, the conventions lock, and the rule that nothing binary is ever written inside the library.
+
+---
+
 ## v0.10.1 -- 2026-08-10
 
 **The licence now travels with the plugin.** Every manifest has declared `"license": "Proprietary"` for a while, but the text itself sat only at the top of the source repo, which is not something an installed plugin carries. Anyone installing from the marketplace got a licence claim with nothing behind it, and no obvious way to read the terms they were accepting. The build now copies `LICENSE` into each plugin, so the claim and the text arrive together.

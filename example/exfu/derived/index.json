@@ -1,14 +1,18 @@
 {
-  "generated": "2026-07-24T19:29:55Z",
-  "substrate_root": "/Users/al/Studio/projects/exfu_plugin/.claude/worktrees/project-improvement-priorities-06f179/example",
+  "generated": "2026-09-03T18:11:57Z",
+  "substrate_root": "/Users/al/Studio/projects/exfu_plugin/.claude/worktrees/library-exfu-version-migration-7996a6/example",
   "exfu_versions": {
     "20260724-1910": {
-      "is_latest": true,
+      "is_latest": false,
       "scopes_using": [
         "Acme",
         "Q3 Renewal",
         "Side Project"
       ]
+    },
+    "20260903-1743": {
+      "is_latest": true,
+      "scopes_using": []
     }
   },
   "scopes": [
@@ -21,9 +25,22 @@
       "folder_types": {
         "ontology": "data",
         "context": "data",
-        "todo": "pointer",
-        "reminders": "data",
-        "inbox": "data"
+        "docket": "data"
+      },
+      "deprecated": [],
+      "docket": {
+        "files": {
+          "todo": "pointer",
+          "reminders": "data",
+          "agent-backlog": "data"
+        },
+        "pointers": {
+          "todo": "tracked in ClickUp, not stored locally; use the ClickUp MCP connector for read/write; default workspace \"Alastair's Workspace\"; board https://app.clickup.com/2461358/v/b/alastairs-workspace"
+        },
+        "triggers": 3,
+        "channels": [
+          "slack-dm"
+        ]
       }
     },
     {
@@ -37,6 +54,9 @@
         "context": "data",
         "todo": "pointer"
       },
+      "deprecated": [
+        "todo"
+      ],
       "children": [
         {
           "name": "Q3 Renewal",
@@ -47,7 +67,10 @@
           "folder_types": {
             "context": "data",
             "todo": "data"
-          }
+          },
+          "deprecated": [
+            "todo"
+          ]
         }
       ]
     },
@@ -61,7 +84,8 @@
         "context": "data",
         "scheduled": "data",
         "visualisations": "data"
-      }
+      },
+      "deprecated": []
     }
   ]
 }

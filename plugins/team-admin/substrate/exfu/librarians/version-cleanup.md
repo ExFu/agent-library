@@ -18,7 +18,7 @@ Keeps the exfu/ directory tidy by identifying convention versions that no scope 
 
 1. Read `exfu/derived/index.json` and collect every exfu version pin in use across all scopes.
 
-2. List the version directories that actually exist under `exfu/` -- timestamp-named (e.g. `20260724-1910`) and legacy `v0.x`-named (e.g. `v0.3`) alike -- and read `exfu/latest.txt` if present.
+2. List the version directories that actually exist under `exfu/` -- timestamp-named (e.g. `20260903-1743`) and legacy `v0.x`-named (e.g. `v0.3`) alike -- and read `exfu/latest.txt` if present.
 
 3. Compare. A version directory is unreferenced if:
    - No scope's `exfu:` pin points at it, and

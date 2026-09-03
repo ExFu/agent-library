@@ -3,11 +3,14 @@
 Dashboard Generator
 
 Reads the substrate index, the scheduled-agent registry, and the run log,
-plus workspace content from individual scopes, and generates a
+plus each scope's docket (todo, reminders and agent-backlog records, with
+their triggers, signals, fire receipts and channels; and the index's due
+view at exfu/derived/due.json when present), and generates a
 self-contained HTML dashboard at exfu/visualisations/dashboard/index.html
 (the substrate's visualisations gallery). Falls back to the pre-rename
 registry/log filenames so it works on substrates that predate the
-scheduled-agent vocabulary.
+scheduled-agent vocabulary, and still reads the deprecated todo/,
+reminders/ and inbox/ folders where a scope has them, labelled as such.
 
 Also maintains dashboard.html at the library root: a small redirect page so
 the dashboard has a front door where users actually look, without moving the
@@ -30,7 +33,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -164,43 +167,17 @@ def extract_url(text):
     return m.group(0).rstrip(".,;") if m else None
 
 
-ISO_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
-
-
-def classify_reminder_date(text):
-    """
-    Best-effort: find the first ISO date in a reminder entry and classify it
-    as overdue / soon (next 7 days) / later. Unparseable text simply gets no
-    date; the entry renders as ordinary content, never an error.
-    Returns (iso_string_or_None, group_or_None).
-    """
-    m = ISO_DATE_RE.search(text or "")
-    if not m:
-        return None, None
-    try:
-        due = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
-                       tzinfo=timezone.utc)
-    except ValueError:
-        return None, None
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
-                                               microsecond=0)
-    delta = (due - today).days
-    if delta < 0:
-        return m.group(0), "overdue"
-    if delta <= 7:
-        return m.group(0), "soon"
-    return m.group(0), "later"
-
-
-CHECKBOX_RE = re.compile(r"^[-*] \[( |x|X)\]\s*(.*)$")
-
-
 def render_markdown_mini(text, max_items=10):
     """
     Render a constrained markdown subset to dashboard HTML: headings become
     section labels, checkboxes become task rows, bullets become list rows,
     other lines render as plain text. Everything is escaped; long content
     truncates with an explicit count, never silently.
+
+    Checkbox lines are ordinary markdown in context docs and scope prose, so
+    this renderer keeps drawing them; CHECKBOX_RE itself lives in the legacy
+    section below because parsing them as *tasks* is the deprecated todo/
+    folder's concern.
     """
     rows = []
     for raw in text.split("\n"):
@@ -246,7 +223,50 @@ def render_markdown_mini(text, max_items=10):
     return "\n".join(out)
 
 
-# Phrases that indicate a pointer (external system) in agent.md
+# ---------------------------------------------------------------------------
+# Legacy (deprecated folder-types)
+#
+# todo/, reminders/ and inbox/ were separate folder-types before docket/
+# (ontology.md#deprecated). They are deprecated, not removed: a scope that
+# still has them keeps working, and everything in this section exists to
+# read their markdown forms. Only deprecated folders are routed through
+# here; the docket code further down never calls any of it. The dashboard
+# labels whatever comes out of this section "(deprecated)".
+# ---------------------------------------------------------------------------
+
+# A markdown checkbox line, the deprecated todo/ folder's task shape
+CHECKBOX_RE = re.compile(r"^[-*] \[( |x|X)\]\s*(.*)$")
+
+ISO_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+
+
+def classify_reminder_date(text):
+    """
+    Best-effort: find the first ISO date in a reminder entry and classify it
+    as overdue / soon (next 7 days) / later. Unparseable text simply gets no
+    date; the entry renders as ordinary content, never an error.
+    Returns (iso_string_or_None, group_or_None).
+    """
+    m = ISO_DATE_RE.search(text or "")
+    if not m:
+        return None, None
+    try:
+        due = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                       tzinfo=timezone.utc)
+    except ValueError:
+        return None, None
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0,
+                                               microsecond=0)
+    delta = (due - today).days
+    if delta < 0:
+        return m.group(0), "overdue"
+    if delta <= 7:
+        return m.group(0), "soon"
+    return m.group(0), "later"
+
+
+# Phrases that indicate a pointer (external system) in a deprecated folder's
+# agent.md. The docket declares pointers per file instead (see below).
 POINTER_PHRASES = [
     "tasks are tracked in",
     "lives in",
@@ -274,15 +294,11 @@ def detect_pointer_target(agent_text):
     return None
 
 
-# ---------------------------------------------------------------------------
-# Workspace content collection
-# ---------------------------------------------------------------------------
-
 def collect_workspace_items(root, scopes, folder_name):
     """
-    Collect workspace items (todo/reminders/inbox) across all scopes.
-    Returns a list of dicts with scope_name, scope_path, folder_type,
-    pointer_target (or None), and content.
+    Collect workspace items from a deprecated folder-type (todo, reminders
+    or inbox) across all scopes. Returns a list of dicts with scope_name,
+    scope_path, folder_type, pointer_target (or None), and content.
     """
     items = []
 
@@ -352,6 +368,1110 @@ def collect_workspace_items(root, scopes, folder_name):
         _process_scope(scope)
 
     return items
+
+
+def split_reminder_entries(body):
+    """
+    Split a deprecated reminders/ file into individual entries. Heading-led
+    blocks become entries titled by their heading; a heading-free file yields
+    one entry per bullet line; failing both, the whole body is a single entry.
+    """
+    lines = body.split("\n")
+    has_heading = any(l.strip().startswith("#") for l in lines)
+    entries = []
+    if has_heading:
+        title, buf = None, []
+        for l in lines:
+            s = l.strip()
+            if s.startswith("#"):
+                if title is not None and "\n".join(buf).strip():
+                    entries.append((title, "\n".join(buf).strip()))
+                title = s.lstrip("#").strip()
+                buf = []
+            else:
+                buf.append(l)
+        if title is not None and "\n".join(buf).strip():
+            entries.append((title, "\n".join(buf).strip()))
+        return entries
+    bullets = [l.strip() for l in lines if l.strip().startswith(("- ", "* "))]
+    if bullets:
+        entries = []
+        for b in bullets:
+            title = b.lstrip("-* ").strip()
+            m = CHECKBOX_RE.match(b)
+            if m:
+                title = m.group(2).strip()
+            # the date stays in the body for classification; the title reads clean
+            title = re.sub(r"^\d{4}-\d{2}-\d{2}\s*(--|—|-|:)?\s*", "", title) or title
+            entries.append((title, b))
+        return entries
+    if body.strip():
+        return [(first_snippet(body) or "Reminder", body)]
+    return []
+
+
+def build_legacy_workspace_items(root, index_data):
+    """
+    Items from the deprecated folder-types, in the same shape the docket
+    produces (see build_docket_items) so one card grid and one sidebar panel
+    serve both. Every item carries legacy: True and legacyFolder so the page
+    can label it, and no record id, so basket instructions fall back to
+    naming the file and the title.
+    """
+    out = {"todos": [], "reminders": [], "backlog": []}
+    if not index_data:
+        return out
+    scopes = index_data.get("scopes", [])
+
+    for kind, folder in (("todos", "todo"), ("reminders", "reminders"), ("backlog", "inbox")):
+        for it in collect_workspace_items(root, scopes, folder):
+            scope_name = it.get("scope_name", "")
+            rel_folder = f'{it.get("scope_path", "")}{folder}/'
+            pointer = it.get("pointer_target")
+            content_files = [
+                cf for cf in it.get("content_files", [])
+                if cf["filename"] not in ("done.md", "archive.md")
+            ]
+            # root-relative only: the client joins D.root back on at render
+            # time, so the generated HTML is location-independent
+            base = {"scope": scope_name, "rel": rel_folder,
+                    "legacy": True, "legacyFolder": folder}
+
+            if pointer:
+                tool = pointer_tool_name(pointer)
+                out[kind].append(dict(base, **{
+                    "title": f"Managed in {tool}" if tool else "Managed elsewhere",
+                    "pointer": pointer,
+                    "pointerUrl": extract_url(pointer)
+                    or extract_url(it.get("agent_text", "")),
+                    "meta": "the folder points at your existing tool",
+                    "html": "",
+                    "kind": "pointer",
+                }))
+                continue
+
+            if kind == "todos":
+                task_sources = [("agent.md", l) for l in it.get("agent_tasks", [])]
+                for cf in content_files:
+                    body = strip_frontmatter(cf["text"])
+                    for line in body.split("\n"):
+                        if CHECKBOX_RE.match(line.strip()):
+                            task_sources.append((cf["filename"], line.strip()))
+                for fname, line in task_sources:
+                    m = CHECKBOX_RE.match(line)
+                    if not m:
+                        continue
+                    done = m.group(1).lower() == "x"
+                    text = m.group(2).strip()
+                    out[kind].append(dict(base, **{
+                        "title": text,
+                        "done": done,
+                        "file": fname,
+                        "meta": "done" if done else "open",
+                        "html": render_markdown_mini(line, max_items=4),
+                        "kind": "task",
+                    }))
+            elif kind == "reminders":
+                for cf in content_files:
+                    body = strip_frontmatter(cf["text"])
+                    for title, entry_body in split_reminder_entries(body):
+                        date_iso, date_group = classify_reminder_date(
+                            title + " " + entry_body)
+                        snippet = first_snippet(entry_body)
+                        # a one-line entry's snippet just repeats the title
+                        if title and title in snippet:
+                            snippet = date_iso or ""
+                        out[kind].append(dict(base, **{
+                            "title": title,
+                            "file": cf["filename"],
+                            "date": date_iso,
+                            "dateGroup": date_group,
+                            "meta": deslug(cf["filename"]),
+                            "snippet": snippet,
+                            "html": render_markdown_mini(entry_body, max_items=30),
+                            "kind": "reminder",
+                        }))
+            else:  # the deprecated inbox/ folder, shown as agent backlog
+                for cf in content_files:
+                    fields = parse_yaml_frontmatter(cf["text"])
+                    body = strip_frontmatter(cf["text"])
+                    age = file_age_label(cf.get("mtime"))
+                    status = fields.get("status", "")
+                    meta_bits = [b for b in (age, status) if b]
+                    out[kind].append(dict(base, **{
+                        "title": deslug(cf["filename"]),
+                        "file": cf["filename"],
+                        "meta": " -- ".join(meta_bits),
+                        "snippet": first_snippet(body),
+                        "html": render_markdown_mini(body, max_items=30),
+                        "kind": "capture",
+                    }))
+    return out
+
+
+# The per-scope block renderers for the deprecated folders. generate_dashboard
+# renders item cards instead; these stay for anything that still composes a
+# folder-by-folder view of a deprecated scope.
+
+def render_workspace_folder(items, folder_label, folder_kind):
+    """
+    Render a deprecated workspace section (todo, reminders, or inbox).
+    Sections with nothing to show are simply absent.
+    """
+    if not items:
+        return ""
+
+    parts = [f'<div class="workspace-section">', f"<h3>{esc(folder_label)}</h3>"]
+
+    for item in items:
+        scope_name = esc(item["scope_name"])
+        pointer = item.get("pointer_target")
+        content_files = item.get("content_files", [])
+        agent_tasks = item.get("agent_tasks", [])
+
+        # done.md / archive.md hold what's finished -- not "on my plate"
+        content_files = [
+            cf for cf in content_files
+            if cf["filename"] not in ("done.md", "archive.md")
+        ]
+
+        # Nothing left to show for this scope? Show nothing.
+        if not (pointer or content_files or agent_tasks):
+            continue
+
+        parts.append('<div class="workspace-scope">')
+        parts.append(f'<div class="workspace-scope-name">{scope_name}</div>')
+
+        if pointer:
+            tool = pointer_tool_name(pointer)
+            chip = f"Managed in {tool}" if tool else "Managed elsewhere"
+            parts.append(
+                '<div class="ws-pointer-row">'
+                f'<span class="chip">{esc(chip)}</span>'
+                f'<span class="ws-pointer-detail">{inline_md(pointer)}</span>'
+                "</div>"
+            )
+        elif folder_kind == "inbox" and content_files:
+            def _inbox_card(cf):
+                fields = parse_yaml_frontmatter(cf["text"])
+                body = strip_frontmatter(cf["text"])
+                title_html = esc(deslug(cf["filename"]))
+                status = fields.get("status", "")
+                if status:
+                    title_html += f'<span class="chip chip-quiet">{esc(status)}</span>'
+                bits = ['<div class="inbox-card">',
+                        f'<div class="inbox-title">{title_html}</div>']
+                snippet = first_snippet(body)
+                if snippet:
+                    bits.append(f'<div class="inbox-snippet">{inline_md(snippet)}</div>')
+                age = file_age_label(cf.get("mtime"))
+                if age:
+                    bits.append(f'<div class="inbox-age">{esc(age)}</div>')
+                bits.append("</div>")
+                return "".join(bits)
+
+            for cf in content_files[:8]:
+                parts.append(_inbox_card(cf))
+            rest = content_files[8:]
+            if rest:
+                plural = "" if len(rest) == 1 else "s"
+                parts.append(
+                    f'<details class="ws-more"><summary>and {len(rest)} more item{plural}</summary>'
+                    + "".join(_inbox_card(cf) for cf in rest) + "</details>"
+                )
+        elif content_files:
+            for cf in content_files:
+                body = strip_frontmatter(cf["text"])
+                if len(content_files) > 1:
+                    parts.append(
+                        f'<div class="ws-filename">{esc(deslug(cf["filename"]))}</div>'
+                    )
+                parts.append(f'<div class="ws-body">{render_markdown_mini(body)}</div>')
+        elif agent_tasks:
+            parts.append(
+                f'<div class="ws-body">{render_markdown_mini(chr(10).join(agent_tasks))}</div>'
+            )
+        else:
+            parts.append('<div class="workspace-empty">Empty</div>')
+
+        parts.append("</div>")
+
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+def render_workspace_views(root, index_data):
+    """Render the deprecated folders folder-by-folder, all three at once."""
+    if index_data is None:
+        return (
+            '<div class="empty-state">'
+            "<h3>No library index found</h3>"
+            "<p>Run the nightly index first. Docket views need the index"
+            "to know where to look for todo, reminders, and inbox items.</p>"
+            "</div>"
+        )
+
+    scopes = index_data.get("scopes", [])
+
+    todo_items = collect_workspace_items(root, scopes, "todo")
+    reminder_items = collect_workspace_items(root, scopes, "reminders")
+    inbox_items = collect_workspace_items(root, scopes, "inbox")
+
+    # Filter out empty items (no pointer, no content, no tasks)
+    def has_content(item):
+        return (
+            item.get("pointer_target")
+            or item.get("content_files")
+            or item.get("agent_tasks")
+        )
+
+    todo_items = [i for i in todo_items if has_content(i)]
+    reminder_items = [i for i in reminder_items if has_content(i)]
+    inbox_items = [i for i in inbox_items if has_content(i)]
+
+    if not todo_items and not reminder_items and not inbox_items:
+        return (
+            '<div class="empty-state">'
+            "<h3>Nothing in your workspace yet</h3>"
+            "<p>Todo items, reminders, and inbox items from your scopes "
+            "will appear here once they have content.</p>"
+            "</div>"
+        )
+
+    parts = [
+        render_workspace_folder(todo_items, "Todo (deprecated)", "todo"),
+        render_workspace_folder(reminder_items, "Reminders (deprecated)", "reminders"),
+        render_workspace_folder(inbox_items, "Inbox (deprecated)", "inbox"),
+    ]
+
+    return "\n".join(p for p in parts if p)
+
+
+def render_workspace_view(root, index_data, kind, label, empty_guidance):
+    """
+    One deprecated folder-type (todo, reminders, inbox) as its own view:
+    collect, filter, render, and close with guidance on how to create
+    content when there is none.
+    """
+    if index_data is None:
+        return (
+            '<div class="empty-state"><h3>No library index found</h3>'
+            "<p>Run the nightly index first. This view needs the index to know "
+            "where to look.</p></div>"
+        )
+    items = collect_workspace_items(root, index_data.get("scopes", []), kind)
+    items = [
+        i for i in items
+        if i.get("pointer_target") or i.get("content_files") or i.get("agent_tasks")
+    ]
+    body = render_workspace_folder(items, label, kind)
+    guidance = f'<div class="guidance">{empty_guidance}</div>'
+    if not body:
+        return (
+            f'<div class="empty-state"><h3>Nothing in {esc(label.lower())} yet</h3>'
+            "<p>This view fills itself from your scopes.</p></div>" + guidance
+        )
+    return body + guidance
+
+
+# ---------------------------------------------------------------------------
+# Docket (records, triggers, signals, receipts, channels)
+#
+# One docket/ per scope: todo.jsonl, reminders.jsonl and agent-backlog.jsonl
+# share the record envelope (ontology.md#records); triggers.jsonl says when
+# and how entries get heard; signals.jsonl and fires.jsonl are the
+# append-only history; channels.jsonl says how the scope reaches people.
+# Store-or-point is per file, declared in agent.md's "Local deviations:".
+# Everything here reads JSON, never markdown.
+# ---------------------------------------------------------------------------
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # pragma: no cover
+    ZoneInfo = None
+
+# (item kind on the page, file stem in the docket)
+DOCKET_ENTRY_FILES = (("todos", "todo"), ("reminders", "reminders"),
+                      ("backlog", "agent-backlog"))
+
+# A per-file pointer line in docket/agent.md's "Local deviations:", e.g.
+# "- todo: tracked in ClickUp, not stored locally". The file name before the
+# colon is explicit; the text after it has to say the data is elsewhere.
+DOCKET_POINTER_RE = re.compile(
+    r"^\s*(?:[-*]\s*)?(todo|reminders|agent-backlog)\s*:\s*(.+?)\s*$",
+    re.IGNORECASE,
+)
+DOCKET_POINTER_WORDS = ("tracked in", "not stored locally", "managed in", "lives in")
+
+# A whole collection is one read; this cap only guards against a runaway file.
+JSONL_MAX_BYTES = 4 * 1024 * 1024
+
+SOON_DAYS = 7
+
+
+def read_jsonl(path):
+    """
+    Rows of a JSONL file as dicts, in file order. Blank and unparseable lines
+    are skipped: a half-written line under sync must not sink the page.
+    """
+    rows = []
+    if not path.is_file():
+        return rows
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")[:JSONL_MAX_BYTES]
+    except OSError:
+        return rows
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def _revision_key(row):
+    try:
+        rev = int(row.get("revision") or 0)
+    except (TypeError, ValueError):
+        rev = 0
+    return (rev, str(row.get("updated") or ""))
+
+
+def fold_rows(rows):
+    """
+    The in-memory half of the record fold: union rows by id keeping the
+    highest revision, then the latest updated, and drop tombstones. Rows
+    without an id pass through. Immutable rows (signals, receipts) fold to
+    themselves.
+    """
+    by_id, anon = {}, []
+    for r in rows:
+        rid = r.get("id")
+        if not rid:
+            anon.append(r)
+            continue
+        cur = by_id.get(rid)
+        if cur is None or _revision_key(r) > _revision_key(cur):
+            by_id[rid] = r
+    live = list(by_id.values()) + anon
+    return [r for r in live if not r.get("deleted")]
+
+
+def is_open(row):
+    """A record is on the plate unless its status says otherwise."""
+    return str(row.get("status") or "open").lower() == "open"
+
+
+def parse_docket_pointers(agent_text):
+    """
+    Per-file pointer declarations from docket/agent.md: {"todo": "tracked in
+    ClickUp, not stored locally", ...}. Only lines in the explicit
+    "<file>: <text>" form count, and a file is a pointer only when one of its
+    lines says the data is elsewhere. Several lines for one file join with
+    "; " so a URL on a second line travels with the declaration. Mirrors
+    substrate-index/index.py; the index is not imported so either script
+    runs alone.
+    """
+    lines_by_file = {}
+    for line in (agent_text or "").split("\n"):
+        m = DOCKET_POINTER_RE.match(line)
+        if m:
+            lines_by_file.setdefault(m.group(1).lower(), []).append(m.group(2).strip())
+    pointers = {}
+    for name, lines in lines_by_file.items():
+        if any(w in text.lower() for text in lines for w in DOCKET_POINTER_WORDS):
+            pointers[name] = "; ".join(lines)
+    return pointers
+
+
+def zone_for(name):
+    """An IANA zone by name, falling back to UTC when unknown or unavailable."""
+    if name and ZoneInfo is not None:
+        try:
+            return ZoneInfo(str(name))
+        except Exception:  # ZoneInfoNotFoundError, or a bad tz key
+            pass
+    return timezone.utc
+
+
+def parse_instant(value, tz_name=None):
+    """
+    An ISO 8601 string as an aware UTC datetime. A naive value takes tz_name
+    (the trigger's zone), else UTC. None when it does not parse.
+    """
+    if not value:
+        return None
+    s = str(value).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=zone_for(tz_name))
+    return dt.astimezone(timezone.utc)
+
+
+def format_instant(inst, tz_name=None):
+    """A next-occurrence label in the trigger's own zone: 'Fri 4 Sep 2026, 09:00 BST'."""
+    if inst is None:
+        return ""
+    local = inst.astimezone(zone_for(tz_name))
+    day = local.strftime("%d").lstrip("0")
+    return local.strftime(f"%a {day} %b %Y, %H:%M %Z").strip()
+
+
+# --- a small 5-field cron evaluator (ontology.md#schedule-modes) ---------
+# minute hour day-of-month month day-of-week; "*", lists, ranges and steps;
+# month and weekday names accepted; no seconds, no "@" aliases. Standard
+# day semantics: when both day fields are restricted, either matching fires.
+
+_MONTH_NAMES = {n: i + 1 for i, n in enumerate(
+    ("jan", "feb", "mar", "apr", "may", "jun",
+     "jul", "aug", "sep", "oct", "nov", "dec"))}
+_DOW_NAMES = {n: i for i, n in enumerate(
+    ("sun", "mon", "tue", "wed", "thu", "fri", "sat"))}
+
+
+def _cron_atom(token, names):
+    token = token.strip().lower()
+    if names and token[:3] in names and token[:3] == token:
+        return names[token]
+    return int(token)
+
+
+def _cron_field(field, lo, hi, names=None):
+    """One cron field as the set of integers it names. Raises ValueError."""
+    values = set()
+    for part in field.split(","):
+        part = part.strip()
+        if not part:
+            raise ValueError("empty cron field part")
+        step = 1
+        if "/" in part:
+            part, step_s = part.split("/", 1)
+            step = int(step_s)
+            if step < 1:
+                raise ValueError("cron step must be positive")
+            open_ended = True
+        else:
+            open_ended = False
+        if part == "*":
+            a, b = lo, hi
+        elif "-" in part:
+            a_s, b_s = part.split("-", 1)
+            a, b = _cron_atom(a_s, names), _cron_atom(b_s, names)
+        else:
+            a = _cron_atom(part, names)
+            b = hi if open_ended else a
+        if a < lo or b > hi or a > b:
+            raise ValueError("cron value out of range")
+        values.update(range(a, b + 1, step))
+    return values
+
+
+def parse_cron(spec):
+    """A 5-field cron spec as field sets, or None when it is not one."""
+    parts = str(spec or "").split()
+    if len(parts) != 5:
+        return None
+    try:
+        minutes = _cron_field(parts[0], 0, 59)
+        hours = _cron_field(parts[1], 0, 23)
+        doms = _cron_field(parts[2], 1, 31)
+        months = _cron_field(parts[3], 1, 12, _MONTH_NAMES)
+        dows = _cron_field(parts[4], 0, 7, _DOW_NAMES)
+    except ValueError:
+        return None
+    if 7 in dows:  # both 0 and 7 mean Sunday
+        dows.add(0)
+    return {
+        "minutes": sorted(minutes), "hours": sorted(hours),
+        "doms": doms, "months": months, "dows": dows,
+        "dom_star": parts[2].strip() == "*", "dow_star": parts[4].strip() == "*",
+    }
+
+
+def cron_next(spec, tz_name, after=None):
+    """
+    The first occurrence of a cron spec strictly after `after` (default now),
+    evaluated in tz_name, returned as an aware UTC datetime. A wall time that
+    does not exist on a spring-forward day is skipped; one that exists twice
+    on a fall-back day is taken once. None when the spec is bad or nothing
+    occurs within about thirteen months.
+    """
+    c = parse_cron(spec)
+    if not c:
+        return None
+    tz = zone_for(tz_name)
+    base = (after or datetime.now(timezone.utc)).astimezone(tz)
+    start = base.replace(second=0, microsecond=0) + timedelta(minutes=1)
+    start_naive = start.replace(tzinfo=None)
+    first_day = start.date()
+    for offset in range(0, 400):
+        d = first_day + timedelta(days=offset)
+        if d.month not in c["months"]:
+            continue
+        dom_ok = d.day in c["doms"]
+        dow_ok = ((d.weekday() + 1) % 7) in c["dows"]  # cron counts Sunday as 0
+        if c["dom_star"] and c["dow_star"]:
+            day_ok = True
+        elif c["dom_star"]:
+            day_ok = dow_ok
+        elif c["dow_star"]:
+            day_ok = dom_ok
+        else:
+            day_ok = dom_ok or dow_ok
+        if not day_ok:
+            continue
+        for h in c["hours"]:
+            for m in c["minutes"]:
+                naive = datetime(d.year, d.month, d.day, h, m)
+                if naive < start_naive:
+                    continue
+                cand = naive.replace(tzinfo=tz)
+                round_trip = cand.astimezone(timezone.utc).astimezone(tz)
+                if round_trip.replace(tzinfo=None) != naive:
+                    continue  # the gap on a spring-forward day
+                return cand.astimezone(timezone.utc)
+    return None
+
+
+def load_due_view(root):
+    """
+    exfu/derived/due.json, the library index's due view, as a map of trigger
+    id to its earliest listed occurrence (aware UTC) plus the raw rows. The
+    dashboard treats it as one more source of next occurrences beside the
+    triggers themselves, so the page still renders when the index has not
+    run. Absent or malformed, both come back empty.
+    """
+    data = load_json(root / "exfu" / "derived" / "due.json")
+    by_trigger, rows = {}, []
+    if not isinstance(data, dict):
+        return by_trigger, rows
+    for row in data.get("due") or []:
+        if not isinstance(row, dict):
+            continue
+        rows.append(row)
+        occ = str(row.get("occurrence") or "")
+        inst = None
+        if "@" in occ:
+            inst = parse_instant(occ.split("@", 1)[1])
+        if inst is None:
+            inst = parse_instant(row.get("at") or row.get("due_at") or row.get("next"))
+        tid = row.get("trigger")
+        if tid and inst is not None:
+            cur = by_trigger.get(tid)
+            if cur is None or inst < cur:
+                by_trigger[tid] = inst
+    return by_trigger, rows
+
+
+def collect_dockets(root, scopes_flat):
+    """
+    Every scope's docket, read straight from disk (the index may be stale):
+    folded live records per entry file, the pointer declarations, and the
+    mechanics files. Scopes without a docket/ folder are absent.
+    """
+    dockets = []
+    for s in scopes_flat:
+        rel = s.get("path", "")
+        d = root / rel / "docket"
+        if not d.is_dir():
+            continue
+        agent_text = read_file_text(d / "agent.md")
+        entries = {kind: fold_rows(read_jsonl(d / f"{stem}.jsonl"))
+                   for kind, stem in DOCKET_ENTRY_FILES}
+        dockets.append({
+            "scope": s.get("name", ""),
+            "rel": f"{rel}docket/",
+            "agent_text": agent_text,
+            "pointers": parse_docket_pointers(agent_text),
+            "entries": entries,
+            "triggers": fold_rows(read_jsonl(d / "triggers.jsonl")),
+            "signals": fold_rows(read_jsonl(d / "signals.jsonl")),
+            "fires": fold_rows(read_jsonl(d / "fires.jsonl")),
+            "channels": fold_rows(read_jsonl(d / "channels.jsonl")),
+        })
+    return dockets
+
+
+def trigger_status(trigger):
+    return str(trigger.get("status") or "armed").lower()
+
+
+def trigger_target_id(trigger):
+    """
+    The record id a docket-entry target names, else None. Ids are
+    library-wide (ontology.md#records), so the join is on id alone; the
+    target's scope is a hint for humans, and is written as a slug or a
+    display name depending on who authored the trigger.
+    """
+    t = trigger.get("target") or {}
+    if not isinstance(t, dict):
+        return None
+    if str(t.get("type") or "docket-entry") != "docket-entry":
+        return None
+    if not t.get("id"):
+        return None
+    return str(t.get("id"))
+
+
+def trigger_rule_label(trigger):
+    """The schedule in plain words: 'every weekday at 09:00 (cron 0 9 * * 1-5, Europe/London)'."""
+    when = trigger.get("when") or {}
+    if not isinstance(when, dict):
+        when = {}
+    mode = str(when.get("mode") or "").lower()
+    tz = when.get("tz") or ""
+    on = trigger.get("on")
+    bits = []
+    if mode == "once":
+        bits.append(f"once at {format_instant(parse_instant(when.get('at'), tz), tz) or when.get('at')}")
+    elif mode == "cron":
+        bits.append(f"cron {when.get('spec', '')}" + (f" ({tz})" if tz else ""))
+    if on:
+        bits.append(f"on signal {on}" + (" (within that window)" if bits else ""))
+    return "; ".join(bits) or "no schedule"
+
+
+def trigger_next_instant(trigger, due_by_trigger, now):
+    """
+    The trigger's next occurrence as an aware UTC datetime, or None for a
+    signal-armed trigger with no window (the signal is the moment). The due
+    view's listing and the spec computed here are both considered; the
+    earlier wins, so an elapsed, undelivered occurrence reads as overdue.
+    """
+    when = trigger.get("when") or {}
+    if not isinstance(when, dict):
+        when = {}
+    mode = str(when.get("mode") or "").lower()
+    tz = when.get("tz")
+    candidates = []
+    listed = due_by_trigger.get(trigger.get("id"))
+    if listed is not None:
+        candidates.append(listed)
+    if mode == "once":
+        inst = parse_instant(when.get("at"), tz)
+        if inst is not None:
+            candidates.append(inst)
+    elif mode == "cron":
+        inst = cron_next(when.get("spec"), tz, after=now)
+        if inst is not None:
+            candidates.append(inst)
+    return min(candidates) if candidates else None
+
+
+def date_group_for(inst, now):
+    """overdue / soon / later, or None when there is no instant."""
+    if inst is None:
+        return None
+    if inst < now:
+        return "overdue"
+    if inst <= now + timedelta(days=SOON_DAYS):
+        return "soon"
+    return "later"
+
+
+def iso_age_label(iso):
+    """Quiet age label from a record's created timestamp."""
+    inst = parse_instant(iso)
+    if inst is None:
+        return ""
+    return file_age_label(inst.timestamp())
+
+
+def trigger_lines(triggers, due_by_trigger, now):
+    """One bullet per trigger for a record's detail panel."""
+    out = []
+    for t in triggers:
+        inst = trigger_next_instant(t, due_by_trigger, now)
+        tz = (t.get("when") or {}).get("tz") if isinstance(t.get("when"), dict) else None
+        bits = [trigger_rule_label(t)]
+        if inst is not None:
+            bits.append(f"next {format_instant(inst, tz)}")
+        bits.append(f"via {t.get('channel') or 'pull'}")
+        if t.get("owner"):
+            bits.append(f"owner {t.get('owner')}")
+        if trigger_status(t) != "armed":
+            bits.append(trigger_status(t))
+        out.append(f'<div class="ws-bullet">{esc("; ".join(bits))}</div>')
+    return "".join(out)
+
+
+def render_record_detail(rec, triggers_html=""):
+    """A record's fields for the sidebar, in the page's prose classes."""
+    parts = []
+    notes = str(rec.get("notes") or "").strip()
+    if notes:
+        for line in notes.split("\n"):
+            if line.strip():
+                parts.append(f'<div class="ws-line">{inline_md(line.strip())}</div>')
+    agent_notes = str(rec.get("agent_notes") or "").strip()
+    if agent_notes:
+        parts.append('<div class="ws-heading">For your agents</div>')
+        for line in agent_notes.split("\n"):
+            if line.strip():
+                parts.append(f'<div class="ws-line">{inline_md(line.strip())}</div>')
+    keywords = rec.get("keywords") or []
+    if isinstance(keywords, list) and keywords:
+        parts.append('<div class="ws-heading">Keywords</div>')
+        parts.append(f'<div class="ws-line">{esc(", ".join(str(k) for k in keywords))}</div>')
+    if triggers_html:
+        parts.append('<div class="ws-heading">Triggers</div>')
+        parts.append(triggers_html)
+    parts.append('<div class="ws-heading">Record</div>')
+    facts = [f"id {rec.get('id', '')}", f"status {rec.get('status') or 'open'}"]
+    if rec.get("created"):
+        facts.append(f"created {format_timestamp(rec.get('created'))}")
+    if rec.get("updated") and rec.get("updated") != rec.get("created"):
+        facts.append(f"updated {format_timestamp(rec.get('updated'))}")
+    if rec.get("revision"):
+        facts.append(f"revision {rec.get('revision')}")
+    parts.append(f'<div class="ws-line panel-mono">{esc(" · ".join(facts))}</div>')
+    return "".join(parts)
+
+
+def build_docket_items(dockets, due_by_trigger, now):
+    """
+    Docket records as page items, one shape with the legacy builder: scope,
+    rel, file, id, title, kind, meta, snippet, html. Open entries only; done
+    and archived rows are off the plate and wait for compaction. A pointer
+    file becomes a "Managed in X" item exactly as a pointer folder did.
+    """
+    out = {"todos": [], "reminders": [], "backlog": []}
+    if not dockets:
+        return out
+
+    # every armed trigger by the entry id it targets, across scopes
+    by_target = {}
+    for d in dockets:
+        for t in d["triggers"]:
+            if trigger_status(t) != "armed":
+                continue
+            tid = trigger_target_id(t)
+            if tid:
+                by_target.setdefault(tid, []).append(t)
+
+    for d in dockets:
+        base = {"scope": d["scope"], "rel": d["rel"]}
+        for kind, stem in DOCKET_ENTRY_FILES:
+            fname = f"{stem}.jsonl"
+            pointer = d["pointers"].get(stem)
+            if pointer:
+                tool = pointer_tool_name(pointer)
+                out[kind].append(dict(base, **{
+                    "title": f"Managed in {tool}" if tool else "Managed elsewhere",
+                    "file": fname,
+                    "pointer": pointer,
+                    "pointerUrl": extract_url(pointer) or extract_url(d["agent_text"]),
+                    "meta": "the docket points at your existing tool for these",
+                    "html": "",
+                    "kind": "pointer",
+                }))
+            for rec in d["entries"][kind]:
+                if not is_open(rec):
+                    continue
+                rid = str(rec.get("id") or "")
+                title = str(rec.get("title") or rec.get("notes") or rid or "Untitled")
+                notes = str(rec.get("notes") or "").strip()
+                snippet = first_snippet(notes) if notes else ""
+                item = dict(base, **{
+                    "id": rid,
+                    "file": fname,
+                    "title": title,
+                    "snippet": snippet,
+                })
+                if kind == "todos":
+                    item.update({
+                        "kind": "task",
+                        "done": False,
+                        "meta": "open",
+                        "html": render_record_detail(rec),
+                    })
+                elif kind == "reminders":
+                    triggers = by_target.get(rid, []) if rid else []
+                    instants, tz = [], None
+                    signal_names = []
+                    for t in triggers:
+                        inst = trigger_next_instant(t, due_by_trigger, now)
+                        if inst is not None and (not instants or inst < min(instants)):
+                            tz = (t.get("when") or {}).get("tz") if isinstance(t.get("when"), dict) else None
+                        if inst is not None:
+                            instants.append(inst)
+                        if t.get("on"):
+                            signal_names.append(str(t.get("on")))
+                    nxt = min(instants) if instants else None
+                    if nxt is not None:
+                        meta = f"next {format_instant(nxt, tz)}"
+                    elif signal_names:
+                        meta = "fires on signal " + ", ".join(signal_names)
+                    elif triggers:
+                        meta = "trigger without a schedule"
+                    else:
+                        meta = "no trigger yet"
+                    item.update({
+                        "kind": "reminder",
+                        "date": nxt.isoformat() if nxt else None,
+                        "dateGroup": date_group_for(nxt, now),
+                        "meta": meta,
+                        "snippet": snippet or meta,
+                        "html": render_record_detail(
+                            rec, trigger_lines(triggers, due_by_trigger, now)),
+                    })
+                else:
+                    age = iso_age_label(rec.get("created"))
+                    item.update({
+                        "kind": "capture",
+                        "meta": age,
+                        "html": render_record_detail(rec),
+                    })
+                out[kind].append(item)
+    return out
+
+
+def _entry_title_index(dockets):
+    """Record id -> title, across every entry file of every docket."""
+    titles = {}
+    for d in dockets:
+        for kind, _stem in DOCKET_ENTRY_FILES:
+            for rec in d["entries"][kind]:
+                if rec.get("id"):
+                    titles[str(rec["id"])] = str(rec.get("title") or "")
+    return titles
+
+
+def _trigger_subject(trigger, titles, due_rows_by_trigger=None):
+    """What a trigger is about: its target's title, else an assess excerpt."""
+    tid = trigger_target_id(trigger)
+    if tid:
+        title = titles.get(tid)
+        if title:
+            return title
+        for row in (due_rows_by_trigger or {}).get(trigger.get("id"), []):
+            t = row.get("target") or {}
+            if isinstance(t, dict) and t.get("title"):
+                return str(t["title"])
+    assess = str(trigger.get("assess") or "").strip()
+    if assess:
+        return assess if len(assess) <= 90 else assess[:90].rstrip() + "..."
+    t = trigger.get("target") or {}
+    if isinstance(t, dict) and t.get("id"):
+        return f"{t.get('type', 'target')} {t.get('id')}"
+    return "(no target, no brief)"
+
+
+def render_fires_next(dockets, due_by_trigger, due_rows, now):
+    """
+    'What fires next': every armed trigger across scopes with its subject,
+    rule, next occurrence, channel and owner, soonest first; signal-armed
+    triggers follow, and paused ones fold into an expander.
+    """
+    titles = _entry_title_index(dockets)
+    due_rows_by_trigger = {}
+    for row in due_rows:
+        if row.get("trigger"):
+            due_rows_by_trigger.setdefault(row["trigger"], []).append(row)
+
+    armed, paused = [], []
+    for d in dockets:
+        for t in d["triggers"]:
+            st = trigger_status(t)
+            if st == "armed":
+                armed.append((d, t))
+            elif st == "paused":
+                paused.append((d, t))
+    if not armed and not paused:
+        return (
+            '<div class="empty-state"><h3>Nothing armed yet</h3>'
+            "<p>Reminders with a date, and any rule you give your AI "
+            '("every weekday at nine, check ..."), appear here as triggers.</p></div>'
+        )
+
+    rows = []
+    for d, t in armed:
+        inst = trigger_next_instant(t, due_by_trigger, now)
+        tz = (t.get("when") or {}).get("tz") if isinstance(t.get("when"), dict) else None
+        if inst is not None:
+            when_label = format_instant(inst, tz)
+        elif t.get("on"):
+            when_label = "when the signal appears"
+        else:
+            when_label = "no schedule"
+        rows.append((inst, d["scope"], _trigger_subject(t, titles, due_rows_by_trigger),
+                     trigger_rule_label(t), when_label, t.get("channel") or "pull",
+                     t.get("owner") or ""))
+    far = datetime.max.replace(tzinfo=timezone.utc)
+    rows.sort(key=lambda r: (r[0] is None, r[0] or far, r[1]))
+
+    parts = ['<table class="ont-table"><tr><th>Scope</th><th>About</th>'
+             "<th>Rule</th><th>Next</th><th>Channel</th><th>Owner</th></tr>"]
+    for inst, scope, subject, rule, when_label, channel, owner in rows:
+        style = ' style="color:var(--red)"' if inst is not None and inst < now else ""
+        parts.append(
+            f"<tr><td>{esc(scope)}</td><td>{esc(subject)}</td><td>{esc(rule)}</td>"
+            f"<td{style}>{esc(when_label)}</td><td>{esc(channel)}</td><td>{esc(owner)}</td></tr>"
+        )
+    parts.append("</table>")
+    if paused:
+        plural = "" if len(paused) == 1 else "s"
+        parts.append(f'<details class="ws-more"><summary>and {len(paused)} paused trigger{plural}</summary>')
+        for d, t in paused:
+            parts.append(
+                f'<div class="ws-bullet">{esc(d["scope"])}: '
+                f'{esc(_trigger_subject(t, titles, due_rows_by_trigger))} '
+                f"({esc(trigger_rule_label(t))})</div>"
+            )
+        parts.append("</details>")
+    parts.append(
+        '<div class="guidance">A trigger is a scope saying when and how a matter '
+        "gets heard. To add or change one, tell your AI in plain words; it writes "
+        "the rule and the dispatcher does the rest.</div>"
+    )
+    return "\n".join(parts)
+
+
+def render_fired(dockets, limit=20):
+    """
+    'What fired': the last result receipts across scopes, newest first. An
+    intent with no result is shown as attempted, outcome unknown, which is
+    what the dispatcher treats it as.
+    """
+    titles = _entry_title_index(dockets)
+    receipts = []
+    for d in dockets:
+        by_id = {t.get("id"): t for t in d["triggers"] if t.get("id")}
+        results = {}
+        intents = {}
+        for r in d["fires"]:
+            occ = r.get("occurrence") or r.get("id")
+            if str(r.get("phase") or "") == "result":
+                results[occ] = r
+            elif str(r.get("phase") or "") == "intent":
+                intents.setdefault(occ, r)
+        for occ, r in results.items():
+            t = by_id.get(r.get("trigger")) or {}
+            receipts.append((str(r.get("at") or ""), d["scope"], t, r,
+                             str(r.get("status") or "unknown")))
+        for occ, r in intents.items():
+            if occ in results:
+                continue
+            t = by_id.get(r.get("trigger")) or {}
+            receipts.append((str(r.get("at") or ""), d["scope"], t, r,
+                             "attempted, outcome unknown"))
+    if not receipts:
+        return (
+            '<div class="empty-state"><h3>Nothing has fired yet</h3>'
+            "<p>Each time a trigger fires, its receipt lands here: what, when, "
+            "through which channel, and how it went.</p></div>"
+        )
+    receipts.sort(key=lambda r: r[0], reverse=True)
+    parts = []
+    for at, scope, t, r, status in receipts[:limit]:
+        if status in ("delivered", "drafted"):
+            dot = "var(--green)"
+        elif status == "failed":
+            dot = "var(--red)"
+        else:
+            dot = "var(--amber)"
+        subject = _trigger_subject(t, titles) if t else f"trigger {r.get('trigger', '')}"
+        text = f"{subject}: {status} via {t.get('channel') or 'pull'}" if t else f"{subject}: {status}"
+        signals = r.get("signals") or []
+        if isinstance(signals, list) and signals:
+            text += " -- reported " + ", ".join(str(s) for s in signals)
+        parts.append(
+            '<div class="run-entry">'
+            f'<span class="run-dot" style="background:{dot}"></span>'
+            f'<span class="run-cadence">{esc(scope)}</span>'
+            f'<span class="run-time">{esc(format_timestamp(at))}</span>'
+            f'<span class="run-results">{esc(text)}</span>'
+            "</div>"
+        )
+    return "\n".join(parts)
+
+
+def render_signals(dockets, limit=20):
+    """
+    'Signals': the last signals recorded across scopes, then the implied
+    graph: for each signal name, which triggers listen for it and which
+    triggers' receipts have emitted it. A name something listens for that
+    nothing has ever emitted is called out, so a silent failure is visible.
+    """
+    titles = _entry_title_index(dockets)
+    rows = []
+    listeners, emitters, seen_names = {}, {}, set()
+    for d in dockets:
+        by_id = {t.get("id"): t for t in d["triggers"] if t.get("id")}
+        for s in d["signals"]:
+            name = str(s.get("name") or "")
+            if not name:
+                continue
+            seen_names.add(name)
+            rows.append((str(s.get("at") or ""), d["scope"], name,
+                         str(s.get("payload") or "")))
+            src = by_id.get(s.get("source"))
+            if src is not None:
+                emitters.setdefault(name, {})[src.get("id")] = (d["scope"], src)
+        for t in d["triggers"]:
+            if t.get("on"):
+                listeners.setdefault(str(t["on"]), []).append((d["scope"], t))
+        for r in d["fires"]:
+            if str(r.get("phase") or "") != "result":
+                continue
+            src = by_id.get(r.get("trigger"))
+            for name in r.get("signals") or []:
+                seen_names.add(str(name))
+                if src is not None:
+                    emitters.setdefault(str(name), {})[src.get("id")] = (d["scope"], src)
+
+    parts = []
+    if rows:
+        rows.sort(key=lambda r: r[0], reverse=True)
+        for at, scope, name, payload in rows[:limit]:
+            text = name + (f" -- {payload}" if payload else "")
+            parts.append(
+                '<div class="run-entry">'
+                '<span class="run-dot" style="background:var(--green)"></span>'
+                f'<span class="run-cadence">{esc(scope)}</span>'
+                f'<span class="run-time">{esc(format_timestamp(at))}</span>'
+                f'<span class="run-results">{esc(text)}</span>'
+                "</div>"
+            )
+    else:
+        parts.append(
+            '<div class="empty-state"><h3>No signals yet</h3>'
+            "<p>A signal is a fact an agent recorded for whoever is listening. "
+            "They appear here as triggers fire and report what they saw.</p></div>"
+        )
+
+    names = sorted(seen_names | set(listeners) | set(emitters))
+    if names:
+        parts.append('<div class="workspace-section"><h3>Who listens, who emits</h3>')
+        for name in names:
+            heard = [f"{sc}: {_trigger_subject(t, titles)}" for sc, t in listeners.get(name, [])]
+            emitted = [f"{sc}: {_trigger_subject(t, titles)}"
+                       for sc, t in emitters.get(name, {}).values()]
+            bits = []
+            if heard:
+                bits.append("heard by " + "; ".join(heard))
+            if emitted:
+                bits.append("emitted by " + "; ".join(emitted))
+            if heard and not emitted and name not in seen_names:
+                bits.append("nothing has ever emitted this")
+            elif not heard:
+                bits.append("nothing listens for this")
+            parts.append(
+                f'<div class="ws-bullet"><strong>{esc(name)}</strong> -- '
+                f'{esc(" | ".join(bits))}</div>'
+            )
+        parts.append("</div>")
+    return "\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -790,7 +1910,7 @@ def render_css():
     .run-time { color: var(--muted); font-family: var(--mono); font-size: 0.72rem; width: 11rem; flex: none; }
     .run-results { color: var(--ink-soft); }
 
-    /* Workspace views */
+    /* Docket views */
     .workspace-section { margin-bottom: 1.6rem; }
     .workspace-section h3 { font-family: var(--serif); font-size: 1.15rem; margin-bottom: 0.6rem; }
     .workspace-scope { margin: 0 0 1rem; padding: 0.9rem 1rem; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-1); }
@@ -1341,6 +2461,8 @@ def render_basket_js():
   }
   function uid() { return 'b' + Math.random().toString(36).slice(2, 10); }
 
+  var KIND_LABEL = { todos: 'task', reminders: 'reminder', backlog: 'agent backlog item' };
+
   function itemFor(ref) {
     if (!ref) return null;
     var parts = ref.split(':');
@@ -1348,29 +2470,52 @@ def render_basket_js():
     var it = list[parseInt(parts[1], 10)];
     return it ? { kind: parts[0], it: it } : null;
   }
+  /* mirrors item_key() on the Python side: a docket record is named by id,
+     a deprecated-folder item by title */
   function keyFor(kind, it) {
-    return kind + ':' + (it.rel || '') + (it.file || '') + ':' + (it.title || '');
+    return kind + ':' + (it.rel || '') + (it.file || '') + ':' + (it.id || it.title || '');
   }
   function locFor(it) { return (it.rel || '') + (it.file || ''); }
+  /* a docket record is always named by id and title, so an agent can find
+     the exact JSONL row to rewrite */
+  function nameFor(it) {
+    return '"' + it.title + '"' + (it.id ? ' (id ' + it.id + ')' : '');
+  }
 
   function toggleInstruction(kind, it) {
-    if (it.done) {
-      return 'In ' + locFor(it) + ', mark the task "' + it.title +
-        '" as not done again (untick it).';
+    if (it.id) {
+      if (it.done) {
+        return 'In ' + locFor(it) + ', reopen the task ' + nameFor(it) +
+          ': set its status back to "open", bump revision and set updated to now.';
+      }
+      return 'In ' + locFor(it) + ', mark the task ' + nameFor(it) +
+        ' as done: set its status to "done", bump revision and set updated to now.';
     }
-    return 'In ' + locFor(it) + ', mark the task "' + it.title +
-      '" as done. Follow the folder conventions (tick it, or move it to ' +
-      'done.md if that is the pattern there).';
+    if (it.done) {
+      return 'In ' + locFor(it) + ' (a deprecated todo folder), mark the task "' +
+        it.title + '" as not done again (untick it).';
+    }
+    return 'In ' + locFor(it) + ' (a deprecated todo folder), mark the task "' +
+      it.title + '" as done. Follow the folder conventions (tick it, or move ' +
+      'it to done.md if that is the pattern there).';
   }
   function deleteInstruction(kind, it) {
-    if (kind === 'inbox') {
-      return 'Delete the inbox item "' + it.title + '" (' + locFor(it) +
-        '). I have decided it is not needed.';
+    var what = KIND_LABEL[kind] || kind;
+    if (it.id) {
+      return 'In ' + locFor(it) + ', delete the ' + what + ' ' + nameFor(it) +
+        ': rewrite its row with deleted: true, bump revision and set updated ' +
+        'to now. I have decided it is not needed.';
+    }
+    if (kind === 'backlog') {
+      return 'Delete the item "' + it.title + '" from the deprecated inbox ' +
+        'folder ' + locFor(it) + '. I have decided it is not needed.';
     }
     if (kind === 'reminders') {
-      return 'Remove the reminder "' + it.title + '" from ' + locFor(it) + '.';
+      return 'Remove the reminder "' + it.title + '" from ' + locFor(it) +
+        ' (a deprecated reminders folder).';
     }
-    return 'Remove the task "' + it.title + '" from ' + locFor(it) + '.';
+    return 'Remove the task "' + it.title + '" from ' + locFor(it) +
+      ' (a deprecated todo folder).';
   }
 
   function add(text, source, key, verb) {
@@ -1652,19 +2797,24 @@ def render_basket_js():
     }
     var text = '', src = '';
     if (kind === 'create-task') {
-      text = 'Add a task to the ' + v.scope + ' scope\\u2019s todo: "' +
-        v.text + '". Create the todo folder first if it does not exist yet.';
+      text = 'Add a task to the ' + v.scope + ' scope\\u2019s docket: "' +
+        v.text + '". If the docket points at an external tool for tasks, ' +
+        'add it there; otherwise append a record to docket/todo.jsonl, ' +
+        'creating the file first if it does not exist yet.';
       src = 'new task';
     } else if (kind === 'create-reminder') {
-      text = 'Add a reminder in the ' + v.scope + ' scope' +
-        (v.date ? ' for ' + v.date : '') + ': "' + v.text +
-        '". Create the reminders folder first if needed.';
+      text = 'Add a reminder to the ' + v.scope + ' scope\\u2019s docket: "' +
+        v.text + '"' + (v.date ? ', to surface on ' + v.date : '') +
+        '. Append a record to docket/reminders.jsonl' +
+        (v.date ? ' with a once trigger for that date' : '') +
+        ', creating the files first if needed.';
       src = 'new reminder';
     } else if (kind === 'create-capture') {
-      text = 'Capture to the ' + v.scope + ' scope\\u2019s inbox: "' +
+      text = 'Capture to the ' + v.scope + ' scope\\u2019s agent backlog: "' +
         v.title + '"' + (v.note ? '. The note: ' + v.note : '') +
-        '. Create the inbox folder first if needed.';
-      src = 'inbox capture';
+        '. Append a record to docket/agent-backlog.jsonl, creating the file ' +
+        'first if needed.';
+      src = 'agent backlog capture';
     } else if (kind === 'create-scope') {
       text = 'Create a new scope named "' + v.name + '"' +
         (v.parent && v.parent !== 'top level'
@@ -2222,9 +3372,11 @@ def render_graph_js():
     var list = (D.workspace || {})[kind] || [];
     var it = list[idx];
     if (!it) return;
-    var kindLabel = { todos: 'task', reminders: 'reminder', inbox: 'inbox item' }[kind] || kind;
+    var kindLabel = { todos: 'task', reminders: 'reminder', backlog: 'agent backlog item' }[kind] || kind;
     var h = '<h3>' + esc(it.title) + '</h3>';
-    h += '<div class="panel-tag">' + esc(kindLabel) + ' &middot; ' + esc(it.scope) + '</div>';
+    h += '<div class="panel-tag">' + esc(kindLabel) + ' &middot; ' + esc(it.scope) +
+         (it.legacy ? ' &middot; ' + esc(it.legacyFolder || '') + '/ folder (deprecated)' : '') +
+         '</div>';
     if (it.meta) h += '<p>' + esc(it.meta) + '</p>';
     if (it.html) h += '<div class="panel-section">Detail</div><div class="panel-prose">' + it.html + '</div>';
     if (it.pointer) {
@@ -2252,8 +3404,8 @@ def render_graph_js():
            'placeholder="Queue a question or change about this">' +
            '<button class="bk-btn" data-ask-go="1">Queue</button></div>';
     }
-    h += '<div class="panel-guidance">' + (kind === 'inbox'
-      ? 'To file it, tell your AI where it belongs -- or let the nightly sweep suggest a home.'
+    h += '<div class="panel-guidance">' + (kind === 'backlog'
+      ? 'To attend to it, tell your AI where it belongs -- or let the nightly backlog sweep suggest a home.'
       : 'Buttons here queue instructions in your basket; your AI makes the actual change.') + '</div>';
     openPanel(h);
   }
@@ -2847,140 +3999,6 @@ def render_librarian_dashboard(registry_data, log_data, unregistered=None):
     return "\n".join(parts)
 
 
-def render_workspace_folder(items, folder_label, folder_kind):
-    """
-    Render a workspace section (todo, reminders, or inbox).
-    Sections with nothing to show are simply absent.
-    """
-    if not items:
-        return ""
-
-    parts = [f'<div class="workspace-section">', f"<h3>{esc(folder_label)}</h3>"]
-
-    for item in items:
-        scope_name = esc(item["scope_name"])
-        pointer = item.get("pointer_target")
-        content_files = item.get("content_files", [])
-        agent_tasks = item.get("agent_tasks", [])
-
-        # done.md / archive.md hold what's finished -- not "on my plate"
-        content_files = [
-            cf for cf in content_files
-            if cf["filename"] not in ("done.md", "archive.md")
-        ]
-
-        # Nothing left to show for this scope? Show nothing.
-        if not (pointer or content_files or agent_tasks):
-            continue
-
-        parts.append('<div class="workspace-scope">')
-        parts.append(f'<div class="workspace-scope-name">{scope_name}</div>')
-
-        if pointer:
-            tool = pointer_tool_name(pointer)
-            chip = f"Managed in {tool}" if tool else "Managed elsewhere"
-            parts.append(
-                '<div class="ws-pointer-row">'
-                f'<span class="chip">{esc(chip)}</span>'
-                f'<span class="ws-pointer-detail">{inline_md(pointer)}</span>'
-                "</div>"
-            )
-        elif folder_kind == "inbox" and content_files:
-            def _inbox_card(cf):
-                fields = parse_yaml_frontmatter(cf["text"])
-                body = strip_frontmatter(cf["text"])
-                title_html = esc(deslug(cf["filename"]))
-                status = fields.get("status", "")
-                if status:
-                    title_html += f'<span class="chip chip-quiet">{esc(status)}</span>'
-                bits = ['<div class="inbox-card">',
-                        f'<div class="inbox-title">{title_html}</div>']
-                snippet = first_snippet(body)
-                if snippet:
-                    bits.append(f'<div class="inbox-snippet">{inline_md(snippet)}</div>')
-                age = file_age_label(cf.get("mtime"))
-                if age:
-                    bits.append(f'<div class="inbox-age">{esc(age)}</div>')
-                bits.append("</div>")
-                return "".join(bits)
-
-            for cf in content_files[:8]:
-                parts.append(_inbox_card(cf))
-            rest = content_files[8:]
-            if rest:
-                plural = "" if len(rest) == 1 else "s"
-                parts.append(
-                    f'<details class="ws-more"><summary>and {len(rest)} more item{plural}</summary>'
-                    + "".join(_inbox_card(cf) for cf in rest) + "</details>"
-                )
-        elif content_files:
-            for cf in content_files:
-                body = strip_frontmatter(cf["text"])
-                if len(content_files) > 1:
-                    parts.append(
-                        f'<div class="ws-filename">{esc(deslug(cf["filename"]))}</div>'
-                    )
-                parts.append(f'<div class="ws-body">{render_markdown_mini(body)}</div>')
-        elif agent_tasks:
-            parts.append(
-                f'<div class="ws-body">{render_markdown_mini(chr(10).join(agent_tasks))}</div>'
-            )
-        else:
-            parts.append('<div class="workspace-empty">Empty</div>')
-
-        parts.append("</div>")
-
-    parts.append("</div>")
-    return "\n".join(parts)
-
-
-def render_workspace_views(root, index_data):
-    """Render the workspace views tab."""
-    if index_data is None:
-        return (
-            '<div class="empty-state">'
-            "<h3>No library index found</h3>"
-            "<p>Run the nightly index first. Workspace views need the index "
-            "to know where to look for todo, reminders, and inbox items.</p>"
-            "</div>"
-        )
-
-    scopes = index_data.get("scopes", [])
-
-    todo_items = collect_workspace_items(root, scopes, "todo")
-    reminder_items = collect_workspace_items(root, scopes, "reminders")
-    inbox_items = collect_workspace_items(root, scopes, "inbox")
-
-    # Filter out empty items (no pointer, no content, no tasks)
-    def has_content(item):
-        return (
-            item.get("pointer_target")
-            or item.get("content_files")
-            or item.get("agent_tasks")
-        )
-
-    todo_items = [i for i in todo_items if has_content(i)]
-    reminder_items = [i for i in reminder_items if has_content(i)]
-    inbox_items = [i for i in inbox_items if has_content(i)]
-
-    if not todo_items and not reminder_items and not inbox_items:
-        return (
-            '<div class="empty-state">'
-            "<h3>Nothing in your workspace yet</h3>"
-            "<p>Todo items, reminders, and inbox items from your scopes "
-            "will appear here once they have content.</p>"
-            "</div>"
-        )
-
-    parts = [
-        render_workspace_folder(todo_items, "Todo", "todo"),
-        render_workspace_folder(reminder_items, "Reminders", "reminders"),
-        render_workspace_folder(inbox_items, "Inbox", "inbox"),
-    ]
-
-    return "\n".join(p for p in parts if p)
-
-
 def flatten_scopes(index_data):
     """All scopes (user + working + nested) as a flat list."""
     flat = []
@@ -3159,145 +4177,28 @@ def enrich_scopes_with_purpose(root, scopes):
             enrich_scopes_with_purpose(root, [child])
 
 
-def split_reminder_entries(body):
+def build_workspace_items(root, index_data, dockets, due_by_trigger, now):
     """
-    Split a reminders file into individual entries. Heading-led blocks become
-    entries titled by their heading; a heading-free file yields one entry per
-    bullet line; failing both, the whole body is a single entry.
+    The docket as first-class items: every task, reminder and agent-backlog
+    entry becomes one card on its view and one detail panel in the sidebar.
+    Docket records come first; whatever the deprecated folders still hold
+    follows, labelled as such. One shape for all of it, keyed todos /
+    reminders / backlog, which is what the client-side basket indexes into.
     """
-    lines = body.split("\n")
-    has_heading = any(l.strip().startswith("#") for l in lines)
-    entries = []
-    if has_heading:
-        title, buf = None, []
-        for l in lines:
-            s = l.strip()
-            if s.startswith("#"):
-                if title is not None and "\n".join(buf).strip():
-                    entries.append((title, "\n".join(buf).strip()))
-                title = s.lstrip("#").strip()
-                buf = []
-            else:
-                buf.append(l)
-        if title is not None and "\n".join(buf).strip():
-            entries.append((title, "\n".join(buf).strip()))
-        return entries
-    bullets = [l.strip() for l in lines if l.strip().startswith(("- ", "* "))]
-    if bullets:
-        entries = []
-        for b in bullets:
-            title = b.lstrip("-* ").strip()
-            m = CHECKBOX_RE.match(b)
-            if m:
-                title = m.group(2).strip()
-            # the date stays in the body for classification; the title reads clean
-            title = re.sub(r"^\d{4}-\d{2}-\d{2}\s*(--|—|-|:)?\s*", "", title) or title
-            entries.append((title, b))
-        return entries
-    if body.strip():
-        return [(first_snippet(body) or "Reminder", body)]
-    return []
-
-
-def build_workspace_items(root, index_data):
-    """
-    Workspace content as first-class items: every task, reminder, and inbox
-    capture becomes one card on its view and one detail panel in the sidebar.
-    One shape for all three ontologies -- the template scope views plug into.
-    """
-    out = {"todos": [], "reminders": [], "inbox": []}
-    if not index_data:
-        return out
-    scopes = index_data.get("scopes", [])
-
-    for kind, folder in (("todos", "todo"), ("reminders", "reminders"), ("inbox", "inbox")):
-        for it in collect_workspace_items(root, scopes, folder):
-            scope_name = it.get("scope_name", "")
-            rel_folder = f'{it.get("scope_path", "")}{folder}/'
-            pointer = it.get("pointer_target")
-            content_files = [
-                cf for cf in it.get("content_files", [])
-                if cf["filename"] not in ("done.md", "archive.md")
-            ]
-            # root-relative only: the client joins D.root back on at render
-            # time, so the generated HTML is location-independent
-            base = {"scope": scope_name, "rel": rel_folder}
-
-            if pointer:
-                tool = pointer_tool_name(pointer)
-                out[kind].append(dict(base, **{
-                    "title": f"Managed in {tool}" if tool else "Managed elsewhere",
-                    "pointer": pointer,
-                    "pointerUrl": extract_url(pointer)
-                    or extract_url(it.get("agent_text", "")),
-                    "meta": "the folder points at your existing tool",
-                    "html": "",
-                    "kind": "pointer",
-                }))
-                continue
-
-            if kind == "todos":
-                task_sources = [("agent.md", l) for l in it.get("agent_tasks", [])]
-                for cf in content_files:
-                    body = strip_frontmatter(cf["text"])
-                    for line in body.split("\n"):
-                        if CHECKBOX_RE.match(line.strip()):
-                            task_sources.append((cf["filename"], line.strip()))
-                for fname, line in task_sources:
-                    m = CHECKBOX_RE.match(line)
-                    if not m:
-                        continue
-                    done = m.group(1).lower() == "x"
-                    text = m.group(2).strip()
-                    out[kind].append(dict(base, **{
-                        "title": text,
-                        "done": done,
-                        "file": fname,
-                        "meta": "done" if done else "open",
-                        "html": render_markdown_mini(line, max_items=4),
-                        "kind": "task",
-                    }))
-            elif kind == "reminders":
-                for cf in content_files:
-                    body = strip_frontmatter(cf["text"])
-                    for title, entry_body in split_reminder_entries(body):
-                        date_iso, date_group = classify_reminder_date(
-                            title + " " + entry_body)
-                        snippet = first_snippet(entry_body)
-                        # a one-line entry's snippet just repeats the title
-                        if title and title in snippet:
-                            snippet = date_iso or ""
-                        out[kind].append(dict(base, **{
-                            "title": title,
-                            "file": cf["filename"],
-                            "date": date_iso,
-                            "dateGroup": date_group,
-                            "meta": deslug(cf["filename"]),
-                            "snippet": snippet,
-                            "html": render_markdown_mini(entry_body, max_items=30),
-                            "kind": "reminder",
-                        }))
-            else:  # inbox
-                for cf in content_files:
-                    fields = parse_yaml_frontmatter(cf["text"])
-                    body = strip_frontmatter(cf["text"])
-                    age = file_age_label(cf.get("mtime"))
-                    status = fields.get("status", "")
-                    meta_bits = [b for b in (age, status) if b]
-                    out[kind].append(dict(base, **{
-                        "title": deslug(cf["filename"]),
-                        "file": cf["filename"],
-                        "meta": " -- ".join(meta_bits),
-                        "snippet": first_snippet(body),
-                        "html": render_markdown_mini(body, max_items=30),
-                        "kind": "capture",
-                    }))
+    out = build_docket_items(dockets, due_by_trigger, now)
+    legacy = build_legacy_workspace_items(root, index_data)
+    for kind in out:
+        out[kind].extend(legacy.get(kind, []))
     return out
 
 
 def item_key(kind, it):
-    """Stable overlay key linking a rendered card to a basket action."""
-    return f'{kind}:{it.get("rel", "")}{it.get("file", "")}:{it.get("title", "")}'
+    """
+    Stable overlay key linking a rendered card to a basket action. A docket
+    record is named by id; a deprecated-folder item, having none, by title.
+    """
+    name = it.get("id") or it.get("title", "")
+    return f'{kind}:{it.get("rel", "")}{it.get("file", "")}:{name}'
 
 
 def pointer_chip(it):
@@ -3352,8 +4253,15 @@ def render_item_cards(kind, items, label, empty_guidance, pairs=None,
                 'title="Mark for deletion (queues an instruction for your AI)">'
                 "&#215;</button></span>"
             )
+        # a deprecated-folder item says so on its face
+        legacy_chip = ""
+        if it.get("legacy"):
+            legacy_chip = (
+                f' <span class="chip chip-quiet">{esc(it.get("legacyFolder", ""))}/ '
+                "(deprecated)</span>"
+            )
         parts.append(
-            f'<div class="item-scope"><span>{esc(it.get("scope", ""))}</span>'
+            f'<div class="item-scope"><span>{esc(it.get("scope", ""))}{legacy_chip}</span>'
             f"{actions}</div>"
         )
         if it.get("kind") == "pointer":
@@ -3384,8 +4292,10 @@ def render_item_cards(kind, items, label, empty_guidance, pairs=None,
 
 def render_reminders_view(items, empty_guidance, lead_html=""):
     """
-    Reminders grouped by urgency: overdue first, then the next seven days,
-    then everything else as written. Undated reminders are ordinary content.
+    Reminders grouped by their next occurrence: overdue first, then the
+    next seven days, then later, then the undated ones (no trigger yet, or
+    a signal-armed one). Docket reminders take their occurrence from their
+    triggers; deprecated-folder reminders from the first date in their text.
     """
     if not items:
         return render_item_cards("reminders", items, "Reminders",
@@ -3393,7 +4303,8 @@ def render_reminders_view(items, empty_guidance, lead_html=""):
     groups = [
         ("overdue", "Overdue"),
         ("soon", "Coming up"),
-        (None, "The rest"),
+        ("later", "Later"),
+        (None, "Undated"),
     ]
     pointer_pairs = [(i, it) for i, it in enumerate(items)
                      if it.get("kind") == "pointer"]
@@ -3401,9 +4312,7 @@ def render_reminders_view(items, empty_guidance, lead_html=""):
     for group_key, group_label in groups:
         pairs = [
             (i, it) for i, it in enumerate(items)
-            if it.get("kind") != "pointer"
-            and (it.get("dateGroup") == group_key
-                 if group_key else it.get("dateGroup") in (None, "later"))
+            if it.get("kind") != "pointer" and it.get("dateGroup") == group_key
         ]
         if not pairs:
             continue
@@ -3421,33 +4330,6 @@ def render_reminders_view(items, empty_guidance, lead_html=""):
         return render_item_cards("reminders", items, "Reminders",
                                  empty_guidance, lead_html=lead_html)
     return body + f'<div class="guidance">{empty_guidance}</div>'
-
-
-def render_workspace_view(root, index_data, kind, label, empty_guidance):
-    """
-    One workspace folder-type (todo, reminders, inbox) as its own top-level
-    view. The same template serves every ontology: collect, filter, render,
-    and close with guidance on how to create content when there is none.
-    """
-    if index_data is None:
-        return (
-            '<div class="empty-state"><h3>No library index found</h3>'
-            "<p>Run the nightly index first. This view needs the index to know "
-            "where to look.</p></div>"
-        )
-    items = collect_workspace_items(root, index_data.get("scopes", []), kind)
-    items = [
-        i for i in items
-        if i.get("pointer_target") or i.get("content_files") or i.get("agent_tasks")
-    ]
-    body = render_workspace_folder(items, label, kind)
-    guidance = f'<div class="guidance">{empty_guidance}</div>'
-    if not body:
-        return (
-            f'<div class="empty-state"><h3>Nothing in {esc(label.lower())} yet</h3>'
-            "<p>This view fills itself from your scopes.</p></div>" + guidance
-        )
-    return body + guidance
 
 
 def collect_visualisations(root, scopes_flat):
@@ -3799,13 +4681,13 @@ def workspace_forms(scopes_flat, which):
             '<input class="bk-input" type="date" name="date">'
             '<label class="bk-label">in scope</label>'
             + _scope_select(scopes_flat, "scope"))
-    if which == "inbox":
+    if which == "backlog":
         return basket_form(
-            "create-capture", "+ Capture something",
+            "create-capture", "+ Leave something for your agents",
             '<input class="bk-input" name="title" required maxlength="120" '
             'placeholder="A short title">'
             '<textarea class="bk-input" name="note" rows="3" maxlength="1000" '
-            'placeholder="The thought itself (optional)"></textarea>'
+            'placeholder="What your agents should know or do (optional)"></textarea>'
             '<label class="bk-label">in scope</label>'
             + _scope_select(scopes_flat, "scope"))
     if which == "scope":
@@ -3858,8 +4740,15 @@ def generate_dashboard(root):
     visualisations = collect_visualisations(root, scopes_flat)
     banner_html = staleness_banner(index_data)
 
+    # The docket: records, triggers and receipts straight from each scope's
+    # docket/, plus the library index's due view when it has run
+    now_utc = datetime.now(timezone.utc)
+    dockets = collect_dockets(root, scopes_flat)
+    due_by_trigger, due_rows = load_due_view(root)
+
     # Client-side payload for the graph views and sidebar
-    workspace_items = build_workspace_items(root, index_data)
+    workspace_items = build_workspace_items(root, index_data, dockets,
+                                            due_by_trigger, now_utc)
     payload = build_dashboard_data(root, registry_data, unregistered, scopes_flat)
     payload["workspace"] = workspace_items
     payload["generatedAt"] = now_iso
@@ -3899,24 +4788,45 @@ def generate_dashboard(root):
         + "Click one for its story.</div></div>"
     )
 
+    # The Docket: one tab, sub-views switched by the same toggle the maps use
+    docket_views = [
+        ("docket-tasks", "Tasks", render_item_cards(
+            "todos", workspace_items["todos"], "Tasks",
+            "Tick a box or use + New task: each queues an instruction for "
+            "your AI. A docket can also point at the task tool you already use.",
+            lead_html=workspace_forms(scopes_flat, "todos"))),
+        ("docket-reminders", "Reminders", render_reminders_view(
+            workspace_items["reminders"],
+            'Use + New reminder, or tell your AI things like "flag the VAT '
+            'return from the 20th of the month" -- each becomes an entry with '
+            "a trigger, and collects here by when it next fires.",
+            lead_html=workspace_forms(scopes_flat, "reminders"))),
+        ("docket-backlog", "Agent backlog", render_item_cards(
+            "backlog", workspace_items["backlog"], "Agent backlog",
+            "Anything you leave for your agents in a scope's agent backlog "
+            "waits here until it is attended to; the nightly backlog sweep "
+            "suggests where each item belongs.",
+            lead_html=workspace_forms(scopes_flat, "backlog"))),
+        ("docket-fires-next", "What fires next",
+         render_fires_next(dockets, due_by_trigger, due_rows, now_utc)),
+        ("docket-fired", "What fired", render_fired(dockets)),
+        ("docket-signals", "Signals", render_signals(dockets)),
+    ]
+    toggle_buttons, panes = [], []
+    for i, (vid, label, vhtml) in enumerate(docket_views):
+        active = ' class="active"' if i == 0 else ""
+        hidden = "" if i == 0 else ' style="display:none"'
+        toggle_buttons.append(f'<button{active} data-view="{vid}">{esc(label)}</button>')
+        panes.append(f'<div data-pane="{vid}"{hidden}>{vhtml}</div>')
+    docket_panel = (
+        '<div class="view-bar"><div class="view-toggle">'
+        + "".join(toggle_buttons) + "</div></div>" + "\n".join(panes)
+    )
+
     views = [
         {"id": "tab-map", "label": "Your scopes", "html": scopes_panel},
         {"id": "tab-librarians", "label": "Agents", "html": agents_panel},
-        {"id": "tab-todos", "label": "Todos", "html": render_item_cards(
-            "todos", workspace_items["todos"], "Todos",
-            "Tick a box or use + New task: each queues an instruction for "
-            "your AI. Scopes can also point at the task tool you already use.",
-            lead_html=workspace_forms(scopes_flat, "todos"))},
-        {"id": "tab-reminders", "label": "Reminders", "html": render_reminders_view(
-            workspace_items["reminders"],
-            'Use + New reminder, or tell your AI things like "flag the VAT '
-            'return from the 20th of the month" -- they collect here.',
-            lead_html=workspace_forms(scopes_flat, "reminders"))},
-        {"id": "tab-inbox", "label": "Inbox", "html": render_item_cards(
-            "inbox", workspace_items["inbox"], "Inbox",
-            "Anything you or your AI drops into a scope's inbox waits here "
-            "until it finds a home; the nightly sweep suggests where.",
-            lead_html=workspace_forms(scopes_flat, "inbox"))},
+        {"id": "tab-docket", "label": "Docket", "html": docket_panel},
         {"id": "tab-ontology", "label": "How it works",
          "html": render_ontology_view(root)},
     ]

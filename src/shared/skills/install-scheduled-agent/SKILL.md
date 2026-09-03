@@ -137,9 +137,16 @@ Register a scheduled agent from its definition file.
 
 7. **Check whether a scheduled task exists for this cadence.** Look at the `cadences` object in the registry.
    - If the cadence already has a `scheduled_task` entry, confirm: "Registered mx5-scanner. It will run with the next nightly cycle."
-   - If the cadence is new (no entry), add it to `cadences` with `scheduled_task` set to `<cadence>-agents` and `last_run` null. Then tell the user they need to create the scheduled task:
+   - If the cadence is new (no entry), add it to `cadences` with `scheduled_task` set to `<cadence>-agents` and `last_run` null. Then tell the user they need to create the scheduled task, and say which kind. There are two places a backing task can live, and they are not interchangeable:
+
+     - **Claude Code Desktop local task** (Code tab, Routines, Local). Runs on this machine with the local filesystem, has a model picker, and runs only while the app is open and the machine is awake; a missed slot gets exactly one catch-up run. Use it for anything that needs local files or a cheap model.
+     - **Cowork scheduled task** (Cowork tab, Scheduled). Runs in the cloud on hourly-or-slower presets, with no access to local files. Use it for cadences whose work reaches the library through connectors, which is how the nightly task has always run.
+
+     The **hourly cadence should be a Desktop local task with the cheapest model selected**: it hosts the dispatcher, which runs against the local index and on most runs finds nothing due, so it has to be cheap. If the user only has Cowork, say plainly that the hourly task cannot run there; the session-start check and the dashboard cover the same ground, less promptly.
 
      > "Registered weekly-digest. This is the first weekly scheduled agent, so you'll need a weekly scheduled task to run it. Use the task prompt from `scheduled-tasks/scheduled-agents/TASK.md` with the cadence word swapped to `weekly`, and set it up in Cowork's Scheduled tab on a weekly schedule."
+
+     > "Registered dispatcher. This is the first hourly scheduled agent, so you'll need an hourly task to run it. Use the hourly prompt from `scheduled-tasks/scheduled-agents/TASK.md` and create it as a local task in Claude Code Desktop (Code tab, Routines, Local), hourly, with the cheapest model in the picker -- it runs against the index on this machine and usually has nothing to do."
 
 8. **Write the updated registry** back to `exfu/derived/agent-registry.json`. Format the JSON readably (2-space indent).
 
@@ -162,7 +169,7 @@ Remove an entry from the registry.
 
 Toggle an entry's `enabled` flag without removing it.
 
-**When the user says:** "disable the inbox triage librarian", "pause the scanner", "turn the digest back on"
+**When the user says:** "disable the backlog sweep librarian", "pause the scanner", "turn the digest back on"
 
 **Steps:**
 
@@ -213,7 +220,7 @@ Walk the substrate for definitions not yet in the registry.
    > - nightly-index (librarian, nightly) -- last ran 2h ago, no failures
 
    **Installed but failing:**
-   > - inbox-triage (librarian, nightly) -- 3 consecutive failures, last error: "Script not found"
+   > - backlog-sweep (librarian, nightly) -- 3 consecutive failures, last error: "Script not found"
 
 5. If everything is installed and healthy, say so. If there are available definitions not yet installed, offer to install them.
 
@@ -277,9 +284,9 @@ If the missing dependency is in a different cadence, note that dependency orderi
 
 ## Baseline context
 
-The install conversation (exfu-start or equivalent) pre-registers the **nightly-index** librarian as part of the substrate baseline, copying the starter registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json`. That happens before this skill is ever invoked. This skill handles everything after: additional librarians, business agents, lifecycle management, health monitoring, and discovery.
+The install conversation (exfu-start or equivalent) pre-registers the shipped baseline librarians by copying the starter registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json`: **nightly-index**, **docket-compact** and **backlog-sweep** on the nightly cadence, and the **dispatcher** on the hourly cadence, with both cadences' backing tasks named. That happens before this skill is ever invoked. This skill handles everything after: additional librarians, business agents, lifecycle management, health monitoring, and discovery.
 
-If the user asks to install nightly-index and it's already registered, say so: "nightly-index is already registered and [healthy/has issues]. Did you want to reinstall it?"
+If the user asks to install one of those and it's already registered, say so: "nightly-index is already registered and [healthy/has issues]. Did you want to reinstall it?"
 
 ---
 

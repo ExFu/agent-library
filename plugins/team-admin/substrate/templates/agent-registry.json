@@ -11,11 +11,51 @@
       "last_run": null,
       "last_status": null,
       "consecutive_failures": 0
+    },
+    {
+      "name": "docket-compact",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": ["nightly-index"],
+      "enabled": true,
+      "source": "exfu/librarians/docket-compact.md",
+      "installed": null,
+      "last_run": null,
+      "last_status": null,
+      "consecutive_failures": 0
+    },
+    {
+      "name": "backlog-sweep",
+      "kind": "librarian",
+      "cadence": "nightly",
+      "depends_on": ["nightly-index"],
+      "enabled": true,
+      "source": "exfu/librarians/backlog-sweep.md",
+      "installed": null,
+      "last_run": null,
+      "last_status": null,
+      "consecutive_failures": 0
+    },
+    {
+      "name": "dispatcher",
+      "kind": "librarian",
+      "cadence": "hourly",
+      "depends_on": [],
+      "enabled": true,
+      "source": "exfu/librarians/dispatcher.md",
+      "installed": null,
+      "last_run": null,
+      "last_status": null,
+      "consecutive_failures": 0
     }
   ],
   "cadences": {
     "nightly": {
       "scheduled_task": "nightly-agents",
+      "last_run": null
+    },
+    "hourly": {
+      "scheduled_task": "hourly-agents",
       "last_run": null
     }
   }

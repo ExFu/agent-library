@@ -240,16 +240,17 @@ With the storage in place, seed the shared substrate. Walk the champion through 
 
 **1. Convention base.** Deploy into the shared root, in order:
 - Create `exfu/` at the shared substrate root.
-- Copy the shipped convention base from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape: the version directory (the plugin ships exactly one, e.g. `20260724-1910`) holding `ontology.md`, plus the unversioned `readme.md`, `principles.md`, `librarians/`, and `skills/` sitting directly in `exfu/` beside it.
+- Copy the shipped convention base from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/`, preserving its shape: the version directory (the plugin ships exactly one, e.g. `20260903-1743`) holding `ontology.md`, plus the unversioned `readme.md`, `principles.md`, `librarians/`, and `skills/` sitting directly in `exfu/` beside it.
 - Create `exfu/latest.txt` containing exactly the shipped version name. (Always use the txt fallback; sync layers handle symlinks unreliably, and git handles the txt fine.)
 - Create `exfu/derived/` directory.
 
 Brief framing for the champion: *"This is the shared vocabulary -- the definitions every team member's Claude will read so they all work the same way. It's versioned, so the team can upgrade deliberately later."*
 
-**2. Permanent record.** Create `durable/` at the shared root, beside `exfu/`. It holds the append-only facts about the shared library itself that nothing can work out again from scratch. **A refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.** Always state it that way round, never as a list of exceptions -- an exception list grows silently wrong as more durable things arrive, and a forgotten entry destroys the one category of file that cannot be recovered. Copy the shipped templates from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/`, preserving their shape. Four files:
+**2. Permanent record.** Create `durable/` at the shared root, beside `exfu/`. It holds the append-only facts about the shared library itself that nothing can work out again from scratch. **A refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.** Always state it that way round, never as a list of exceptions -- an exception list grows silently wrong as more durable things arrive, and a forgotten entry destroys the one category of file that cannot be recovered. Copy the shipped templates from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/`, preserving their shape. Five files:
 - `durable/readme.md` -- what the permanent record is, and the three tests anything kept here must pass: unregenerable, about the library rather than the world, append-only human-readable text. As shipped.
 - `durable/ledger/readme.md` -- what the logbook is and the rules that govern it. As shipped.
 - `durable/ledger/install.md` -- fill the shipped skeleton: today's date, the plugin version (from the manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface this install ran on (Claude Code or Cowork), the storage backend chosen in Step 5, the conventions version deployed above, and who provisioned it.
+- `durable/ledger/grants.md` -- the record of consent given, later, for a channel to send on someone's behalf without asking. As shipped; it starts with no entries.
 - `durable/ledger/migrations.md` -- one entry per migration the plugin ships at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/`, in filename order, each with outcome `not-applicable`. If that directory is absent or empty the plugin ships none: leave the file with its heading and no entries.
 
 Entry format, used by every ledger this plugin writes:
@@ -294,7 +295,7 @@ Set up the champion's personal substrate, separate from the shared one -- never 
 
 *"Now your own setup. Where would you like your personal library to live? Dropbox is the recommended default -- it syncs across devices and works with the connector for mobile access."* Use `request_cowork_directory` for the folder picker. If Dropbox, surface the hydration caveat ("Make Available Offline") for this folder too.
 
-Deploy the convention base into the personal root, same recipe as Step 6.1: the shipped `exfu/<version>/` copied from the plugin, `exfu/latest.txt` naming it, `exfu/derived/`. Then create the personal root's own `durable/`, same recipe as Step 6.2: `durable/readme.md` and `durable/ledger/readme.md` as shipped, a `durable/ledger/install.md` recording this personal root (date, plugin version, surface, backend chosen here, conventions version), and a `durable/ledger/migrations.md` seeded with every shipped migration as `not-applicable`. This is a separate library from the shared one, so it gets its own permanent record; the two never share.
+Deploy the convention base into the personal root, same recipe as Step 6.1: the shipped `exfu/<version>/` copied from the plugin, `exfu/latest.txt` naming it, `exfu/derived/`. Then create the personal root's own `durable/`, same recipe as Step 6.2: `durable/readme.md`, `durable/ledger/readme.md` and `durable/ledger/grants.md` as shipped, a `durable/ledger/install.md` recording this personal root (date, plugin version, surface, backend chosen here, conventions version), and a `durable/ledger/migrations.md` seeded with every shipped migration as `not-applicable`. This is a separate library from the shared one, so it gets its own permanent record; the two never share.
 
 ### Step 8 -- User scope creation (delegate to scope-setup)
 
@@ -305,7 +306,7 @@ Create the champion's personal scope. **Delegate to the `scope-setup` skill**, p
 The scope-setup skill will:
 - Ask about-me questions and write `user/context/about-me.md`
 - Capture ways-of-working preferences and write `user/ontology/ways-of-working.md`
-- Optionally set up todo, reminders, and inbox with sane defaults
+- Set up the champion's docket at `user/docket/` -- the one place for their tasks, reminders, and things they leave for their agents. It scaffolds only `agent.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/scope/docket/agent.md`) and `readme.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/docket-readme.md`); the entry files appear on their first entry, and a task tool the champion already has becomes a pointer line in `agent.md` rather than a local file
 
 Make sure the about-me captures role explicitly -- including the champion role itself. Also record how this machine connects to the shared substrate (backend, location or remote). Note: the champion also appears in the team's shared `team-members.md` (Step 6), but that's the team-level view; the personal about-me is theirs alone.
 
@@ -340,11 +341,12 @@ This protects the library from being treated as a generic working folder.
 ### Step 11 -- Librarian registration (delegate to install-scheduled-agent)
 
 **Delegate to the `install-scheduled-agent` skill.** For the personal substrate it will:
-- Register the nightly-index librarian
-- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json`
-- Set up the `nightly-agents` scheduled task
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json`. That registers the shipped librarians it lists: nightly-index, docket-compact, and backlog-sweep on the nightly cadence, and the dispatcher on the hourly cadence
+- Set up two scheduled tasks, one per cadence:
+  - `nightly-agents` -- runs all nightly-cadence scheduled agents (librarians first, then any business agents). Created in Cowork's Scheduled tab, as before.
+  - `hourly-agents` -- runs the dispatcher, the librarian that checks whether any reminder rule is due and delivers it. Create this one as a **Claude Code Desktop local scheduled task** (Code tab, Routines, Local) with the **cheapest model** selected in its model picker: it runs against the local index on this machine and must be cheap, because on most runs nothing is due. Cowork's scheduled tasks run in the cloud without local files, so they cannot host it. A champion who only has Cowork skips this task; they get the same check when a session starts, and the dashboard shows what is waiting
 
-**The shared substrate needs librarians too, and someone's machine has to run them.** By default that's the champion's. Offer it: *"The shared setup benefits from the same nightly maintenance -- an up-to-date index, mainly. It runs on your machine on the same schedule. Want me to register it?"* If yes, delegate to `install-scheduled-agent` against the shared root as well (its registry lives in the shared root's `exfu/derived/`). On the git path, note the nightly run writes to `exfu/derived/` in the repo; commit-and-push of derived output is part of that librarian's rhythm.
+**The shared substrate needs librarians too, and someone's machine has to run them.** By default that's the champion's. Offer it: *"The shared setup benefits from the same nightly maintenance -- an up-to-date index, mainly -- and the same hourly check for anything the team asked to be reminded about. It runs on your machine on the same schedule. Want me to register it?"* If yes, delegate to `install-scheduled-agent` against the shared root as well (its registry lives in the shared root's `exfu/derived/`). The default registry registers the dispatcher there too; in a shared scope it fires only the reminder rules the champion owns or that are marked for anyone, so a colleague's own rules stay theirs. On the git path, note the nightly run writes to `exfu/derived/` in the repo; commit-and-push of derived output is part of that librarian's rhythm.
 
 Then run the first index against the personal root immediately:
 
@@ -377,7 +379,7 @@ The champion now has something concrete to hand to their first colleague. Even i
 
 ### Step 14 -- Buffet, demonstrations, close
 
-**Personal buffet** -- as the conversation surfaces needs, offer what matches (same as every install): daily briefing, quick capture, drafting in their voice, reminders, a personal CRM. If the champion got inbox, reminders, or todo during Step 8, don't re-offer those. Available skills: `setup-reminders`, `setup-inbox`, `setup-writing-styles`.
+**Personal buffet** -- as the conversation surfaces needs, offer what matches (same as every install): daily briefing, quick capture, drafting in their voice, reminders, a personal CRM. The champion's docket was set up during Step 8, so capture and reminders are already covered there; `setup-docket` is what makes them usable in every session. Available skills: `setup-docket`, `setup-writing-styles`.
 
 **Champion-specific moves** -- these are part of the install flow, not optional:
 - Seed shared scopes for active shared work areas (delegate to `scope-setup`; use `team-shared-skills-authoring` when the team wants shared skills on top).
@@ -403,7 +405,7 @@ All pre-installed via the plugin. No URL fetching needed.
 
 **Bedrock -- always installed:**
 - `skill-packaging` -- for custom skills the champion or team wants to create.
-- `exfu-library` -- boot skill. Orients to both substrates by reading their indexes, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-library` -- boot skill. Orients to both substrates by reading their indexes, runs the docket's due check at session start and delegates to the user's personal docket skill if it is installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes, shared scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks, against either substrate root.
 
@@ -413,8 +415,7 @@ All pre-installed via the plugin. No URL fetching needed.
 - Local-only path: neither skill is registered as the storage layer; everything works against local folders directly.
 
 **Optional but high-value (same as other plugins):**
-- `setup-reminders` -- one-time intake that generates the champion's personal `<username>-reminders` skill.
-- `setup-inbox` -- one-time intake that generates the champion's personal `<username>-inbox` skill.
+- `setup-docket` -- one-time intake that generates the champion's personal `<username>-docket` skill (capture, remind, complete, snooze, session-start check).
 - `daily-briefing` (scheduled task) -- morning briefing, extensible to include team-layer content.
 - `setup-writing-styles` -- voice intake from writing samples that generates the champion's personal `<username>-writing-styles` skill.
 
@@ -441,9 +442,9 @@ All pre-installed via the plugin. No URL fetching needed.
 - Storage backend chosen (git, Dropbox, or local-only). The appropriate sync skill is operational, or the local-only trade-off is understood and accepted.
 - For git: repo provisioned or connected, remote URL confirmed, seeded structure committed and pushed, champion understands the git rhythm.
 - For Dropbox: folders created and shared, access set for the team, `exfu-dropbox-storage` operational, champion understands the conflicted-copy caveat and the hydration fix ("Make Available Offline").
-- Shared substrate seeded: convention base at its `exfu/<version>/` with `latest.txt` naming it, `durable/readme.md` in place and the ledger at `durable/ledger/` holding `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
-- Champion's personal substrate established in a separate folder: convention base deployed, its own `durable/` created and seeded the same way, user scope at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
-- Agent registry at the personal root with nightly-index registered; `nightly-agents` scheduled task created. Shared-substrate librarians registered too, or deliberately deferred.
+- Shared substrate seeded: convention base at its `exfu/<version>/` with `latest.txt` naming it, `durable/readme.md` in place and the ledger at `durable/ledger/` holding `readme.md`, `install.md`, `grants.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`, team scope created with `scope.md`, first-draft `ways-of-working.md` and `team-members.md` in place, CLAUDE.md guard at the shared root, first index generated.
+- Champion's personal substrate established in a separate folder: convention base deployed, its own `durable/` created and seeded the same way, user scope at `user/` with `scope.md`, `context/about-me.md`, `ontology/ways-of-working.md`, and `docket/agent.md`, at least one personal working scope, CLAUDE.md guard at the personal root.
+- Agent registry at the personal root with the shipped librarians registered (nightly-index, docket-compact, backlog-sweep, dispatcher); `nightly-agents` scheduled task created, and `hourly-agents` created as a Claude Code Desktop local task with the cheapest model, or deliberately skipped on a Cowork-only surface. Shared-substrate librarians registered too, or deliberately deferred.
 - First index generated at the personal root's `exfu/derived/index.json`.
 - Compliance briefing surfaced and reviewed (or at least located for later review).
 - Personal `wow` generated with a navigation map pointing at both substrates, noted as team-admin variant, installed in Global Instructions.

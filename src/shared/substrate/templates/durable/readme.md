@@ -3,7 +3,7 @@
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1910/ontology.md#durable
+Follows: exfu/20260903-1743/ontology.md#durable
 
 The things your librarians must never lose: the small set of facts about this library itself that nothing can work out again from scratch.
 

@@ -109,7 +109,7 @@ Plant this framing through the **moves you make**, not as a tagline. *"Let's tel
 
 **Concrete first, abstract later.** Don't lecture on architecture before doing anything. Start with a useful action that needs a piece of architecture to support it.
 
-**Many small wins, not one big workflow.** About-me leads to context. "Save that thought" leads to inbox. "Remind me Tuesday" leads to reminders. Each illustrates a different facet.
+**Many small wins, not one big workflow.** About-me leads to context. "Save that thought" leads to the docket. "Remind me Tuesday" leads to a reminder rule on it. Each illustrates a different facet.
 
 **Build by doing.** The setup is the byproduct of useful conversation. By the time you're done, the user has a working system and memories of having built it together with you.
 
@@ -175,7 +175,7 @@ Do the following in order:
 
 1. **Create `exfu/` at the substrate root.** This is the convention base directory.
 2. **Copy the shipped convention base** from `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` into `exfu/` at the substrate root, preserving its shape. Two parts:
-   - The version directory (the plugin ships exactly one, e.g. `20260724-1910`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
+   - The version directory (the plugin ships exactly one, e.g. `20260903-1743`) containing `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents. This is the frozen contract; copy it under the same version name.
    - The unversioned files beside it -- `readme.md`, `principles.md`, `librarians/` (the shipped librarian definitions), and `skills/` (the wow template). These sit directly in `exfu/`, not inside the version directory, and are refreshed by plugin updates.
 3. **Create `exfu/latest.txt`** containing exactly the shipped version name. This tells agents which convention version is current.
 4. **Create `exfu/derived/`** directory. This is where generated outputs live (the nightly index, visualisations). It starts empty.
@@ -183,6 +183,7 @@ Do the following in order:
    - `durable/readme.md` -- what the permanent record is, plus the three tests anything kept here must pass: unregenerable, about the library rather than about the world, and append-only human-readable text. Copy it as shipped.
    - `durable/ledger/readme.md` -- what the logbook is and the rules that govern it. Copy it as shipped.
    - `durable/ledger/install.md` -- the record of this install. Fill the shipped skeleton in: today's date, the plugin version (read it from the plugin manifest at `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), which surface the install ran on (Claude Code or Cowork), the storage backend the user chose in Step 3, and the conventions version deployed above.
+   - `durable/ledger/grants.md` -- the record of consent the user gives, later, for a channel to send on their behalf without asking. Copy it as shipped from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/grants.md`; it starts with no entries.
    - `durable/ledger/migrations.md` -- seeded, per the next item.
 6. **Seed `durable/ledger/migrations.md` with every migration the plugin ships.** List the files in `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/migrations/` and write one entry for each, in filename order, with outcome `not-applicable`. If that directory is absent or empty, the plugin ships none: leave the file with its heading and no entries. Use this format, which is the format every ledger this plugin writes uses:
 
@@ -209,7 +210,7 @@ Now that the convention base is in place, create the user's personal scope. **De
 The scope-setup skill will:
 - Ask about-me questions and write `user/context/about-me.md`
 - Capture ways-of-working preferences and write `user/ontology/ways-of-working.md`
-- Optionally set up todo, reminders, and inbox with sane defaults
+- Set up the user's docket at `user/docket/` -- the one place for their tasks, reminders, and things they leave for their agents. It scaffolds only `agent.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/scope/docket/agent.md`) and `readme.md` (from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/docket-readme.md`); the entry files appear on their first entry, and a task tool the user already has (ClickUp, Todoist) becomes a pointer line in `agent.md` rather than a local file
 
 If the about-me reveals the user is part of a team or organisation -- colleagues, an employer, IT policies, work tools -- read `${CLAUDE_PLUGIN_ROOT}/resources/team-considerations.md` and fold its considerations into the rest of the install.
 
@@ -253,9 +254,12 @@ This protects the library from being treated as a generic working folder.
 ### Step 8 -- Librarian registration (delegate to install-scheduled-agent)
 
 **Delegate to the `install-scheduled-agent` skill.** It will:
-- Register the nightly-index librarian
-- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json` at the substrate root
-- Set up the `nightly-agents` scheduled task (which runs all nightly-cadence scheduled agents -- librarians first, then any business agents)
+- Copy the default registry from `${CLAUDE_PLUGIN_ROOT}/substrate/templates/agent-registry.json` to `exfu/derived/agent-registry.json` at the substrate root. That registers the shipped librarians it lists: nightly-index, docket-compact, and backlog-sweep on the nightly cadence, and the dispatcher on the hourly cadence
+- Set up two scheduled tasks, one per cadence:
+  - `nightly-agents` -- runs all nightly-cadence scheduled agents (librarians first, then any business agents). Created in Cowork's Scheduled tab, as before.
+  - `hourly-agents` -- runs the dispatcher, the librarian that checks whether any reminder rule is due and delivers it. Create this one as a **Claude Code Desktop local scheduled task** (Code tab, Routines, Local) with the **cheapest model** selected in its model picker: it runs against the local index on this machine and must be cheap, because on most runs nothing is due. Cowork's scheduled tasks run in the cloud without local files, so they cannot host it. A user who only has Cowork skips this task; they get the same check when a session starts, and the dashboard shows what is waiting
+
+To the user, this is *"your librarians' overnight rounds, plus an hourly check for anything you asked to be reminded about"*.
 
 ### Step 9 -- Run the index immediately
 
@@ -289,11 +293,10 @@ As the conversation naturally surfaces needs, offer the skills that match. Don't
 - A contact list or personal CRM maintained for them.
 - Standing instructions that apply across every conversation.
 
-If the user already got inbox, reminders, or todo during the user scope creation (Step 5), don't re-offer those. Pick two or three from what's left. Install those. Leave the rest on the menu.
+The user's docket was set up during user scope creation (Step 5), so capture and reminders are already covered there; the docket skill below is what makes them usable in every session. Pick two or three from what's left. Install those. Leave the rest on the menu.
 
 **Available skills:**
-- `setup-reminders` -- generates the user's personal reminders skill. Introduce when the user mentions losing track of things or wanting nudges.
-- `setup-inbox` -- generates the user's personal inbox skill. Introduce when the user mentions thoughts they don't want to lose.
+- `setup-docket` -- generates the user's personal docket skill, which captures, reminds, completes, snoozes, and runs the session-start check. Introduce when the user mentions losing track of things, wanting nudges, or thoughts they don't want to lose. It replaces the separate reminders and inbox skills of earlier releases.
 - `setup-writing-styles` -- voice intake from writing samples that generates the user's personal writing-styles skill. Introduce if the user wants Claude to draft on their behalf.
 
 ### Step 12 -- Summary and next steps
@@ -315,14 +318,13 @@ What's available, all pre-installed via the plugin. No URL fetching needed.
 **Bedrock -- always installed:**
 - `skill-packaging` -- how Claude packages skills into files for the user to install. Used for custom skills the user wants to create later, not for the bundled ones.
 - `exfu-dropbox-storage` -- how Claude manages files in Dropbox (filesystem when mounted, MCP connector when not; native delete and move, conflicted-copy handling).
-- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, delegates to the user's personal reminders and inbox skills at session start if they are installed.
+- `exfu-library` -- the boot skill. Reads the way-of-working guide, orients to the current substrate by reading the index, runs the docket's due check at session start and delegates to the user's personal docket skill if it is installed.
 - `scope-setup` -- creates new scopes (user scope, working scopes). Handles about-me capture, ways-of-working, folder-type scaffolding.
 - `install-scheduled-agent` -- registers scheduled agents (librarians and business agents) and sets up their cadence tasks.
 
 **Optional but high-value:**
-- `setup-reminders` -- one-time intake that generates the user's personal `<username>-reminders` skill.
-- `setup-inbox` -- one-time intake that generates the user's personal `<username>-inbox` skill.
-- `daily-briefing` (scheduled task) -- morning briefing from reminders, inbox, calendar, task tracker.
+- `setup-docket` -- one-time intake that generates the user's personal `<username>-docket` skill (capture, remind, complete, snooze, session-start check).
+- `daily-briefing` (scheduled task) -- morning briefing from the docket, calendar, task tracker.
 - `setup-writing-styles` -- voice intake from writing samples that generates the user's personal `<username>-writing-styles` skill.
 
 **Reference resources (in the plugin, no fetching needed):**
@@ -340,12 +342,12 @@ A checklist, not a script:
 - Settings configured for full Cowork capability (Dispatch enabled, search/reference chats, generate memory from history, visual, code execution, Keep Computer Awake).
 - Dropbox account, Dropbox folder locally synced, Dropbox MCP connector connected (or alternative storage confirmed). Library folder identified via the folder picker. Hydration caveat ("Make Available Offline") surfaced and actioned.
 - Convention base deployed at `exfu/<version>/` with `exfu/latest.txt` naming it.
-- Permanent record created at `durable/` with `readme.md`, and its ledger at `durable/ledger/` with `readme.md`, `install.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`.
-- User scope created at `user/` with `scope.md`, `context/about-me.md`, and `ontology/ways-of-working.md`.
+- Permanent record created at `durable/` with `readme.md`, and its ledger at `durable/ledger/` with `readme.md`, `install.md`, `grants.md`, and a `migrations.md` seeded with every shipped migration as `not-applicable`.
+- User scope created at `user/` with `scope.md`, `context/about-me.md`, `ontology/ways-of-working.md`, and `docket/agent.md`.
 - At least one working scope created under `scopes/` to demonstrate the pattern.
 - CLAUDE.md guard at the substrate root.
-- Agent registry at `exfu/derived/agent-registry.json` with nightly-index registered.
-- `nightly-agents` scheduled task created.
+- Agent registry at `exfu/derived/agent-registry.json` with the shipped librarians registered (nightly-index, docket-compact, backlog-sweep, dispatcher).
+- `nightly-agents` scheduled task created. `hourly-agents` created as a Claude Code Desktop local task with the cheapest model, or deliberately skipped on a Cowork-only surface.
 - First index generated at `exfu/derived/index.json`.
 - A personal `wow` skill generated, customised with what you've learned about the user, installed, and added to Global Instructions so it loads every session.
 - `exfu-library` skill installed and operational.

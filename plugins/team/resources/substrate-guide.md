@@ -1,6 +1,6 @@
 # Substrate Guide
 
-version: 13
+version: 14
 
 This is the reference for how this user's Claude substrate works. Read this whenever you need to understand the structure, conventions, or philosophy behind the way things are organised.
 
@@ -123,18 +123,20 @@ Not a scope itself (no `scope.md`). This is the convention base and generated-ou
 
 ```
 exfu/
-  latest.txt              # single line: the current convention version (e.g. "20260724-1910")
-  20260724-1910/          # a convention version -- the frozen contract
+  latest.txt              # single line: the current convention version (e.g. "20260903-1743")
+  20260903-1743/          # a convention version -- the frozen contract
     ontology.md           # the complete core ontology, ONE file (scope model,
                           #   folder-types, scheduled agents, authoring rules)
   readme.md               # orientation map for this directory
   principles.md           # ExFu principles and recommendations
   librarians/             # shipped librarian definitions, ready to register
   skills/                 # shipped skill sources (the wow template)
-  derived/                # generated output (never hand-edited)
+  derived/                # generated TEXT caches (never hand-edited)
     index.json            # the global index -- whole-substrate map
     agent-registry.json   # registered scheduled agents and their health
     agent-log.json        # scheduled-agent run history
+    channels.json         # which connectors this surface can send through
+    due.json              # the docket's due view, for surfaces without the index
   visualisations/         # ExFu-shipped visual outputs
     dashboard/            # the substrate dashboard (HTML)
       index.html
@@ -142,9 +144,11 @@ exfu/
 
 The convention base is one complete ontology file rather than a folder of fragments because agents ingest a single read far more reliably -- the same file-economy principle that governs everything written into the substrate.
 
-**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260724-1910` carry all four inside the version directory; that is the older shape, and migration lifts them out.
+**`exfu/derived/` holds text, and only text.** It syncs with the library and a phone reads it through the storage connector, so everything in it is a small text file that is safe to delete and regenerate. Anything binary lives per machine, **outside the synced root**: the search index `library.sqlite` sits at `~/.exfu/derived/<library-id>/` (`library-id` is a short hash of the library's resolved root path; `EXFU_DERIVED_DIR` overrides the location). Dropbox and git sync a database's `-wal` and `-shm` sidecars independently and produce a conflicted binary copy with no merge, which is why nothing binary is ever written inside the library. The index is rebuilt from the text records incrementally by content hash and is never a source of truth; a moved library simply rebuilds it.
 
-**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260724-1910`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260724-1910/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
+**What is frozen, and what is not.** A version directory holds `ontology.md` and nothing else. The rule that decides membership: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Nothing anchors into the readme, the principles, the shipped librarian definitions, or the skill templates, so those sit unversioned at `exfu/` and are refreshed by plugin updates. This keeps the contract genuinely immutable while the material around it evolves at whatever pace features need -- and it keeps registry `source` paths stable, since librarian definitions no longer move when a convention version is minted. Bases shipped before `20260903-1743` carry all four inside the version directory; that is the older shape, and migration lifts them out.
+
+**Versioning is side-by-side.** Convention versions are identified by their release moment: a shortened UTC timestamp to the minute, `YYYYMMDD-HHMM` (e.g. `20260903-1743`) -- no seconds, no timezone suffix, no ISO punctuation. Every release mints a fresh identifier (contents never change under a stable name), lexicographic order is chronological order, and identifiers share no naming surface with plugin release numbers. When a new convention version ships, it appears alongside the existing ones (e.g. `exfu/20260903-1743/` next to `exfu/20260723-1446/`, or a legacy `exfu/v0.3/` -- any timestamp identifier is newer than any legacy `v0.x` one). Existing scopes keep their version pin until explicitly migrated. The `latest.txt` file points to the current default for new scopes.
 
 ### The durable/ directory -- the permanent record
 
@@ -164,7 +168,7 @@ Three tests, all of which must hold before anything is written here:
 
 An exception list grows silently wrong: each new durable thing is a fresh chance to forget an entry, and a forgotten entry destroys the one category of file that cannot be recovered. Naming what a refresh *may* replace has no such failure mode.
 
-`ledger/` is the first tenant and for now the only one -- materialise-on-demand applies here as everywhere, so `durable/` ships holding `ledger/` and a `readme.md` carrying the membership test, and gains nothing else until a second genuine tenant exists. The ledger holds `migrations.md` (every migration considered and how it went) and `install.md` (when the library was created, by which plugin version and surface). In the user-facing register `durable/` is the library's **permanent record** and the ledger is its **logbook**; librarians say "permanent record" to users and never say "durable".
+`ledger/` is the first tenant -- materialise-on-demand applies here as everywhere, so `durable/` ships holding `ledger/` and a `readme.md` carrying the membership test, and gains nothing else until another genuine tenant exists. The ledger holds `migrations.md` (every migration considered and how it went, including per-scope journals for migrations that work scope by scope), `install.md` (when the library was created, by which plugin version and surface), and `grants.md` (consent the user gave, and revoked, for a channel to send on their behalf without asking -- the dispatcher checks it before every automatic send, so the flag on the channel itself grants nothing). In the user-facing register `durable/` is the library's **permanent record** and the ledger is its **logbook**; librarians say "permanent record" to users and never say "durable".
 
 ### Migrations -- how a library moves between shapes
 
@@ -189,9 +193,10 @@ user/
   scope.md                # no exfu version pin -- always current
   context/                # personal background, preferences, about-me
   ontology/               # personal definitions, ways of working
-  skills/                 # sources of the user's generated personal skills (wow etc.)
+  skills/                 # sources of the user's generated personal skills (wow, docket)
+  docket/                 # what is open: tasks, reminders, things left for agents
   ...                     # other folder-types materialise as content appears
-                          #   (todo, reminders, inbox, databases, scheduled, ...)
+                          #   (databases, scheduled, ...)
 ```
 
 The user scope's `scope.md` has `parent: none` and no `exfu:` version field. It doesn't pin a version -- it's always current. Migration is by user decision.
@@ -209,13 +214,13 @@ scopes/
     scope.md
     ontology/
     context/
-    todo/
+    docket/
     databases/
     scopes/               # acme's child scopes, gathered here
       sales/              # a sub-scope
         scope.md
         ontology/
-        todo/
+        docket/
       eng/                # another sub-scope
         scope.md
   clients/                # a grouping folder (no scope.md)
@@ -223,7 +228,7 @@ scopes/
   side-project/           # another scope
     scope.md
     context/
-    inbox/
+    docket/
 ```
 
 **Scopes nest via their own `scopes/` directory.** A scope never holds child scopes loose among its own working folders. It gathers them in a dedicated `scopes/` subdirectory, keeping the scope's own folder-types clean and predictable. The pattern is self-similar: the root has `scopes/`, a scope can have `scopes/`, and so on.
@@ -267,7 +272,7 @@ Format:
 name: Acme
 purpose: Client relationship and commercial engagement with Acme Corp
 parent: root
-exfu: 20260724-1910
+exfu: 20260903-1743
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
@@ -284,7 +289,7 @@ Optional 2-3 sentence elaboration of purpose. Not required.
 
 **What scope.md does NOT contain:**
 - Entities, conventions, current state, dependencies (these live in folder-types)
-- Status, dates, progress tracking (those belong in `todo/` or the global index)
+- Status, dates, progress tracking (those belong in `docket/` or the global index)
 - Arrays of related skills or dependencies (scope.md is a boundary marker, not a knowledge store)
 
 **The protective header** (the blockquote) appears in both `scope.md` and every `agent.md`. Its job is to catch agents that wander into the substrate without having loaded ExFu skills. The exact wording is consistent across every file.
@@ -304,23 +309,40 @@ The base catalogue (defined canonically in `exfu/<version>/ontology.md`, one anc
 | `skills/` | What skill definitions belong to this scope? | Functions |
 | `librarians/` | What substrate maintenance runs here on a schedule? | Cron jobs for housekeeping |
 | `scheduled/` | What business-logic work runs here on a schedule? | A standing brief to an assistant |
-| `todo/` | How does this scope handle tasks? | A task list |
-| `reminders/` | How does this scope handle lightweight nudges? | A notification list |
-| `inbox/` | Where do uncategorised thoughts go for this scope? | A catch-all |
+| `docket/` | What is open here -- tasks, reminders, things left for agents -- and when and how does it get heard? | A court's list of matters to be heard |
 | `databases/` | Where do structured, repeating records live? Including recurring personal records like daily logs | Structured records |
 | `visualisations/` | Where do agent-created visual outputs live for this scope? | A gallery |
+
+**Three folder-types are deprecated.** `todo/`, `reminders/` and `inbox/` were separate folder-types before `docket/` replaced all three. A scope that has them keeps working: every shipped reader (the boot skill, the index, the dashboard, the daily briefing) still understands their markdown forms, and the docket migration offers to convert them scope by scope, with the originals kept in `docket/legacy/`. No new scope creates them, and their anchors stay in the ontology so old `Follows:` lines resolve.
 
 **The catalogue is open.** Any scope may add a folder-type not listed here. If it does, it should define the new type in that scope's `ontology/` so an agent can make sense of it.
 
 ### Store-or-point
 
-Store-or-point is a first-class choice for every folder-type. A `todo/` folder may contain actual task files, or its `agent.md` may simply say "tasks are in ClickUp." A `reminders/` folder may hold a markdown file with trigger rules, or it may say "reminders live in Apple Reminders."
+Store-or-point is a first-class choice for every folder-type, and in the docket it is a choice per file. A `docket/` may hold `todo.jsonl`, or its `agent.md` may say `todo: tracked in ClickUp, not stored locally` while `reminders.jsonl` and `agent-backlog.jsonl` stay local. A `databases/` folder may hold records, or say "contacts live in HubSpot."
 
-The convention guarantees the *location is discoverable*; whether data lives there is per-scope, per-user. The global index tracks the status of each folder-type as `data` (contains files), `pointer` (points elsewhere), or `empty`.
+The convention guarantees the *location is discoverable*; whether data lives there is per-scope, per-user. The global index tracks the status of each folder-type as `data` (contains files), `pointer` (points elsewhere), or `empty`, and for the docket it tracks that status per file.
 
 ### Folder-types materialise on demand
 
-Not every scope uses every folder-type, and a folder-type is only created when there is content to put in it (or the user explicitly asks, e.g. a todo pointer). Most scopes start with just `context/`. Additional folder-types are created the moment their first content appears -- never scaffolded empty "for completeness". An empty folder with boilerplate descriptors is noise every future read pays for; a scope with only scope.md and context/ is healthy, not incomplete.
+Not every scope uses every folder-type, and a folder-type is only created when there is content to put in it (or the user explicitly asks, e.g. a docket whose tasks point at an external tool). Most scopes start with just `context/`. Additional folder-types are created the moment their first content appears -- never scaffolded empty "for completeness". An empty folder with boilerplate descriptors is noise every future read pays for; a scope with only scope.md and context/ is healthy, not incomplete.
+
+### The docket -- what is open, and when it gets heard
+
+`docket/` is the folder-type agents touch most often, so its shape is the most specified. It holds three kinds of entry, one JSONL file each: `todo.jsonl` (tasks, with a completion state), `reminders.jsonl` (nudges, with a surface time or condition), and `agent-backlog.jsonl` (things the user leaves **for agents** to attend to -- a queue of work for agents to pull from, never the user's own in-tray; the backlog-sweep librarian summarises and suggests homes, the user decides). One file per collection rather than one file per entry, because the reading cost that matters is the number of files: a whole collection is one read from any surface, including one connector call on a phone. A file appears on its first entry; the folder on its first file.
+
+Every entry is one JSON object on one line with the same deliberately thin shape: `title`, `notes` for people, `agent_notes` as freeform instructions for agents (timing, conditions, dependencies, "only show when"), `status` (`open | done | archived`), optional `keywords` written by the saving agent as the search layer that needs no model, and the common envelope -- a library-wide `id` (UTC timestamp to the second plus random base32), `created`, `updated`, and a `revision` the writer increments. There are no priority, tag, dependency or recurrence columns; those live in `agent_notes` as prose. A facet a program must read is a **mixin**: a separate JSONL file whose rows reference the record they decorate by id, so the schema never grows. Sync conflicts fold by id (highest revision wins); the docket-compact librarian moves `done` and `archived` entries into `archive.jsonl` after 30 days so the active files stay small.
+
+The mechanics that make entries *do* something sit beside them in the same folder, joined by id:
+
+- **Triggers** (`triggers.jsonl`) are the scope's statement that at some moment, or on some occurrence, something should be assessed by an agent, and how. Each carries an `assess` brief in prose, a schedule (`once`, `cron` with a timezone, or `on-signal`), a handler (`deliver` through a channel; `agent`, a sub-agent at a stated weight; or `definition`, a registered scheduled agent), a channel, and an owner. A reminder is an entry with a trigger; an email check or "see whether the build passed" is a trigger with no entry at all. Natural-language rules are resolved once, when saved, and the original wording is kept in `assess`.
+- **Signals** (`signals.jsonl`) are facts an agent recorded about the world, addressed to whoever is listening. A fired trigger's handler reports the signals it observed; any trigger may be armed on a signal name. Two triggers that share a name form a workflow without either knowing about the other; the dashboard renders the implied graph from the index.
+- **Fire receipts** (`fires.jsonl`) record every firing: an `intent` row before acting and a `result` row after, so a crash leaves a visible half-receipt, nothing fires twice, and in a shared scope the intent receipt is the claim that decides which actor proceeds. At most once per trigger per run, never backfilled.
+- **Channels** (`channels.jsonl`) are how the scope reaches people: `dm` to one actor, `broadcast` to several, or `pull` (the dashboard and session start, always present). Any scope may declare channels; `user/` is where most people declare their default. Each is `send: draft` unless the user elevates it to `auto`, and the elevation is a grant in the permanent record, not the flag.
+
+The **dispatcher** librarian, on the hourly cadence, is what makes triggers fire. It never boots the library: it refreshes the index, reads the due view, and for each due trigger it owns writes the intent receipt, does what the handler says, and writes the result. It runs as a Claude Code Desktop local scheduled task with the cheapest model, because it needs the local index and on most runs finds nothing due; Cowork's cloud tasks have no local files and cannot host it. The boot skill runs the same due check at session start, so a Cowork-only user still gets their reminders, less promptly, and the dashboard shows what is waiting.
+
+The user's generated personal skill for all of this is `<user>-docket` (from `setup-docket`), which captures, reminds, completes and snoozes on both the filesystem and connector backends. It replaces the separate reminders and inbox skills of earlier releases. With users the vocabulary is plain: "your docket", "a reminder rule", "something happened", "tell me" or "tell the team", "prepare only" or "send automatically". The full contract is `exfu/<version>/ontology.md#docket` and `#docket-mechanics`.
 
 ---
 
@@ -342,7 +364,7 @@ A folder with no deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1910/ontology.md#context
+Follows: exfu/20260903-1743/ontology.md#context
 ```
 
 That's it. One line plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
@@ -353,10 +375,10 @@ A folder with deviations:
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260724-1910/ontology.md#todo
+Follows: exfu/20260903-1743/ontology.md#docket
 
 Local deviations:
-- Tasks are tracked in ClickUp, not stored locally
+- todo: tracked in ClickUp, not stored locally
 - Use the ClickUp MCP connector for read/write
 - Tag all tasks with scope name "acme-sales"
 ```
@@ -396,7 +418,7 @@ A collection of definitions -- "here is what this concept means in this scope." 
 
 Ontology holds *concepts*, not instances. A definition of what something means belongs here; a thing of a known kind goes where that kind prescribes (a librarian definition in `librarians/`, records in `databases/`, documents in `context/`).
 
-- `exfu/<version>/ontology.md` defines the structural vocabulary the entire substrate runs on, in one file: what a scope is, what a scheduled agent is, the difference between a todo and a reminder, what each folder-type means.
+- `exfu/<version>/ontology.md` defines the structural vocabulary the entire substrate runs on, in one file: what a scope is, what a scheduled agent is, the difference between a task and a reminder, what each folder-type means.
 - `user/ontology/` adds the user's personal definitions and ways of working that apply across all their scopes.
 - Any scope's `ontology/` adds definitions local to that scope ("we call them specialists, not reps"; "a lead in this context means...").
 
@@ -434,17 +456,17 @@ acme/
   scope.md                # name: Acme, parent: root
   ontology/
   context/
-  todo/
+  docket/
   scopes/
     sales/
       scope.md            # name: Sales, parent: Acme
       ontology/
-      todo/
+      docket/
       scopes/
         q3-renewal/
           scope.md        # name: Q3 Renewal, parent: Sales
           context/
-          todo/
+          docket/
 ```
 
 Nesting depth is unlimited but practical use rarely exceeds three levels. Flat is always possible -- users who don't want nesting just don't nest.
@@ -476,7 +498,7 @@ If you'd read it to *orient yourself*, it's context. If you'd read it to *pick u
 An imaginary company, Acme:
 
 - `scopes/acme/context/account-overview.md` -- who Acme is, the relationship, their business, standing facts. Rarely changes.
-- `scopes/acme/todo/` -- the active tasks: follow-ups, proposal drafts, decisions.
+- `scopes/acme/docket/` -- the active tasks and reminders: follow-ups, proposal drafts, decisions.
 - `scopes/acme/scopes/q3-renewal/` -- a child scope for a specific deal cycle, with its own context and tasks.
 
 Context and active work coexist within the same scope. They serve different purposes.
@@ -497,11 +519,13 @@ The index serves two consumers:
 1. **Agents.** Instead of traversing the filesystem, an agent reads the index and knows immediately what scopes exist, where they are, and what's in them. Fast orientation, even when the substrate is large.
 2. **The substrate dashboard.** The HTML visualisation at `exfu/visualisations/dashboard/index.html` renders the index into a visual map for non-technical users.
 
+The global index is a text cache in `exfu/derived/`, beside the agent registry and log, `channels.json` (which connectors this surface can send through) and `due.json` (the docket's due view, carrying the index generation and source hashes it was computed from, so a stale one is rejected). The **search index** is a different thing: a per-machine SQLite file at `~/.exfu/derived/<library-id>/library.sqlite`, outside the synced root, holding every docket record with full-text search over titles, notes and keywords, plus the trigger, signal, receipt and channel tables the dispatcher and dashboard query. It is rebuilt incrementally by content hash (the nightly run validates everything, the hourly run trusts size and mtime hints), is never a source of truth, and is never read from a phone: mobile sessions read the JSONL files directly.
+
 ---
 
 ## Scheduled agents: librarians and business agents
 
-A scheduled agent is recurring work defined as *agent instructions*: a markdown definition an agent reads cold and carries out on a cadence (typically nightly), calling scripts as tools where the definition says to. The definition is the spec; the platform's scheduled task is the cron; Claude in that session is the worker.
+A scheduled agent is recurring work defined as *agent instructions*: a markdown definition an agent reads cold and carries out on a cadence (nightly for most; hourly for the dispatcher), calling scripts as tools where the definition says to. The definition is the spec; the platform's scheduled task is the cron; Claude in that session is the worker.
 
 Two kinds share identical mechanics and differ only in remit:
 
@@ -512,9 +536,12 @@ Two kinds share identical mechanics and differ only in remit:
 
 Librarians:
 - **Nightly index** (exfu-shipped) -- walks the entire substrate and regenerates `exfu/derived/index.json`. The foundation; others depend on it.
-- **Inbox triage** (exfu-shipped) -- sweeps inbox folders and suggests where captured thoughts belong; never moves anything itself.
+- **Docket compaction** (exfu-shipped, nightly) -- archives closed docket entries after 30 days, folds sync conflicts by id, sweeps expired signals, receipts and orphaned mixins, and emits `entry-completed` signals.
+- **Backlog sweep** (exfu-shipped, nightly) -- summarises each scope's agent backlog (and any deprecated inbox) and suggests where items belong; never moves anything itself.
+- **Dispatcher** (exfu-shipped, hourly) -- asks the index what is due and fires each trigger through the handler and channel it names, writing a receipt per fire. Runs as a Desktop local task with the cheapest model; never boots the library.
 - **Dashboard generator** (exfu-shipped) -- renders the HTML dashboard from the derived data.
 - **Version cleanup** (exfu-shipped) -- flags convention versions no scope references any more.
+- **Library updater** (exfu-shipped, not scheduled) -- applies pending migrations with the user present when the boot skill finds the ledger behind the plugin.
 
 Business agents:
 - A listings scanner that checks dealer sites against a brief and updates a sightings database.
@@ -527,7 +554,7 @@ What a definition does is scope-dependent -- it reads that scope's ontology, the
 
 Definitions are markdown files with YAML frontmatter (`name`, `cadence`, `description`, plus optional `scripts`, `reads`, `writes`, `depends_on`) and natural-language instructions -- rich enough for a scheduled agent to read cold and know what to do, but not so procedural that they become brittle scripts. The canonical format lives in `exfu/<version>/ontology.md` (Scheduled agents section).
 
-A definition does nothing until *registered* (the install-scheduled-agent skill handles this, always with user confirmation). The registry of all registered scheduled agents lives at `exfu/derived/agent-registry.json`; run history is logged at `exfu/derived/agent-log.json`. One scheduled task per cadence (e.g. `nightly-agents`) executes everything registered for that cadence: librarians first, so the substrate is tidy and the index fresh before business agents consume them, then dependency order.
+A definition does nothing until *registered* (the install-scheduled-agent skill handles this, always with user confirmation). The registry of all registered scheduled agents lives at `exfu/derived/agent-registry.json`; run history is logged at `exfu/derived/agent-log.json`. One scheduled task per cadence (e.g. `nightly-agents`) executes everything registered for that cadence: librarians first, so the substrate is tidy and the index fresh before business agents consume them, then dependency order. The nightly task is a Cowork scheduled task, as before. The hourly task (`hourly-agents`) is a Claude Code Desktop local task with the cheapest model selected, because the dispatcher it hosts needs the local index and usually has nothing to do; it runs only while the app is open and the machine is awake, with one catch-up run for a missed slot, which is the dispatcher's own misfire rule. A Cowork-only user skips it and relies on the session-start check.
 
 ---
 
@@ -604,7 +631,7 @@ The substrate is designed to grow.
 
 **Custom databases** -- Ask Claude to manage structured data (contacts, CRM, task lists, anything). It creates and maintains the data in a scope's `databases/` folder-type. The user interacts through conversation.
 
-**Custom folder-types** -- A scope can define folder-types beyond the standard ten. Define the new type in that scope's `ontology/` so agents can make sense of it.
+**Custom folder-types** -- A scope can define folder-types beyond the standard eight. Define the new type in that scope's `ontology/` so agents can make sense of it.
 
 **Custom skills** -- Draft skills in the user's `skills/` folder-type or a scope's `skills/`, test them, then install as proper skills. Skills can encode any repeated workflow, convention, or way of working.
 
@@ -638,6 +665,7 @@ Newest entries at the top of the Changelog section. Append-only. Don't rewrite h
 
 ## Changelog
 
+- 2026-09-03 v14: The docket replaces three folder-types, and the library gains triggers (plugin 0.11.0, conventions `20260903-1743`). `todo/`, `reminders/` and `inbox/` collapse into one `docket/` per scope: `todo.jsonl`, `reminders.jsonl` and `agent-backlog.jsonl` (the inbox renamed to say whose queue it is), one JSONL file per collection so a whole collection is one read from any surface including a phone. The three old folder-types are deprecated, never wiped: every reader keeps its legacy parser, no new scope creates them, and the migration is offered per scope with a journal in the ledger, originals preserved in `docket/legacy/`, and a scope the user or agent declines staying on the old shape indefinitely. One thin record shape for all three files -- `title`, `notes`, `agent_notes`, `status`, optional agent-written `keywords`, and the envelope of library-wide `id`, `created`, `updated`, `revision` -- with no ontological fields: priority, tags, dependencies and recurrence live in `agent_notes` as prose, and any facet a program must read is a mixin file joined on id, so the schema never grows. Mixins bring the docket's mechanics as sibling files: triggers (when and how a matter gets heard: `once`, `cron` with a zone, or `on-signal`; a prose `assess` brief; a handler of `deliver`, `agent` at a weight, or `definition`), signals (facts recorded for whoever listens, the arc between actions, forming workflows no file authors), fire receipts (intent before acting, result after; the misfire rule, the watermark, and the claim in a shared scope), actors (owner handles; a dispatcher fires only what it owns or what is `any`), channels (`dm`, `broadcast`, always-present `pull`; `draft` by default) and grants (`auto` sending is a ledger entry in `durable/ledger/grants.md`, never the flag; in 0.11.0 honoured only on a `dm` to the trigger's owner). The dispatcher is a new librarian on the existing hourly cadence, created as a Claude Code Desktop local task with the cheapest model because it needs the local index and usually has nothing to do; Cowork's cloud tasks cannot host it, so a Cowork-only user gets the boot-time drain -- the boot skill runs the same due check at session start -- and the dashboard. `inbox-triage` becomes `backlog-sweep`; `docket-compact` joins the nightly cadence. The derived rule is reworded and made true: `exfu/derived/` holds text caches only (index, registry, log, `channels.json`, `due.json`), and the search index `library.sqlite` moves per machine outside the synced root to `~/.exfu/derived/<library-id>/`, rebuilt from the JSONL records incrementally by content hash, FTS5 over titles, notes and keywords, no embeddings and no install beyond the stdlib. `setup-docket` replaces `setup-reminders` and `setup-inbox`, generating one `<user>-docket` skill. Decision record: `planning/structured-worklist.md`.
 - 2026-07-24 v13: Library migrations become a convention, and durable state gets a home (plugin 0.10.0). New top-level `durable/` is the library's permanent record: the append-only facts about the library itself that nothing can regenerate and that no refresh may overwrite. Its first tenant is the logbook at `durable/ledger/` (`migrations.md`, `install.md`). The container is deliberately more general than that tenant, because more stateful things will need to survive outside `exfu/` over time. Membership test, all three required: unregenerable (delete it, run every librarian twice, see if it returns -- cost is not part of the test), about the library rather than the world (domain records belong in a scope's `databases/`), and append-only human-readable text (which excludes SQLite, embeddings and mutable config by construction, and matters because libraries sync through Dropbox or git). The carve-out is stated positively and never as an exception list: a refresh replaces `exfu/`, and never touches `durable/`, `user/`, or `scopes/` -- an exception list grows silently wrong, and a live data-loss bug of exactly that kind was found and fixed in `exfu-migrate-to-dropbox`. Migrations themselves are boot-detected rather than scheduled: a plugin update does not touch the library, so there is no update hook to fire; the boot skill compares shipped migrations against the ledger and hands pending work to the `library-updater` librarian, applied with the user present. Three safety rules: fresh installs seed rather than replay, preconditions test actual structure rather than the ledger, and a library ahead of its surface's plugin blocks structural work (Claude Code and Cowork have separate plugin installs and either may auto-update). Decision records: `planning/library-migrations.md`.
 - 2026-07-24 v11: The conventions lock moves to the contract rather than the folder (plugin 0.9.0). A convention version directory now holds `ontology.md` and nothing else; `readme.md`, `principles.md`, `librarians/`, and `skills/` move out to unversioned `exfu/` and travel with plugin releases. The deciding rule is mechanical: a file belongs in a version directory if and only if a `Follows:` line can anchor into it, and all 16 anchors point into the ontology. Base minted as `20260724-1749`; the root-layout depiction moved from the ontology to `exfu/readme.md`. Registry `source` paths stop breaking on every mint. A build gate (`build/check-conventions-lock.sh`) now enforces byte-identity of shipped versions, and `build/mint-conventions.sh` makes minting one command. Bases before `20260724-1749` keep the old shape; both coexist. Decision record: `planning/conventions-lock-boundary.md`.
 - 2026-07-24 v10: The dashboard gains a front door. `dashboard.html` at the library root redirects to `exfu/visualisations/dashboard/index.html`, so users open the dashboard from the top of their library instead of remembering a four-deep path. It is a generated redirect page, not a symlink: sync layers handle symlinks unreliably (the same reason `exfu/latest.txt` is a text file), and browsers resolve relative URLs against the document URL, so a symlinked page would break the dashboard's own `../../../scopes/...` gallery links and view iframes. The dashboard bundle itself does not move.
