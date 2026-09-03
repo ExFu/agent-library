@@ -20,7 +20,7 @@ description: The library's cron manager -- finds due triggers in the index and h
 
 Every scope may say, in its docket, that at some moment or on some occurrence something should be assessed by an agent, and how. This librarian is the one place those statements become action. It runs on the hourly cadence with the cheapest model available, because on most runs nothing is due and the whole job is one query.
 
-Follows: exfu/20260903-1743/ontology.md#dispatcher
+Follows: exfu/20260903-1825/ontology.md#dispatcher
 
 ## Hard constraints
 

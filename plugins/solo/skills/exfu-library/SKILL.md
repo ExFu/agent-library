@@ -90,6 +90,7 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 - Every scope (name, path, parent chain, nesting)
 - Folder-type status per scope (data-bearing, pointer-only, or empty)
+- Any `status: stale` assertion a scope.md declares -- treat such scopes as background: don't volunteer their content as current, and mention the staleness if the user asks about them
 - ExFu version pins per scope
 - Which exfu versions are in use and which is latest
 
@@ -104,11 +105,11 @@ Read `exfu/derived/index.json` from the substrate root. This is the single sourc
 
 ### Step 6 -- Resolve the current exfu version
 
-Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260903-1743`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
+Read `exfu/latest.txt` from the substrate root. It contains the current convention version (e.g. `20260903-1825`). This tells you which convention base to reference when creating new content or interpreting scopes that don't specify a version.
 
 The convention base lives at `exfu/` and is deliberately flat and small. It splits in two:
 
-**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260903-1743/`), which holds one file:
+**The versioned contract** at `exfu/<version>/` (e.g. `exfu/20260903-1825/`), which holds one file:
 - `ontology.md` -- the complete core ontology in one file: the scope model, every folder-type, scheduled agents and librarians, the way-of-working concept, and the authoring rules. One read gives you the whole vocabulary; `Follows:` references across the substrate point into it by anchor (e.g. `ontology.md#todo`).
 
 **Unversioned shipped content** beside it at `exfu/`, refreshed by plugin updates:
@@ -117,9 +118,9 @@ The convention base lives at `exfu/` and is deliberately flat and small. It spli
 - `librarians/` -- the ExFu-shipped librarian definitions, ready to register.
 - `skills/` -- the ExFu-shipped skill sources, including the way-of-working template.
 
-A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260903-1743` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
+A file is frozen if and only if a `Follows:` line can anchor into it, which is why only the ontology is versioned. Bases shipped before `20260903-1825` carry all four of the unversioned items *inside* the version directory instead -- the older shape. If you see that, read them from there; both shapes coexist.
 
-Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260903-1743` follows the conventions in `exfu/20260903-1743/ontology.md`. The `user/` scope is unversioned and always follows latest.
+Scopes pin their version in scope.md's `exfu` field. A scope pinned to `20260903-1825` follows the conventions in `exfu/20260903-1825/ontology.md`. The `user/` scope is unversioned and always follows latest.
 
 ### Step 7 -- Check for pending migrations
 
@@ -345,7 +346,7 @@ Everything in the substrate is organised around one concept: the **scope**. A sc
 ```
 substrate-root/
   exfu/                     # convention base (plugin-owned, not user-editable)
-    20260903-1743/          # a convention version: the frozen contract
+    20260903-1825/          # a convention version: the frozen contract
       ontology.md           # the complete core ontology, one file
     readme.md               # orientation map for this directory
     principles.md           # design principles + recommendations
@@ -361,7 +362,7 @@ substrate-root/
       due.json              # the due view: triggers ready to fire, with source hashes
     visualisations/         # exfu-shipped visual outputs
       dashboard/            # generated HTML dashboard
-    latest.txt              # points to current version (e.g. "20260903-1743")
+    latest.txt              # points to current version (e.g. "20260903-1825")
   dashboard.html            # generated front door: redirects to the dashboard above
   durable/                  # the permanent record: facts about the library itself
                             # that nothing can regenerate. A refresh replaces
@@ -401,7 +402,7 @@ substrate-root/
 ---
 name: <human-readable name>
 parent: <parent scope name, or "root" for top-level>
-exfu: 20260903-1743
+exfu: 20260903-1825
 ---
 ```
 
@@ -440,13 +441,13 @@ Every materialised folder-type directory contains an `agent.md` with this struct
    > This folder follows ExFu conventions. If you haven't loaded them yet, ask your user to set you up with their WoW or ExFu skills.
 
 2. **`Follows:` line** naming the upstream convention by versioned anchor into the core ontology file:
-   `Follows: exfu/20260903-1743/ontology.md#docket`
+   `Follows: exfu/20260903-1825/ontology.md#docket`
 
 3. **`Local deviations:` section** listing only what differs from upstream. If nothing differs, this section is omitted entirely.
 
 A folder with no deviations is two lines plus the header. The agent reads the referenced section of `ontology.md` for full behaviour.
 
-**Descriptors carry no state.** agent.md, readme.md, and scope.md describe what a folder is *for* -- never its current contents, counts, or status. "Currently empty" goes stale silently; state lives in the derived index and the content itself.
+**Descriptors carry no state.** agent.md, readme.md, and scope.md describe what a folder is *for* -- never its current contents, counts, or status. "Currently empty" goes stale silently; state lives in the derived index and the content itself. The one exception is scope.md's optional `status: stale` lifecycle assertion -- a deliberate declaration that stays true until removed, not a snapshot.
 
 ### Scope nesting
 
@@ -515,7 +516,7 @@ These are internalised here so they're available even when the convention base h
 - **Delegate to the right storage skill.** For git-backed substrates, defer ongoing sync work to `git-substrate-sync`. For Dropbox-backed substrates, defer file CRUD to `exfu-dropbox-storage`. For local-only substrates, direct filesystem operations are sufficient. For legacy Box-backed substrates, suggest `exfu-migrate-to-dropbox` before doing substantive file work.
 - **Navigate via the index.** When you need to find a scope or understand the substrate's shape, read the index first. Only walk the filesystem when the index is unavailable.
 - **Maintain discoverability.** When you create new folders or content, create or update agent.md files with `Follows:` anchor references into the convention base's `ontology.md`. When you create a new scope, scaffold scope.md with the correct parent and version pin.
-- **Materialise on demand, write no state into descriptors, prefer fewer complete files.** Don't create empty folder-types; add them when their first content appears. Never write "currently empty", counts, or status into agent.md/readme.md/scope.md. Extend existing files rather than scattering siblings; keep ontologies flat with one complete file per concept. (Full authoring rules: `exfu/<version>/ontology.md#authoring-rules`.)
+- **Materialise on demand, write no state into descriptors, prefer fewer complete files.** Don't create empty folder-types; add them when their first content appears. Never write "currently empty", counts, or status into agent.md/readme.md/scope.md -- except scope.md's deliberate `status: stale` lifecycle assertion. Extend existing files rather than scattering siblings; keep ontologies flat with one complete file per concept. (Full authoring rules: `exfu/<version>/ontology.md#authoring-rules`.)
 - **Respect version pins.** When working inside a scope, use the conventions from the scope's pinned exfu version. Don't assume all scopes are on the latest version.
 - **Don't assume context persists between sessions.** If you need information from the substrate, read it from the current state. Don't rely on memory from prior conversations.
 - **Surface only what's actually there.** Don't invent scopes, folder-types, or permissions. Read the files and report what you find.

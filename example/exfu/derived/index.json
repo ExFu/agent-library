@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-03T18:11:57Z",
+  "generated": "2026-09-03T18:26:27Z",
   "substrate_root": "/Users/al/Studio/projects/exfu_plugin/.claude/worktrees/library-exfu-version-migration-7996a6/example",
   "exfu_versions": {
     "20260724-1910": {
@@ -10,7 +10,7 @@
         "Side Project"
       ]
     },
-    "20260903-1743": {
+    "20260903-1825": {
       "is_latest": true,
       "scopes_using": []
     }

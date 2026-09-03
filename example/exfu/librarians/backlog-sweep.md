@@ -17,7 +17,7 @@ description: Summarises and suggests homes for items sitting in agent backlogs a
 
 Keeps agent backlogs from becoming bottomless pits. The backlog is where the user leaves things for their agents to attend to; if items sit there too long, it stops being useful. This librarian surfaces what's accumulating and suggests where things might go -- it does not move, close or delete anything, because final routing needs the user's judgment.
 
-Follows: exfu/20260903-1743/ontology.md#docket
+Follows: exfu/20260903-1825/ontology.md#docket
 
 ## Instructions
 

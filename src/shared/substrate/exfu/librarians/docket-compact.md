@@ -23,7 +23,7 @@ description: Keeps every docket small and consistent -- archives closed entries,
 
 A docket is read whole, from any surface, including a phone through the storage connector. That only stays cheap if the active files stay small and consistent. This librarian is the housekeeping that makes the one-file-per-collection rule safe over time.
 
-Follows: exfu/20260903-1743/ontology.md#docket-mechanics
+Follows: exfu/20260903-1825/ontology.md#docket-mechanics
 
 ## Instructions
 

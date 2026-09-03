@@ -18,7 +18,7 @@ You are called in three situations:
 
 1. **Materialise on demand -- never scaffold empty folders.** Create a folder-type only when you have actual content to put in it right now, or the user has explicitly asked for it (e.g. a docket whose tasks point at their task tool). An empty folder with boilerplate descriptors is noise every future read pays for. There is no minimum set: a scope with only scope.md is valid. Folder-types are added later, the moment content for them first appears -- that's situation 3, and it's the normal way scopes grow.
 2. **Documents are context; repeating records are databases.** Reference documents (PDFs, spreadsheets, transcripts, exports, anything "filed for keeping") live in `context/`, beside the prose that gives them meaning; anything with a repeating shape lives in `databases/`. This routing holds during migrations too -- an old vault's document piles become context.
-3. **No state in descriptors.** scope.md, agent.md, and readme.md describe what a folder *is for* -- static facts that stay true. Never write "currently empty", item counts, "last updated", or any other snapshot of current state into them. State goes stale silently and misleads every later reader.
+3. **No state in descriptors.** scope.md, agent.md, and readme.md describe what a folder *is for* -- static facts that stay true. Never write "currently empty", item counts, "last updated", or any other snapshot of current state into them. State goes stale silently and misleads every later reader. One carve-out: scope.md may carry the `status: stale` lifecycle assertion (see below) -- a deliberate declaration, not a snapshot.
 4. **Fewer, more complete files.** When writing ontology entries, one complete file per concept (or one file for the whole ontology while it's small) -- never a nest of fragments. When capturing context, extend an existing file before creating a sibling.
 5. **Ontology holds concepts, not instances.** A definition of what something *means* goes in ontology/. An instance of a known concept goes where that concept prescribes: a librarian definition in librarians/, a business agent in scheduled/, records in databases/, reference documents in context/. If you're about to put a file in ontology/ ask: "is this a new kind of thing, or a thing of a known kind?"
 6. **Never use em-dashes.** Use " -- " (space-dash-dash-space) instead.
@@ -124,6 +124,8 @@ exfu: <version from latest.txt>
 
 <optional 2-3 sentence elaboration of purpose -- what it's for, never what it currently contains>
 ```
+
+New scopes never carry a `status:` line. Later, when a scope winds down but isn't ready to delete or archive, add `status: stale` to the frontmatter -- a deliberate assertion that its content is no longer kept current. The next index run picks it up and the dashboard badges the scope. Remove the line to reactivate. `stale` is the only recognised value; never write `status: active`.
 
 ### agent.md (any folder-type, no deviations)
 

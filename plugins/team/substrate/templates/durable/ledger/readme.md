@@ -3,7 +3,7 @@
 > This folder follows ExFu conventions. If you haven't loaded them yet,
 > ask your user to set you up with their WoW or ExFu skills.
 
-Follows: exfu/20260903-1743/ontology.md#ledger
+Follows: exfu/20260903-1825/ontology.md#ledger
 
 This is the logbook: which migrations have been applied, when the library was created, and by which version. It lives inside `durable/`, the library's permanent record. Your librarians write here; you can read it.
 

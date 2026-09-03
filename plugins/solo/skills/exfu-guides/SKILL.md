@@ -63,7 +63,7 @@ The eight standard folder-types are the vocabulary of "where things go" inside a
 
 Three folder-types from earlier versions -- `todo/`, `reminders/`, `inbox/` -- are deprecated: `docket/` replaces all three. A scope that has them keeps working and every reader still understands them, but no new scope creates them and the docket migration offers to convert them scope by scope. Their anchors are kept so old `Follows:` lines resolve.
 
-The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260903-1743/ontology.md#docket`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
+The catalogue is open -- a scope can add its own types and define them in its `ontology/`. Folder-types materialise only when content exists for them: a scope with just scope.md and context/ is healthy, not incomplete. Each materialised folder-type has an `agent.md` whose `Follows:` line anchors into the core ontology (e.g. `Follows: exfu/20260903-1825/ontology.md#docket`) and lists only local deviations. Descriptors never carry state ("currently empty" is banned -- it goes stale).
 
 Canonical source: `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/<version>/ontology.md` (Folder-types section)
 
@@ -73,7 +73,7 @@ The convention base lives at `exfu/` inside the substrate, and splits in two. Th
 
 The rule deciding which is which: *a file belongs in a version directory if and only if a `Follows:` line can anchor into it.* Only the ontology qualifies, so only the ontology is frozen. That is what lets the conventions stay genuinely locked while documentation, shipped librarians, and templates keep evolving -- and it keeps registry `source` paths stable, because librarian definitions no longer move when a version is minted.
 
-Scopes reference the contract via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260903-1743/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The base ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` and gets installed into the user's substrate. It is deliberately flat and small so it can be ingested in a handful of reads. Bases shipped before `20260903-1743` hold all four unversioned items inside the version directory instead; that is the older shape.
+Scopes reference the contract via `Follows:` lines in their `agent.md` files, anchored into the single ontology file (`Follows: exfu/20260903-1825/ontology.md#context`). A standard folder with no deviations is tiny -- the protective header plus that one line. The base ships with the plugin at `${CLAUDE_PLUGIN_ROOT}/substrate/exfu/` and gets installed into the user's substrate. It is deliberately flat and small so it can be ingested in a handful of reads. Bases shipped before `20260903-1825` hold all four unversioned items inside the version directory instead; that is the older shape.
 
 ### 4. Store-or-point
 

@@ -4,7 +4,7 @@
 audit and a two-voice council). Every open decision is ruled and folded into
 the decisions below; the audit's corrections are applied in place rather than
 listed separately. Enacted as release 0.11.0 on 2026-09-03 (conventions
-`20260903-1743`); the attended migration's first real run and the phone-side
+`20260903-1825`); the attended migration's first real run and the phone-side
 connector check are the two verifications still owed. Companion to
 `library-migrations.md` (this will be the second shipped migration and the
 second conventions mint) and to the `durable/` reasoning there, which already

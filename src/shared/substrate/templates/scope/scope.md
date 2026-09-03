@@ -2,7 +2,7 @@
 name: <scope-name>
 purpose: <one-line purpose>
 parent: <parent-scope-name or "root">
-exfu: 20260903-1743
+exfu: 20260903-1825
 ---
 
 > This folder follows ExFu conventions. If you haven't loaded them yet,
