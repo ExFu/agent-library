@@ -6,6 +6,10 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.11.1 -- 2026-09-03
+
+**The author of record is the brand.** Every manifest's `author.name` is now `exfu.ai` rather than a person's name, matching the sibling ExFu plugins and the `exfu-marketplace` catalogue, which changed in the same sweep. The `email` and `url` fields are unchanged, and the LICENSE still names the licensor, which is ownership rather than authorship. Metadata-only patch; no behaviour changes.
+
 ## v0.11.0 -- 2026-09-03
 
 **What is open in a scope now lives in one docket, as records.** Tasks, reminders and captured thoughts were three folder-types of freeform markdown that scripts guessed at: the dashboard took the first date it found in a line as a reminder's date, decided a folder was a pointer by substring-matching phrases, and split reminder files by whether they happened to use headings or bullets. The two generations of personal skills disagreed about where the files even lived. And one file per captured item is the most expensive shape there is for an agent to read. Decision record: `planning/structured-worklist.md`, adopted after a Codex audit and a two-voice council.

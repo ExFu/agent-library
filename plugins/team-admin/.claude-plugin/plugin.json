@@ -1,9 +1,9 @@
 {
   "name": "exfu-agent-library-team-admin",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "ExFu: library-champion edition. Provision your team's shared Agent Library, author shared skills, brief IT, onboard members.",
   "author": {
-    "name": "Alastair Brayne",
+    "name": "exfu.ai",
     "email": "al@exfu.ai",
     "url": "https://exfu.ai"
   },

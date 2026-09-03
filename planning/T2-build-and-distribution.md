@@ -228,3 +228,12 @@ at the repo root holds the terms; all three plugin manifests declare
 `"license": "Proprietary"`. The repo is public for distribution convenience
 only -- publication grants no open-source licence, and redistribution needs
 written permission. Enquiries: al@exfu.ai.
+
+**Author identity (2026-09-03).** Operator ruling: the author of record on
+every ExFu plugin is the brand, `exfu.ai`, not the person. All three
+`src/*/.claude-plugin/plugin.json` manifests carry `author.name: exfu.ai`
+(email and url unchanged) and the suite cut as 0.11.1, a metadata-only patch --
+the marketplace release flow moves a pin only on a version change, because the
+CLI caches by version. The LICENSE still names the licensor: ownership, not
+authorship. The same ruling was applied to every sibling plugin and to the
+`exfu-marketplace` catalogue's `owner` and entry `author` fields in one sweep.
