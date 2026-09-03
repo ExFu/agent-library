@@ -1,10 +1,9 @@
 # structured-worklist -- one docket per scope, mixin files, triggers, and a local index
 
-**Status:** Draft, third pass (2026-09-03). Every open decision from the first
-two passes and the audit is now ruled by Al and folded into the decisions
-below; the audit's corrections are applied in place rather than listed
-separately. What remains is the acceptance ceremony and then enactment.
-Nothing under `src/` changes until Al accepts. Companion to
+**Status:** Adopted (Al, 2026-09-03, in session, after three passes, a Codex
+audit and a two-voice council). Every open decision is ruled and folded into
+the decisions below; the audit's corrections are applied in place rather than
+listed separately. Enactment (release 0.11.0) follows this record. Companion to
 `library-migrations.md` (this will be the second shipped migration and the
 second conventions mint) and to the `durable/` reasoning there, which already
 anticipated SQLite arriving.
