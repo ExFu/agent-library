@@ -129,7 +129,7 @@ The personal scope. Always exists at the substrate root alongside `exfu/` and `s
 
 ### 9. The permanent record
 
-`durable/` at the root holds the facts about the library itself that nothing can regenerate: which migrations have been applied, when the library was created and by which version, and which channels the user has allowed to send on their behalf without asking (`ledger/grants.md`; the dispatcher checks it before every automatic send, so a flag on the channel grants nothing by itself). Its first tenant is the logbook at `durable/ledger/`. Not a scope, not a folder-type.
+`durable/` at the root holds the facts about the library itself that nothing can regenerate: which migrations have been applied, when the library was created and by which version, which channels the user has allowed to send on their behalf without asking (`ledger/grants.md`; the dispatcher checks it before every automatic send, so a flag on the channel grants nothing by itself), and who the library acts as (`ledger/actors.md`: the canonical handle triggers carry as `owner`, plus every alias and medium id that resolves to it, so a trigger written under a display name still fires). Its first tenant is the logbook at `durable/ledger/`. Not a scope, not a folder-type.
 
 It exists because every other home is wrong. `exfu/` is replaced wholesale when the plugin updates. `exfu/derived/` is a cache that is safe to delete and rebuild. So the rule every skill states is positive rather than a list of exceptions: **a refresh replaces `exfu/`; it never touches `durable/`, `user/`, or `scopes/`.**
 

@@ -66,7 +66,9 @@ Once you have the intake answers:
 
 ### 1. Determine the username
 
-Read `user/context/about-me.md` from the user's library. Look for their name. Default to first-name-lowercase as the username (e.g. "Alastair" becomes `al`, or use whatever handle is clear from the file). Prefer the actor handle in `durable/ledger/install.md` if it exists, since triggers carry it as `owner`. If the name is ambiguous or the file doesn't exist, ask: "What should we call your docket skill? Something like `al-docket` or `sarah-docket` -- first name or nickname is fine."
+Read `durable/ledger/actors.md` first: if it has a record, its first heading is the handle, and the username is that handle. Otherwise read `user/context/about-me.md`, look for their name, and default to first-name-lowercase (e.g. "Alastair" becomes `al`, or whatever handle is clear from the file). If the name is ambiguous or neither file exists, ask: "What should we call your docket skill? Something like `al-docket` or `sarah-docket` -- first name or nickname is fine."
+
+**Record the actor if no record exists.** Triggers carry the handle as `owner`, and the dispatcher fires only what resolves to the library's actor, so the handle needs a home before the first trigger is written. Append a record to `durable/ledger/actors.md` in the shape of `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/actors.md`: the handle as heading, their display name, the aliases they go by (ask: "Any other names you go by that an agent might write down? First name, nickname, initials?"), and the ids of any channel that reaches them directly (the Slack member id behind a `dm` channel, their email). Every name listed there resolves to the handle, so a trigger written under "Alastair" fires for `al` instead of failing silently.
 
 The per-user skill will be named `<username>-docket`.
 
@@ -110,4 +112,5 @@ If the user ever wants a fresh setup -- a different location, time zone, channel
 - `exfu-library` calls the user's docket skill (by name) at session start if it is installed.
 - The template at `${CLAUDE_PLUGIN_ROOT}/templates/docket-template.md` contains the operational logic.
 - `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/grants.md` -- the shape of a grant entry, when a channel is set to send automatically.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/actors.md` -- the actor record: the handle triggers carry as `owner`, and the names that resolve to it.
 - `exfu/<version>/ontology.md#docket`, `#triggers`, `#channels` and `#grants` -- the contract the generated skill follows.

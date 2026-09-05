@@ -18,3 +18,4 @@ Three rules govern this folder:
 | `migrations.md` | Every migration considered, and how it went, scope by scope where a migration works that way |
 | `install.md` | When this library was created, by which plugin version and surface |
 | `grants.md` | Consent you gave, or took back, for a channel to send automatically |
+| `actors.md` | Who this library acts as: the canonical handle triggers carry as `owner`, and every other name or medium id it resolves from |

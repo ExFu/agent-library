@@ -1044,18 +1044,120 @@ def _unfenced_lines(text):
             yield line
 
 
-def default_actor(root):
-    """The library's actor from durable/ledger/install.md, else 'any'."""
+ACTOR_NON_IDENTITY_KEYS = {"recorded", "notes", "role"}
+
+
+def read_actors(root):
+    """
+    The actor records in durable/ledger/actors.md, in file order. Each `## <handle>`
+    heading opens one record; every `- key: value` line beneath it except the
+    bookkeeping keys is a name that resolves to the handle (`aliases` is a comma
+    list; `display`, `slack`, `email` and any other medium are taken whole).
+    Returns a list of {"handle", "names": [...]}.
+    """
+    path = Path(root) / "durable" / "ledger" / "actors.md"
+    actors = []
+    if not path.is_file():
+        return actors
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return actors
+    current = None
+    for line in _unfenced_lines(text):
+        m = re.match(r"^##\s+(\S+)", line)
+        if m:
+            handle = m.group(1).strip()
+            if handle.startswith("<"):
+                current = None
+                continue
+            current = {"handle": handle, "names": []}
+            actors.append(current)
+            continue
+        if current is None:
+            continue
+        m = re.match(r"^\s*-\s*([A-Za-z][\w -]*?):\s*(.+?)\s*$", line)
+        if not m:
+            continue
+        key, value = m.group(1).strip().lower(), m.group(2).strip()
+        if key in ACTOR_NON_IDENTITY_KEYS or not value or value.startswith("<"):
+            continue
+        parts = [v.strip() for v in value.split(",")] if key == "aliases" else [value]
+        current["names"].extend(v for v in parts if v)
+    return actors
+
+
+def alias_map(actors):
+    """Lower-cased name (handle, display, alias, or medium id) -> canonical handle."""
+    table = {}
+    for a in actors:
+        for name in [a["handle"], *a["names"]]:
+            key = str(name).strip().lower().lstrip("@")
+            if key and key not in table:
+                table[key] = a["handle"]
+    return table
+
+
+def resolve_actor(name, actors):
+    """
+    The canonical handle for a name: through the actor records when one knows it,
+    else the name as written. 'any' and empty names pass through unchanged.
+    """
+    if name is None:
+        return None
+    text = str(name).strip()
+    if not text or text == "any":
+        return text
+    return alias_map(actors).get(text.lower().lstrip("@"), text)
+
+
+def known_actor(name, actors):
+    """True when a name resolves to a registered actor (always True with no records)."""
+    if not actors:
+        return True
+    return str(name).strip().lower().lstrip("@") in alias_map(actors)
+
+
+def default_actor(root, actors=None):
+    """
+    The library's actor: the first record in durable/ledger/actors.md; else the
+    `actor handle:` line of durable/ledger/install.md; else its `installed by:`
+    line resolved through the records; else 'any'.
+    """
+    if actors is None:
+        actors = read_actors(root)
+    if actors:
+        return actors[0]["handle"]
     path = Path(root) / "durable" / "ledger" / "install.md"
+    handle = installed_by = None
     if path.is_file():
         try:
             for line in _unfenced_lines(path.read_text(encoding="utf-8", errors="replace")):
+                m = re.match(r"^\s*-\s*actor handle:\s*([^\s(]+)", line)
+                if m and handle is None and not m.group(1).startswith("<"):
+                    handle = m.group(1)
                 m = re.match(r"^\s*-\s*installed by:\s*(.+?)\s*$", line)
-                if m and not m.group(1).startswith("<"):
-                    return m.group(1)
+                if m and installed_by is None and not m.group(1).startswith("<"):
+                    installed_by = m.group(1)
         except OSError:
             pass
+    if handle:
+        return handle
+    if installed_by:
+        return resolve_actor(installed_by, actors)
     return "any"
+
+
+def trigger_owner(trig, actor, actors):
+    """
+    The trigger's owner as a canonical handle. A missing or blank owner means the
+    library's own actor (`any` must be written explicitly); a name the actor
+    records know resolves to its handle; anything else stands as written.
+    """
+    raw = trig.get("owner")
+    if raw is None or not str(raw).strip():
+        return actor
+    return resolve_actor(raw, actors)
 
 
 def machine_name():
@@ -1108,15 +1210,16 @@ def resolve_channel(conn, scopes_by_name, scope_name, channel_name):
     return None
 
 
-def target_is_owner(target, owner):
+def target_is_owner(target, owner, actors=()):
+    """The channel target names the owner: literally, with an @, or via the owner's actor record."""
     if not target or not owner or owner == "any":
         return False
-    t = str(target).strip().lower()
+    t = str(target).strip().lower().lstrip("@")
     o = str(owner).strip().lower()
-    return t == o or t == "@" + o
+    return t == o or resolve_actor(t, actors) == resolve_actor(o, actors)
 
 
-def resolve_send(channel, owner, grants, delivered_today, run_counts):
+def resolve_send(channel, owner, grants, delivered_today, run_counts, actors=()):
     """
     The resolved send mode for one due entry: 'pull' when there is no channel,
     'auto' only when every condition holds (channel says auto, it is a dm to
@@ -1129,7 +1232,7 @@ def resolve_send(channel, owner, grants, delivered_today, run_counts):
         return "draft", "channel is draft"
     if channel.get("kind") != "dm":
         return "draft", "auto is honoured only on a dm in this release"
-    if not target_is_owner(channel.get("target"), owner):
+    if not target_is_owner(channel.get("target"), owner, actors):
         return "draft", "channel target is not the trigger's owner"
     if not grants.get(channel["id"], False):
         return "draft", "no active grant in durable/ledger/grants.md"
@@ -1370,13 +1473,14 @@ def target_title(conn, trig):
     return None
 
 
-def build_entry(conn, scopes_by_name, trig, occ, grants, delivered, run_counts, receipts, loops):
+def build_entry(conn, scopes_by_name, trig, occ, grants, delivered, run_counts, receipts, loops,
+                actor="any", actors=()):
     """One due-view entry, as the dispatcher consumes it."""
     channel = resolve_channel(conn, scopes_by_name, trig["scope"], trig.get("channel"))
     if trig.get("channel") and channel is None:
         warn(f"trigger {trig['id']}: channel '{trig['channel']}' not found in scope chain; degrading to pull")
-    owner = trig.get("owner") or "any"
-    mode, why = resolve_send(channel, owner, grants, delivered, run_counts)
+    owner = trigger_owner(trig, actor, actors)
+    mode, why = resolve_send(channel, owner, grants, delivered, run_counts, actors)
     others = [
         {"actor": r.get("actor"), "machine": r.get("machine"), "at": r.get("at")}
         for r in receipts
@@ -1422,29 +1526,42 @@ def build_entry(conn, scopes_by_name, trig, occ, grants, delivered, run_counts, 
     }
 
 
-def compute_due(conn, root, scopes, now, actor):
-    """The due view: every armed trigger this actor may fire that is due at now."""
+def compute_due(conn, root, scopes, now, actor, actors=None):
+    """
+    The due view: every armed trigger this actor may fire that is due at now.
+    Returns (entries, excluded, flags): `excluded` lists the triggers that are due
+    but belong to another actor, so a mismatch is never silent; `flags` names
+    armed triggers whose owner no actor record knows.
+    """
+    if actors is None:
+        actors = read_actors(root)
     scopes_by_name = {sc.name: sc for sc in scopes}
     grants = read_grants(root)
     delivered = delivered_today(conn, scopes_by_name, now)
     loops = loop_counts(conn, now)
     run_counts = {}
-    entries = []
+    entries, excluded, flags = [], [], []
     for row in conn.execute("SELECT * FROM triggers WHERE status = 'armed' ORDER BY created, id"):
         trig = dict(row)
-        owner = trig.get("owner") or "any"
-        if owner != "any" and owner != actor:
-            continue
+        owner = trigger_owner(trig, actor, actors)
+        if owner != "any" and not known_actor(owner, actors):
+            flags.append(f"trigger {trig['id']} is owned by '{trig.get('owner')}', which is not a registered actor "
+                         f"in durable/ledger/actors.md; nothing will fire it")
         receipts = receipts_for(conn, trig["id"])
         ev = evaluate_trigger(conn, trig, now, actor, receipts)
         if ev["due"] is None:
             continue
-        entry = build_entry(conn, scopes_by_name, trig, ev["due"], grants, delivered, run_counts, receipts, loops)
+        if owner != "any" and owner != actor:
+            excluded.append({"trigger": trig["id"], "scope": trig["scope"], "occurrence": ev["due"]["occurrence"],
+                             "owner": owner, "owner_as_written": trig.get("owner"), "actor": actor})
+            continue
+        entry = build_entry(conn, scopes_by_name, trig, ev["due"], grants, delivered, run_counts, receipts, loops,
+                            actor, actors)
         entry["skipped_occurrences"] = [s["occurrence"] for s in ev["skipped"]]
         entry["reason"] = ev["reason"]
         entries.append(entry)
     entries.sort(key=lambda e: (e.get("scheduled_at") or "", e["trigger"]))
-    return entries
+    return entries, excluded, flags
 
 
 def index_health(conn):
@@ -1507,6 +1624,17 @@ def read_due_json_or_refuse(root, scopes, actor):
 # ---------------------------------------------------------------------------
 # Printing helpers
 # ---------------------------------------------------------------------------
+
+def print_excluded(excluded, actor):
+    if not excluded:
+        return
+    print()
+    print(f"{len(excluded)} due but excluded (owned by another actor; actor is '{actor}'):")
+    for x in excluded:
+        as_written = x.get("owner_as_written")
+        shown = f"'{x['owner']}'" if as_written in (None, x["owner"]) else f"'{as_written}' -> '{x['owner']}'"
+        print(f"   {x['occurrence']}  scope: {x['scope']}  owned by {shown}")
+
 
 def print_due_entries(entries, now, actor, header=True):
     if header:
@@ -1642,7 +1770,8 @@ def cmd_due(args):
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    actor = args.actor or default_actor(root)
+    actors = read_actors(root)
+    actor = resolve_actor(args.actor, actors) if args.actor else default_actor(root, actors)
     conn, scopes, stats, err = prepare(root, trust_hints=args.trust_hints)
     if conn is None:
         print(f"Index unavailable ({err}); falling back to exfu/derived/due.json.", file=sys.stderr)
@@ -1660,20 +1789,24 @@ def cmd_due(args):
             print_due_entries(entries, now, actor)
         return 0
     if actor == "any":
-        print("Note: no actor in durable/ledger/install.md; only triggers owned by 'any' are considered.",
+        print("Note: no actor in durable/ledger/actors.md or install.md; only triggers owned by 'any' are considered.",
               file=sys.stderr)
-    entries = compute_due(conn, root, scopes, now, actor)
+    entries, excluded, owner_flags = compute_due(conn, root, scopes, now, actor, actors)
     if not explicit_at:
         try:
             write_due_json(root, scopes, conn, now, actor, entries)
         except OSError as e:
             warn(f"could not write due.json: {e}")
-    for note in index_health(conn):
+    for note in index_health(conn) + owner_flags:
         print(f"flag: {note}", file=sys.stderr)
+    for x in excluded:
+        print(f"flag: excluded due trigger {x['trigger']} ({x['occurrence']}): owned by '{x['owner']}', "
+              f"actor is '{actor}'", file=sys.stderr)
     if args.json:
         emit_json(entries)
     else:
         print_due_entries(entries, now, actor)
+        print_excluded(excluded, actor)
     return 0
 
 
@@ -1684,7 +1817,8 @@ def cmd_explain(args):
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    actor = args.actor or default_actor(root)
+    actors = read_actors(root)
+    actor = resolve_actor(args.actor, actors) if args.actor else default_actor(root, actors)
     conn, scopes, stats, err = prepare(root)
     if conn is None:
         print(f"Error: cannot open the index at {index_path(root)}: {err}", file=sys.stderr)
@@ -1695,8 +1829,16 @@ def cmd_explain(args):
         return 1
     trig = dict(row)
     scopes_by_name = {sc.name: sc for sc in scopes}
+    owner = trigger_owner(trig, actor, actors)
+    raw_owner = trig.get("owner")
+    if raw_owner is None or not str(raw_owner).strip():
+        owner_shown = f"(none) -> {owner} (the library's actor)"
+    elif str(raw_owner).strip() != owner:
+        owner_shown = f"{str(raw_owner).strip()} -> {owner}"
+    else:
+        owner_shown = owner
     print(f"Trigger {trig['id']} in scope '{trig['scope']}'")
-    print(f"  status: {trig.get('status')}  owner: {trig.get('owner') or 'any'}  mode: {trig.get('when_mode')}")
+    print(f"  status: {trig.get('status')}  owner: {owner_shown}  mode: {trig.get('when_mode')}")
     if trig.get("when_mode") == "cron":
         print(f"  spec: {trig.get('when_spec')}  tz: {trig.get('tz') or 'UTC'}")
     elif trig.get("when_mode") == "once":
@@ -1740,8 +1882,9 @@ def cmd_explain(args):
     if not receipts:
         print("  (none)")
     print()
-    owner = trig.get("owner") or "any"
-    if owner != "any" and owner != actor:
+    if owner != "any" and not known_actor(owner, actors):
+        print(f"Owner check: '{raw_owner}' is not a registered actor in durable/ledger/actors.md; nothing will fire it.")
+    elif owner != "any" and owner != actor:
         print(f"Owner check: owned by '{owner}', so actor '{actor}' will not fire it.")
     if ev["due"]:
         print(f"Due at {utc_iso(now)}: yes -- {ev['reason']}")
@@ -1768,13 +1911,15 @@ def cmd_fire(args):
         return 1
     trig = dict(row)
     now = utc_now()
-    actor = args.actor or default_actor(root)
+    actors = read_actors(root)
+    actor = resolve_actor(args.actor, actors) if args.actor else default_actor(root, actors)
     tz = load_zone(trig.get("tz"))
     occ = {"occurrence": f"{trig['id']}@{instant_str(now.astimezone(tz))}", "instant": now, "signal": None}
     scopes_by_name = {sc.name: sc for sc in scopes}
     receipts = receipts_for(conn, trig["id"])
     entry = build_entry(conn, scopes_by_name, trig, occ, read_grants(root),
-                        delivered_today(conn, scopes_by_name, now), {}, receipts, loop_counts(conn, now))
+                        delivered_today(conn, scopes_by_name, now), {}, receipts, loop_counts(conn, now),
+                        actor, actors)
     entry["reason"] = "fired by hand with --now"
     if args.json:
         emit_json([entry])
@@ -1807,7 +1952,8 @@ def cmd_receipt(args):
         return 1
 
     now = utc_now()
-    actor = args.actor or default_actor(root)
+    actors = read_actors(root)
+    actor = resolve_actor(args.actor, actors) if args.actor else default_actor(root, actors)
     machine = args.machine or machine_name()
     taken = set()
     written = []

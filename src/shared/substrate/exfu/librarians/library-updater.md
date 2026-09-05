@@ -27,7 +27,7 @@ Follows: exfu/20260903-1825/ontology.md#migrations
 2. Read `durable/ledger/migrations.md`. Every id recorded there -- with any outcome, including `not-applicable` -- has been dealt with.
 3. Pending = shipped minus recorded, in id order.
 
-**If `durable/` does not exist,** this is a library from before the permanent record convention. Do not treat that as "everything is pending". Create the container and the logbook inside it -- `durable/readme.md`, then `durable/ledger/` with `migrations.md` and `install.md`, all from the shipped templates -- then continue to step 2, which decides what genuinely applies by looking at the library rather than at the absent record. The same applies if `durable/` is there but `durable/ledger/` is not: create what is missing, record nothing retrospectively.
+**If `durable/` does not exist,** this is a library from before the permanent record convention. Do not treat that as "everything is pending". Create the container and the logbook inside it -- `durable/readme.md`, then `durable/ledger/` with `migrations.md`, `install.md` and `actors.md`, all from the shipped templates -- then continue to step 2, which decides what genuinely applies by looking at the library rather than at the absent record. The same applies if `durable/` is there but `durable/ledger/` is not: create what is missing, record nothing retrospectively.
 
 **If the ledger records ids this plugin does not ship,** the library is ahead of this surface. Another surface (Claude Code and Cowork have separate plugin installs, and either may auto-update) has already moved it forward. **Stop.** Tell the user this surface's plugin is older than their library and needs updating first. Do not attempt structural work against a shape this plugin does not understand.
 

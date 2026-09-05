@@ -8,6 +8,7 @@ reads:
   - "*/docket/triggers.jsonl"
   - "*/docket/channels.jsonl"
   - "durable/ledger/grants.md"
+  - "durable/ledger/actors.md"
 writes:
   - "*/docket/fires.jsonl"
   - "*/docket/signals.jsonl"
@@ -36,7 +37,9 @@ Follows: exfu/20260903-1825/ontology.md#dispatcher
    python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/library-index/index.py due <substrate-root> --json
    ```
 
-   The tool prints the triggers that are due now for this actor (owner matches the library's actor, or `any`), each with its handler, channel, target entry (title only), the occurrence id, and the channel's resolved `send` mode after checking grants and caps. If the tool reports the index unavailable, it falls back to `exfu/derived/due.json` and says so; if that file is stale it refuses, and this run records `skipped` with that reason.
+   The tool prints the triggers that are due now for this actor, each with its handler, channel, target entry (title only), the occurrence id, and the channel's resolved `send` mode after checking grants and caps. The actor is the first record in `durable/ledger/actors.md`; a trigger with no `owner` belongs to that actor, and an owner written as an alias or display name resolves to it through the same file. If the tool reports the index unavailable, it falls back to `exfu/derived/due.json` and says so; if that file is stale it refuses, and this run records `skipped` with that reason.
+
+   Read the `flag:` lines on stderr as part of the result. A **due trigger that was excluded** (owned by another actor) and an **owner that is not a registered actor** are both reported there rather than dropped in silence. Never fire an excluded trigger and never edit its row; carry the flag into this run's detail line so the user sees it. If the excluded owner is plainly the user under another name, say so in the detail line and suggest adding the alias to `actors.md`.
 
 2. For each due trigger, in the order printed:
    1. Write the intent receipt: `index.py receipt <substrate-root> <occurrence> intent`.
@@ -47,11 +50,11 @@ Follows: exfu/20260903-1825/ontology.md#dispatcher
       - `definition`: run the registered definition named by `ref` as the cadence session would, and record its outcome as this trigger's result.
    4. Write the result receipt: `index.py receipt <substrate-root> <occurrence> result --status <delivered|drafted|failed|skipped|suppressed> [--signals name,...] [--key <idempotency key>]`. The tool appends any reported signals to the scope's `signals.jsonl`, disarms a `once` trigger, and pauses a trigger after three consecutive failures.
 
-3. Record the run with a detail line that counts fires by status (e.g. "4 due: 2 delivered, 1 drafted, 1 skipped (claimed by sam)"). If nothing was due, record success with "nothing due".
+3. Record the run with a detail line that counts fires by status (e.g. "4 due: 2 delivered, 1 drafted, 1 skipped (claimed by sam)"), followed by any flags the tool raised (e.g. "nothing due; 1 due but excluded: <trigger id> owned by 'sam', actor is 'al'"). If nothing was due and nothing was flagged, record success with "nothing due".
 
 ## What it touches
 
-- Reads: the due view, trigger and channel rows, the grants ledger
+- Reads: the due view, trigger and channel rows, the grants and actors ledgers
 - Writes: receipts and signals, and a trigger row only to disarm a `once` or pause a failing one
 
 ## Why it matters

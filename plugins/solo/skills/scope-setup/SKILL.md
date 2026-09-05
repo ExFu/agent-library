@@ -224,6 +224,7 @@ followed by the protective header.
 - `${CLAUDE_PLUGIN_ROOT}/substrate/templates/scope/` -- per-folder-type agent.md stubs.
 - `${CLAUDE_PLUGIN_ROOT}/substrate/templates/defaults/` -- sane-default content for the docket (`docket-agent.md`, `docket-pointer.md`, `docket-readme.md`). The todo, reminders and inbox defaults beside them serve deprecated scopes only; never scaffold from them.
 - `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/grants.md` -- the shape of a grant entry, appended when a channel is elevated to automatic sending.
+- `${CLAUDE_PLUGIN_ROOT}/substrate/templates/durable/ledger/actors.md` -- the actor record; when a `dm` channel to the user is declared, add its target id to their record so the dispatcher can see the channel reaches the owner.
 - `exfu/latest.txt` in the substrate root -- current version string.
 - `exfu/<version>/ontology.md` in the substrate -- the core ontology this skill implements; read its folder-type sections when judgment calls arise.
 - The substrate must be accessible (filesystem or connector) before this skill can scaffold anything. If it isn't, say so and stop.

@@ -44,7 +44,9 @@ A **reminder** is a `reminders.jsonl` entry plus a trigger in `triggers.jsonl`:
 - `when.mode` is `once` (an instant in `at`, zone `tz`), `cron` (a 5-field spec in `spec`, zone `tz`) or `on-signal` (fire when the signal named in `on` appears).
 - A rule in words ("every other Monday", "first working day of the month") is resolved now, once, into a `cron` spec or a `once` instant; keep the words in `assess` so a person can see what was meant.
 - `channel` is the name of a channel in `channels.jsonl` (or a parent scope's); leave `null` for "tell me in session and on the dashboard".
+- `owner` is the handle from `durable/ledger/actors.md` (`{{username}}`). Leave it out rather than guess: a trigger with no owner belongs to the library's actor. Write `any` only for a shared scope where whichever library runs first should fire it.
 - Triggers are authored here and fired by the dispatcher librarian; this skill never writes to `fires.jsonl` except during the session-start check (below).
+- **After arming any trigger, confirm it will fire.** Run `python3 ${CLAUDE_PLUGIN_ROOT}/scheduled-tasks/library-index/index.py explain <library root> <trigger id>` and read the `Owner check` and `Next occurrence` lines. If it says the owner is not a registered actor, or names another actor, fix the row before telling {{username}} the reminder is set. Skip this only on a surface where scripts cannot run.
 
 ## Actions
 

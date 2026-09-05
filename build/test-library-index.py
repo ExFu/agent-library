@@ -30,6 +30,9 @@ TOOL = HERE.parent / "src" / "shared" / "scheduled-tasks" / "library-index" / "i
 CRON_ID = "20260903T120000Z-TRGCRON001"
 ONCE_ID = "20260903T120100Z-TRGONCE001"
 SIG_ID = "20260901T120200Z-TRGSIGN001"
+ALIAS_ID = "20260905T190000Z-TRGALIAS01"
+NOOWNER_ID = "20260905T190100Z-TRGNOOWN01"
+STRANGER_ID = "20260905T190200Z-TRGSTRNG01"
 T1, T2, T3, T4, T5 = (f"20260901T10000{i}Z-ITEM00000{i}" for i in range(1, 6))
 R1 = "20260901T100100Z-REMIND0001"
 CH_DM = "20260901T110000Z-CHANNEL0DM"
@@ -345,6 +348,65 @@ def main():
     proc = r.run("compact")
     names = [s["name"] for s in read_rows(acme / "signals.jsonl")]
     ok(names.count(f"entry-completed:{T4}") == 1 and "signalled 0" in proc.stdout, "second compaction emits nothing new")
+
+    # -- actors: aliases, the self default, and visible exclusions ------------------
+    print("actors")
+    ledger = lib / "durable" / "ledger"
+    (ledger / "install.md").write_text(
+        "# Install\n\n- created: 2026-09-01\n- plugin: exfu-agent-library-solo 0.11.2\n"
+        "- installed by: Alastair Brayne\n", encoding="utf-8")
+    (ledger / "actors.md").write_text(
+        "# Actors\n\n```markdown\n## <handle>\n- aliases: <other names>\n```\n\n"
+        "## al\n- display: Alastair Brayne\n- aliases: Alastair, Al\n- slack: U0B0C019474\n"
+        "- recorded: 2026-09-05T20:00:00Z by al (Claude Code), plugin 0.11.2\n", encoding="utf-8")
+    env2 = {"created": "2026-09-05T19:00:00Z", "updated": "2026-09-05T19:00:00Z", "revision": 1}
+    jsonl(lib / "user" / "docket" / "channels.jsonl", [
+        {"id": CH_DM, "name": "slack-dm", "kind": "dm", "via": "slack", "target": "U0B0C019474", "send": "auto", **env2},
+    ])
+    when = {"mode": "once", "at": "2026-09-06T09:00:00Z", "tz": "UTC"}
+    handler = {"kind": "agent", "weight": "light", "ref": None}
+    jsonl(lib / "user" / "docket" / "triggers.jsonl", [
+        {"id": ALIAS_ID, "target": None, "assess": "Owned under a display name.", "when": when, "on": None,
+         "handler": handler, "channel": "slack-dm", "owner": "Alastair", "status": "armed", **env2},
+        {"id": NOOWNER_ID, "target": None, "assess": "No owner key at all.", "when": when, "on": None,
+         "handler": handler, "channel": None, "status": "armed", **env2},
+        {"id": STRANGER_ID, "target": None, "assess": "Owned by someone this library does not know.", "when": when,
+         "on": None, "handler": handler, "channel": None, "owner": "sam", "status": "armed", **env2},
+    ])
+    due, proc = r.run_json("due", "--at", "2026-09-06T09:00:00Z")
+    ids = [e["trigger"] for e in due]
+    ok(ALIAS_ID in ids, "a trigger owned under an alias fires for the canonical actor")
+    ok(NOOWNER_ID in ids, "a trigger with no owner fires for the library's own actor")
+    ok(STRANGER_ID not in ids, "another actor's trigger is still excluded")
+    alias = next(e for e in due if e["trigger"] == ALIAS_ID)
+    ok(alias["owner"] == "al", "the due view reports the canonical handle as owner")
+    ok(alias["resolved_send"] == "auto", "a dm whose target is the owner's slack id resolves to auto")
+    ok("excluded" in proc.stderr and STRANGER_ID in proc.stderr and "'sam'" in proc.stderr,
+       "--json reports the due trigger it excluded, naming its owner")
+    ok("not a registered actor" in proc.stderr, "--json flags an owner that resolves to no known actor")
+    proc = r.run("due", "--at", "2026-09-06T09:00:00Z")
+    ok("1 due but excluded" in proc.stdout and "owned by 'sam'" in proc.stdout and "actor is 'al'" in proc.stdout,
+       "the text due view says what it excluded and why")
+    proc = r.run("explain", ALIAS_ID, "--at", "2026-09-06T09:00:00Z")
+    ok("owner: Alastair -> al" in proc.stdout, "explain shows the alias resolving to the handle")
+    ok("Owner check: owned by" not in proc.stdout, "explain raises no owner objection for an alias of the actor")
+    proc = r.run("explain", STRANGER_ID, "--at", "2026-09-06T09:00:00Z")
+    ok("not a registered actor" in proc.stdout, "explain flags an owner no actor record knows")
+    alias_occ = f"{ALIAS_ID}@2026-09-06T09:00+00:00"
+    r.run("receipt", alias_occ, "intent", "--actor", "Alastair", "--machine", "test-box")
+    fires = read_rows(lib / "user" / "docket" / "fires.jsonl")
+    ok(fires[-1]["actor"] == "al", "a receipt written under an alias carries the canonical handle")
+    (ledger / "actors.md").unlink()
+    (ledger / "install.md").write_text(
+        "# Install\n\n- installed by: Alastair Brayne\n- actor handle: al (the handle triggers carry as owner)\n",
+        encoding="utf-8")
+    due, _ = r.run_json("due", "--at", "2026-09-06T09:00:00Z")
+    ids = [e["trigger"] for e in due]
+    ok(NOOWNER_ID in ids and ALIAS_ID not in ids,
+       "without actors.md the actor handle line names the actor and unregistered names are excluded")
+    (ledger / "install.md").write_text("# Install\n\n- installed by: al\n", encoding="utf-8")
+    due, _ = r.run_json("due", "--at", "2026-09-06T09:00:00Z")
+    ok(NOOWNER_ID in [e["trigger"] for e in due], "with neither record, installed by still names the actor")
 
     # -- nothing binary inside the library ----------------------------------------
     print("hygiene")

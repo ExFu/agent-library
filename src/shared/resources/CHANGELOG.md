@@ -6,6 +6,18 @@ Versions match the plugin manifests. Patch bumps cover bug fixes and small behav
 
 ---
 
+## v0.11.2 -- 2026-09-05
+
+**A person has more than one name; the dispatcher now knows that.** The library's actor was the `installed by:` line of `durable/ledger/install.md`, compared as a raw string against each trigger's `owner`. That line held a display name, the docket skill wrote the handle, and a due one-off trigger sat armed through every hourly run without firing and without anything saying so. The same raw comparison sat in the automatic-send gate, where the channel target is a Slack member id and the owner is a handle, so even a matched owner would have been drafted rather than sent.
+
+**The actor record.** `durable/ledger/actors.md` (new template, new migration `20260905-2030-actors`) holds one record per actor: a canonical handle as heading, then the display name, aliases, and the medium ids that reach them. Every tool resolves owner strings and channel targets through it before comparing, so the check stays exact against the handle while agents may write whatever name they have. The first record is the library's actor; `install.md` falls back to an `actor handle:` line, then to `installed by:`, and `installed by` is documented as a display name rather than an identity key.
+
+**No owner means the library's own actor**, as the ontology always said; the tools had read it as `any`. `any` is now explicit opt-in, the only mode with a double-fire risk in a shared scope.
+
+**Silence designed out.** The due view reports the due triggers it excluded because another actor owns them, and flags any armed trigger whose owner is not a registered actor, on stderr under `--json` and in the text view. `explain` shows the alias resolving to the handle and says when an owner resolves to nothing. The dispatcher carries those flags into its run detail line. The generated docket skill runs `explain` on every trigger it arms and reads the owner check before confirming the reminder to the user. Setup-docket records the actor before the first trigger is written.
+
+The ontology text at `20260903-1825` is frozen and unchanged; its Actors section names `install.md` as the actor's home, and the next conventions mint should point it at `actors.md`.
+
 ## v0.11.1 -- 2026-09-03
 
 **The author of record is the brand.** Every manifest's `author.name` is now `exfu.ai` rather than a person's name, matching the sibling ExFu plugins and the `exfu-marketplace` catalogue, which changed in the same sweep. The `email` and `url` fields are unchanged, and the LICENSE still names the licensor, which is ownership rather than authorship. Metadata-only patch; no behaviour changes.
